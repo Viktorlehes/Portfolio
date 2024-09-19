@@ -1,21 +1,26 @@
 import React from 'react';
+import { PieChart, Pie, Cell } from 'recharts';
 import './CryptoBundle.css';
 
-export interface Asset {
+import DeFi from 'cryptocurrency-icons/32/color/chain.png';
+import top from 'cryptocurrency-icons/32/color/btc.png';
+import scaling from 'cryptocurrency-icons/32/color/matic.png';
+
+interface Asset {
   name: string;
   percent: number;
   color: string;
 }
 
-export interface CryptoBundleProps {
+interface CryptoBundleProps {
   category: string;
   assets: Asset[];
   value: number;
+  performance: number;
 }
 
-const CryptoBundle: React.FC<CryptoBundleProps> = ({ category, assets, value }) => {
+const CryptoBundle: React.FC<CryptoBundleProps> = ({ category, assets, value, performance }) => {
   const getIcon = (name: string) => {
-    // This is a placeholder. You should replace these with actual icon components or imports
     const icons: { [key: string]: string } = {
       Chainlink: '🔗',
       Bitcoin: '₿',
@@ -28,64 +33,77 @@ const CryptoBundle: React.FC<CryptoBundleProps> = ({ category, assets, value }) 
       Optimism: '⭕',
       Arbitrum: 'Ⓐ',
     };
-    return icons[name] || '🪙'; // Default icon
+    return icons[name] || '🪙';
   };
 
-  const getPerformance = (category: string): number => {
-    // This is a placeholder. You should implement actual performance calculation logic
-    const performances: { [key: string]: number } = {
-      "DeFi tokens": -17.75,
-      "Top-tier coins": -8.4,
-      "Scaling coins": -21.94
+  const getCatIcon = (name: string) => {
+    const icons: { [key: string]: string } = {
+      'DeFi Tokens': DeFi,
+      'Top-Tier Coins': top,
+      'Scaling Coins': scaling
     };
-    return performances[category] || 0;
-  };
+    return icons[name];
+  }
 
-  const generateConicGradient = () => {
-    let gradient = '';
-    let currentPercentage = 0;
-    assets.forEach((asset, index) => {
-      gradient += `${asset.color} ${currentPercentage}% ${currentPercentage + asset.percent}%`;
-      currentPercentage += asset.percent;
-      if (index < assets.length - 1) gradient += ', ';
-    });
-    return `conic-gradient(${gradient})`;
-  };
+  const data = assets.map(asset => ({
+    name: asset.name,
+    value: asset.percent,
+  }));
 
   return (
-    <div className="crypto-bundle-card">
-      <div className="crypto-bundle-header">
-        <div className="title-section">
-          <div className="icon-title">
-            {getIcon(category)} {category} bundle
-          </div>
-          <div className="performance">
-            <span className="performance-value">{getPerformance(category)}%</span>
-            <span className="performance-label">Last quarter</span>
-          </div>
+    <div className="crypto-bundle">
+      <div className="bundle-header">
+        <div className="bundle-title">
+          <img className="bundle-icon" src={getCatIcon(category)} alt='img'></img>
+          <h2>{category}</h2>
         </div>
-        <p className="description">
-          {category === "DeFi tokens" && "Invest in the future of finance ..."}
-          {category === "Top-tier coins" && "Own a piece of the most establis..."}
-          {category === "Scaling coins" && "Take advantage of the most promi..."}
-          <a href="#">Read more</a>
-        </p>
+        <div className="bundle-performance">
+          <span className={`performance-value ${performance < 0 ? 'negative' : 'positive'}`}>
+            {performance.toFixed(2)}%
+          </span>
+          <p className="performance-period">Last Month</p>
+        </div>
       </div>
       
-      <div className="crypto-bundle-content">
-        <div className="progress-circle" style={{ background: generateConicGradient() }}>
-          <div className="circle-inner">
-            <span>Value</span>
-            <strong>${value.toLocaleString()}</strong>
-          </div>
+      <p className="bundle-description">
+        {category === "DeFi tokens" && "Invest in the future of finance..."}
+        {category === "Top-tier coins" && "Own a piece of the most establis..."}
+        {category === "Scaling coins" && "Take advantage of the most promi..."}
+        <a href="#" className="read-more">Read more</a>
+      </p>
+
+      <div className="chart-container">
+        <PieChart width={200} height={200}>
+          <Pie
+            data={data}
+            cx={100}
+            cy={100}
+            innerRadius={60}
+            outerRadius={80}
+            paddingAngle={5}
+            dataKey="value"
+          >
+            {data.map((_, index) => (
+              <Cell key={`cell-${index}`} fill={assets[index].color} />
+            ))}
+          </Pie>
+        </PieChart>
+        <div className="chart-center">
+          <p className="chart-label">Value</p>
+          <p className="chart-value">${value.toLocaleString()}</p>
         </div>
       </div>
 
-      <div className="crypto-bundle-footer">
+      <div className="asset-list-bundle">
         {assets.map((asset, index) => (
-          <div key={index} className="asset-icon" style={{ backgroundColor: asset.color }}>
-            {getIcon(asset.name)}
-            <span className="asset-percentage">{asset.percent}%</span>
+          <div key={index} className="asset-item-bundle">
+            <div 
+              className="asset-icon"
+              style={{ backgroundColor: asset.color }}
+            >
+              {getIcon(asset.name)}
+            </div>
+            <span className="asset-percent-bundle">{asset.percent}%</span>
           </div>
         ))}
       </div>

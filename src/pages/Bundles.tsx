@@ -4,13 +4,15 @@ import './Bundles.css';
 
 export interface Asset {
   name: string;
-  percent: number; // Target weight in percentage
+  percent: number;
   color: string;
 }
 
 export interface CryptoCategory {
   category: string;
   assets: Asset[];
+  value: number;
+  performance: number;
 }
 
 const cryptoBundles: CryptoCategory[] = [
@@ -22,6 +24,8 @@ const cryptoBundles: CryptoCategory[] = [
       { name: "Uniswap", percent: 25, color: '#0ea5e9' },
       { name: "Synthetix", percent: 15, color: '#14b8a6' },
     ],
+    value: 10000,
+    performance: -17.75
   },
   {
     category: "Top-Tier Coins",
@@ -30,6 +34,8 @@ const cryptoBundles: CryptoCategory[] = [
       { name: "Ethereum", percent: 25, color: '#6366f1' },
       { name: "Solana", percent: 45, color: '#8b5cf6' },
     ],
+    value: 20000,
+    performance: -8.4
   },
   {
     category: "Scaling Coins",
@@ -38,36 +44,26 @@ const cryptoBundles: CryptoCategory[] = [
       { name: "Optimism", percent: 35, color: '#f97316' },
       { name: "Arbitrum", percent: 25, color: '#8b5cf6' },
     ],
+    value: 30000,
+    performance: -21.94
   },
 ];
-
-interface cryptoBundlesValues {
-  category: string;
-  value: number;
-} 
-
-const cryptoBundlesValues: cryptoBundlesValues[] = [
-  { category: "DeFi Tokens", value: 10000 },
-  { category: "Top-Tier Coins", value: 20000 },
-  { category: "Scaling Coins", value: 30000 }
-];
-
 
 const CryptoDemoPage: React.FC = () => {
   return (
     <div className="crypto-demo-page">
       <h1>Crypto Bundles</h1>
-      {cryptoBundles.map((bundle, index) => {
-        const bundleValue = cryptoBundlesValues.find(v => v.category === bundle.category)?.value || 0;
-        return (
+      <div className="crypto-bundles-container">
+        {cryptoBundles.map((bundle, index) => (
           <CryptoBundle
             key={index}
             category={bundle.category}
             assets={bundle.assets}
-            value={bundleValue}
+            value={bundle.value}
+            performance={bundle.performance}
           />
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 };
