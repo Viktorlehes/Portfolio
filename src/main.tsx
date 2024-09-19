@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 import Dashboard from './pages/Dashboard';
-import Assets from './pages/Assets';
+import Bundles from './pages/Bundles';
 import Temp from './pages/Temp';
 
 const router = createBrowserRouter([
@@ -16,8 +16,8 @@ const router = createBrowserRouter([
         element: <Dashboard />,
       },
       {
-        path: 'assets',
-        element: <Assets />,
+        path: 'Bundles',
+        element: <Bundles />,
       },
       {
         path: 'liabilities',

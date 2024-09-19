@@ -9,7 +9,7 @@ const Sidebar: React.FC = () => {
 
   const menuItems = [
     { icon: LayoutDashboard, text: 'Dashboard', path: '/' },
-    { icon: Wallet, text: 'Assets', path: '/assets' },
+    { icon: Wallet, text: 'Bundles', path: '/Bundles' },
     { icon: CreditCard, text: 'Liabilities', path: '/liabilities' },
     { icon: BarChart2, text: 'Cashflow', path: '/cashflow' },
     { icon: FileText, text: 'Reports', path: '/reports' },
