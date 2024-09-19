@@ -1,0 +1,30 @@
+.dashboard {
+    padding-left: 10px;
+}
+
+.dashboard-sub-cat {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5%;
+    width: 100%;
+    margin-top: 10px;
+  }
+  
+  .dashboard-sub-cat > * {
+    flex-grow: 1;
+    flex-basis: calc((100% - 10%) / 3); /* 3 items per row with 5% gap */
+    min-width: calc((100% - 5%) / 2); /* 2 items per row when space is limited */
+    max-width: 100%; /* Full width on very small screens */
+  }
+  
+  @media (max-width: 1200px) {
+    .dashboard-sub-cat > * {
+      flex-basis: calc((100% - 5%) / 2); /* 2 items per row */
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .dashboard-sub-cat > * {
+      flex-basis: 100%; /* 1 item per row on small screens */
+    }
+  }

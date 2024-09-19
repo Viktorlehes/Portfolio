@@ -1,3 +1,9 @@
+# Notes 
+
+  alchemy for getting values from wallets
+  https://docs.alchemy.com/docs/how-to-get-all-tokens-owned-by-an-address 
+
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
