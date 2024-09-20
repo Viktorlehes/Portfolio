@@ -130,6 +130,11 @@
   color: #4b5563;
 }
 
+.asset-name-bundle {
+  font-size: 12px;
+  color: #4b5563;
+}
+
 .buy-button {
   width: 100%;
   background-color: #f97316;

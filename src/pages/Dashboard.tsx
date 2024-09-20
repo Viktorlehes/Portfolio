@@ -95,26 +95,28 @@ const assetsPortfolio3: Asset[] = [
 
 const Dashboard: React.FC = () => {
   return (
-    <div className="dashboard">
-      <section className='dashboard-head'>
-        <h2>Wealth Overview</h2>
-        <div className="overview-values">
-          <ValueCard label="Coinbase" value={85800} color="#8884d8" />
-          <ValueCard label="Nexo" value={61300} color="#82ca9d" />
-          <ValueCard label="Uniswap" value={51500} color="#ffc658" />
-        </div>
-      </section>
+    <div className="dashboard-page">
+      <div className="page-header">
+        <h1>Wealth Overview</h1>
+      </div>
+      <div className="page-content">
+        <section className='dashboard-head'>
+          <div className="overview-values">
+            <ValueCard label="Coinbase" value={85800} color="#8884d8" />
+            <ValueCard label="Nexo" value={61300} color="#82ca9d" />
+            <ValueCard label="Uniswap" value={51500} color="#ffc658" />
+          </div>
+        </section>
 
-      <Linechart data={data}/>
+        <Linechart data={data}/>
 
-      <section className='dashboard-sub-cat'>
-        <AssetBreakdown name={"Coinbase"} assets={assetsPortfolio1} />
-        <AssetBreakdown name={"Nexo"} assets={assetsPortfolio2} />
-        <AssetBreakdown name={"Uniswap"} assets={assetsPortfolio3} />
-      </section>
-
+        <section className='dashboard-sub-cat'>
+          <AssetBreakdown name={"Coinbase"} assets={assetsPortfolio1} />
+          <AssetBreakdown name={"Nexo"} assets={assetsPortfolio2} />
+          <AssetBreakdown name={"Uniswap"} assets={assetsPortfolio3} />
+        </section>
+      </div>
     </div>
   );
 };
-
 export default Dashboard;

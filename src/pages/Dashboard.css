@@ -1,25 +1,65 @@
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page-header {
+  background-color: #ffffff;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 24px;
+  color: #000000;
+}
+
+.page-content {
+  flex-grow: 1;
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+
 .dashboard {
   padding-left: 10px;
+}
+
+.dashboard-head {
+  margin-bottom: 20px;
+}
+
+.overview-values {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .dashboard-sub-cat {
   display: flex;
   flex-wrap: wrap;
-  gap: 5%;
+  gap: 20px;
   width: 100%;
-  margin-top: 10px;
+  margin-top: 20px;
+  margin-bottom: 10px;
 }
 
 .dashboard-sub-cat > * {
   flex-grow: 1;
-  flex-basis: calc((100% - 10%) / 3); /* 3 items per row with 5% gap */
-  min-width: calc((100% - 5%) / 2); /* 2 items per row when space is limited */
+  flex-basis: calc((100% - 40px) / 3); /* 3 items per row with 20px gap */
+  min-width: calc((100% - 20px) / 2); /* 2 items per row when space is limited */
   max-width: 100%; /* Full width on very small screens */
+  margin-bottom: 10px; /* Add vertical margin */
 }
 
 @media (max-width: 1200px) {
   .dashboard-sub-cat > * {
-    flex-basis: calc((100% - 5%) / 2); /* 2 items per row */
+    flex-basis: calc((100% - 20px) / 2); /* 2 items per row */
   }
 }
 

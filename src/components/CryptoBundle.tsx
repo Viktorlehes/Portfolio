@@ -104,6 +104,7 @@ const CryptoBundle: React.FC<CryptoBundleProps> = ({ category, assets, value, pe
               {getIcon(asset.name)}
             </div>
             <span className="asset-percent-bundle">{asset.percent}%</span>
+            <span className="asset-name-bundle">{asset.name}</span>
           </div>
         ))}
       </div>

@@ -1,19 +1,70 @@
-.crypto-demo-page {
+.crypto-demo-container {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0;
+}
+
+.crypto-demo-header {
+  background-color: #ffffff;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.crypto-demo-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.crypto-demo-content {
+  background-color: #f5f5f5;
   padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.crypto-demo-page h1 {
-  text-align: center;
-  margin-bottom: 32px;
-  font-size: 28px;
-  color: #333;
-}
-
-.crypto-bundles-container {
+.crypto-bundles-grid {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 24px;
+  justify-content: flex-start;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.crypto-bundle-item {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .crypto-bundle-item {
+    width: calc(50% - 8px);
+  }
+}
+
+@media (min-width: 768px) {
+  .crypto-bundle-item {
+    width: calc(33.333% - 11px);
+  }
+}
+
+/* Update WalletSelector styles to fit in the header */
+.wallet-selector {
+  position: static;
+}
+
+.wallet-selector select {
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  background-color: white;
+  color: #374151;
+  font-weight: 600;
+}
+
+.wallet-selector select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  border-color: transparent;
 }

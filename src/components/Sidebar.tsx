@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Wallet, CreditCard, BarChart2, FileText } from 'lucide-react';
+import './Sidebar.css';
+
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
