@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import BundleOverview from '../components/BundleOverview';
-import CryptoBundle from '../components/CryptoBundle';
-import WalletSelector from '../components/WalletSelector';
+import BundleOverview from '../components/Bundles/BundleOverview';
+import CryptoBundle from '../components/Bundles/CryptoBundle';
+import WalletSelector from '../components/Bundles/WalletSelector';
 import './Bundles.css';
 
 export interface Asset {
@@ -62,12 +62,12 @@ const CryptoDemoPage: React.FC = () => {
   };
 
   return (
-    <div className="crypto-demo-container">
-      <div className="crypto-demo-header">
-        <h1 className="crypto-demo-title">Crypto Bundles</h1>
+    <div className="default-page">
+      <div className="page-header">
+        <h1>Crypto Bundles</h1>
         <WalletSelector onWalletChange={handleWalletChange} />
       </div>
-      <div className="crypto-demo-content">
+      <div className="page-content">
         <BundleOverview bundles={cryptoBundles} />
         <div className="crypto-bundles-grid">
           {cryptoBundles.map((bundle, index) => (

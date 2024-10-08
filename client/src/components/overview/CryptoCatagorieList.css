@@ -1,0 +1,59 @@
+.crypto-list {
+    width: 100%;
+    padding: 16px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eaeaea;
+  }
+  
+  .category-item:last-child {
+    border-bottom: none;
+  }
+  
+  .category-name {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .category-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  
+  .crypto-names {
+    font-size: 0.9rem;
+    color: #6c757d;
+  }
+  
+  .price-change {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  
+  .price-change.up {
+    color: green;
+  }
+  
+  .price-change.down {
+    color: red;
+  }
+  
