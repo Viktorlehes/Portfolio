@@ -12,13 +12,16 @@ interface LinechartProps {
 }
 
 function getWidth() {
-    return Math.max(
-      document.body.scrollWidth,
-      document.documentElement.scrollWidth,
-      document.body.offsetWidth,
-      document.documentElement.offsetWidth,
-      document.documentElement.clientWidth
-    ) * 0.8;
+    const w1 = Math.max(
+        document.body.scrollWidth,
+        document.documentElement.scrollWidth,
+        document.body.offsetWidth,
+        document.documentElement.offsetWidth,
+        document.documentElement.clientWidth
+      ) * 0.8 
+    
+    const w2 = 1152; 
+    return w1 < w2 ? w1 : w2;
 }
 
 const Linechart: React.FC<LinechartProps> = ({ data }) => {

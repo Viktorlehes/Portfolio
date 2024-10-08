@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Wallet, CreditCard, BarChart2, FileText } from 'lucide-react';
+import { LayoutDashboard, Wallet, PanelsTopLeft } from 'lucide-react';
 import './Sidebar.css';
-
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -10,11 +9,9 @@ const Sidebar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const menuItems = [
-    { icon: LayoutDashboard, text: 'Dashboard', path: '/' },
+    { icon: PanelsTopLeft, text: 'Overview', path: '/' },
+    { icon: LayoutDashboard, text: 'Dashboard', path: '/Dashboard' },
     { icon: Wallet, text: 'Bundles', path: '/Bundles' },
-    { icon: CreditCard, text: 'Liabilities', path: '/liabilities' },
-    { icon: BarChart2, text: 'Cashflow', path: '/cashflow' },
-    { icon: FileText, text: 'Reports', path: '/reports' },
   ];
 
   return (

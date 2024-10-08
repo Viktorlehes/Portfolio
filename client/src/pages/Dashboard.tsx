@@ -72,7 +72,6 @@ const assetsPortfolio1: Asset[] = [
   { name: 'Chainlink', value: 1100, color: '#3b82f6' }
 ];
 
-
 const assetsPortfolio2: Asset[] = [
   { name: 'Litecoin', value: 35000, color: '#f97316' }, // Larger than 30% of total
   { name: 'Binance Coin', value: 20000, color: '#eab308' },
@@ -82,7 +81,6 @@ const assetsPortfolio2: Asset[] = [
   { name: 'Stellar', value: 1100, color: '#6366f1' }
 ];
 
-
 const assetsPortfolio3: Asset[] = [
   { name: 'Cosmos', value: 40000, color: '#14b8a6' }, // Larger than 30% of total
   { name: 'Tezos', value: 1500, color: '#ef4444' },
@@ -91,7 +89,6 @@ const assetsPortfolio3: Asset[] = [
   { name: 'Fantom', value: 2500, color: '#9333ea' },
   { name: 'Algorand', value: 1200, color: '#06b6d4' }
 ];
-
 
 const Dashboard: React.FC = () => {
   return (
@@ -119,4 +116,5 @@ const Dashboard: React.FC = () => {
     </div>
   );
 };
+
 export default Dashboard;
