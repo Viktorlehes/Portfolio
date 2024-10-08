@@ -1,0 +1,25 @@
+.metric-card {
+    background-color: #ffffff;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+  }
+  
+  .metric-card h3 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #6c7075;
+  }
+  
+  .metric-card .value {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 10px 0;
+  }
+  
+  .metric-card .change {
+    color: #4ade80;
+    font-size: 14px;
+  }
+  

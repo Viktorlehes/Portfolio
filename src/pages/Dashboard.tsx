@@ -1,8 +1,8 @@
 // src/pages/Dashboard.tsx
 import React from 'react';
-import Linechart from '../components/Linechart'; 
-import ValueCard from '../components/ValueCard';
-import AssetBreakdown from '../components/AssetBreakdown';
+import Linechart from '../components/Dashboard/Linechart'; 
+import ValueCard from '../components/Dashboard/ValueCard';
+import AssetBreakdown from '../components/Dashboard/AssetBreakdown';
 import './Dashboard.css';
 
 export interface Asset {
@@ -95,9 +95,9 @@ const assetsPortfolio3: Asset[] = [
 
 const Dashboard: React.FC = () => {
   return (
-    <div className="dashboard-page">
+    <div className="default-page">
       <div className="page-header">
-        <h1>Wealth Overview</h1>
+        <h1>Wealth Dashboard</h1>
       </div>
       <div className="page-content">
         <section className='dashboard-head'>

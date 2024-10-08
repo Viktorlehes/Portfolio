@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 import Dashboard from './pages/Dashboard';
 import Bundles from './pages/Bundles';
-import Temp from './pages/Temp';
+import Overview from './pages/Overview';
 
 const router = createBrowserRouter([
   {
@@ -13,23 +13,15 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
+        element: <Overview />,
+      },
+      {
+        path: 'Dashboard',
         element: <Dashboard />,
       },
       {
         path: 'Bundles',
         element: <Bundles />,
-      },
-      {
-        path: 'liabilities',
-        element: <Temp />,
-      },
-      {
-        path: 'cashflow',
-        element: <Temp />,
-      },
-      {
-        path: 'reports',
-        element: <Temp />,
       },
     ],
   },
