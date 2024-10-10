@@ -1,7 +1,7 @@
 import React from 'react';
 import './AssetBreakdown.css';
 
-import { Asset } from '../pages/Dashboard';
+import { Asset } from '../../../data/dashboarddata';
 
 interface AssetBreakdownProps {
   name: string;

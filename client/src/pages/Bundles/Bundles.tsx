@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import BundleOverview from '../components/Bundles/BundleOverview';
-import CryptoBundle from '../components/Bundles/CryptoBundle';
-import WalletSelector from '../components/Bundles/WalletSelector';
+import BundleOverview from '../../components/Bundles/BundleOverview';
+import CryptoBundle from '../../components/Bundles/CryptoBundle';
+import WalletSelector from '../../components/Bundles/WalletSelector';
 import './Bundles.css';
 
 export interface Asset {

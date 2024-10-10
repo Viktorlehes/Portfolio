@@ -1,0 +1,32 @@
+.asset-overview-wrapper {
+    display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 20px;
+}
+
+.asset-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.asset-nav div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.asset-dashboard-grid {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.asset-overview-sidebar {
+    display: flex;
+  flex-direction: column;
+  position: relative;
+  min-width: 400px;
+}

@@ -1,23 +1,13 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { Datapoint } from '../../../data/dashboarddata';
 
-interface FinancialData {
-    name: string;
-    Coinbase: number;
-    Nexo: number;
-    Uniswap: number;
-}
 
 interface LinechartProps {
-    data: FinancialData[];
+    data: Datapoint[];
 }
 
 function getWidth() {
-    const w1 = Math.max(
-        document.documentElement.clientWidth
-      ) * 0.8 
-    
-    const w2 = 1152; 
-    return w1 < w2 ? w1 : w2;
+    return document.documentElement.clientWidth - 280
 }
 
 const Linechart: React.FC<LinechartProps> = ({ data }) => {
@@ -31,6 +21,7 @@ const Linechart: React.FC<LinechartProps> = ({ data }) => {
             <Line type="monotone" dataKey="Coinbase" stroke="#8884d8" />
             <Line type="monotone" dataKey="Nexo" stroke="#ff7300" />
             <Line type="monotone" dataKey="Uniswap" stroke="#82ca9d" />
+            <Line type="monotone" dataKey="Total" stroke='#000100' />
         </LineChart>
     );
 }

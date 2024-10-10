@@ -4,7 +4,6 @@
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  font-family: Arial, sans-serif;
 }
 
 .header-container {
@@ -15,7 +14,7 @@
 
 .title {
   font-size: 14px;
-  color: #333;
+  color: #8b5cf6;
   margin: 0 0 8px 0;
 }
 
@@ -55,7 +54,7 @@
 .chart {
   margin-top: 16px;
   width: 100%;
-  max-width: 200px;
+  max-width: 250px;
   height: auto;
   display: block;
   margin: 0 auto;

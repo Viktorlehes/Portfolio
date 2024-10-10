@@ -1,0 +1,30 @@
+.manage-wallets-wrapper {
+  height: calc(100vh - 110px);
+}
+
+.content-wrapper {
+  display: grid;
+    grid-template-columns: 1fr 5fr 5fr;
+  gap: 20px;
+}
+
+.Managewallet-return {
+    width: 50px;
+    height: 50px;
+  border-radius: 10px;
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.Managewallet-return button {
+    width: 50px;
+    height: 50px;
+  background-color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  color: black;
+}

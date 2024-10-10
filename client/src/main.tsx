@@ -1,14 +1,15 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import App from './App';
-import Overview from './pages/Overview';
-import Dashboard from './pages/Dashboard';
-import Bundles from './pages/Bundles';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import App from "./App";
+import Overview from "./pages/Overview/Overview";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import Bundles from "./pages/Bundles/Bundles";
+import ManageWallets from "./pages/Dashboard/ManageWallets";
 
 const router = createBrowserRouter([
   {
-    path: '/',
+  path: "/",
     element: <App />,
     children: [
       {
@@ -16,18 +17,22 @@ const router = createBrowserRouter([
         element: <Overview />,
       },
       {
-        path: 'Dashboard',
+        path: "Dashboard",
         element: <Dashboard />,
       },
       {
-        path: 'Bundles',
+        path: "Dashboard/manage",
+        element: <ManageWallets/>,
+      },
+      {
+        path: "Bundles",
         element: <Bundles />,
       },
     ],
   },
 ]);
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <RouterProvider router={router} />
   </React.StrictMode>

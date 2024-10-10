@@ -1,41 +1,47 @@
-import React from "react";
-import "./CryptoCatagorieList.css";
+import React from 'react';
+import { CryptoCategory } from '../../data/dashboarddata';
+import './CryptoCatagorieList.css'
 
-export interface Category {
-  name: string;
-  average_price_change: string;
-  crypto_names: string[];
+interface CryptoCategoriesSidebarProps {
+  categories: CryptoCategory[];
 }
 
-interface CryptoListProps {
-  categories: Category[];
-}
+const CryptoCategoriesSidebar: React.FC<CryptoCategoriesSidebarProps> = ({ categories }) => {
+  const topEarners = categories.filter(cat => parseFloat(cat.change24h) >= 0)
+    .sort((a, b) => parseFloat(b.change24h) - parseFloat(a.change24h))
+    .slice(0, 5);
 
-const CryptoList: React.FC<CryptoListProps> = ({ categories }) => {
+  const topLosers = categories.filter(cat => parseFloat(cat.change24h) < 0)
+    .sort((a, b) => parseFloat(a.change24h) - parseFloat(b.change24h))
+    .slice(0, 5);
+
+  const CategoryList: React.FC<{ categories: CryptoCategory[], title: string }> = ({ categories, title }) => (
+    <div className="category-list">
+      <h3>{title}</h3>
+      <div className="category-header">
+        <span>Category</span>
+        <span>24h</span>
+        <span>7d</span>
+        <span># of coins</span>
+      </div>
+      {categories.map((category, index) => (
+        <div key={index} className="category-item">
+          <span>{category.category}</span>
+          <span className={parseFloat(category.change24h) >= 0 ? 'positive' : 'negative'}>{category.change24h}</span>
+          <span className={parseFloat(category.change7d) >= 0 ? 'positive' : 'negative'}>{category.change7d}</span>
+          <span>{category.numberOfCoins}</span>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="crypto-list">
-      <h2>Catagories</h2>
-      <ul>
-        {categories.map((category, index) => (
-          <li key={index} className="category-item">
-            <div className="category-name">
-              <span className="category-title">{category.name}</span>
-              <span className="crypto-names">
-                {category.crypto_names.join(", ")}
-              </span>
-            </div>
-            <span
-              className={`price-change ${
-                category.average_price_change.startsWith("-") ? "down" : "up"
-              }`}
-            >
-              {category.average_price_change}
-            </span>
-          </li>
-        ))}
-      </ul>
+    <div className="crypto-categories-sidebar">
+      <h2>Categories</h2>
+      <CategoryList categories={topEarners} title="Top Earners" />
+      <CategoryList categories={topLosers} title="Top Losers" />
     </div>
   );
 };
 
-export default CryptoList;
+export default CryptoCategoriesSidebar;

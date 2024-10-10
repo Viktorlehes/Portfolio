@@ -1,8 +1,9 @@
 .dashboard-head {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 5px;
   margin-bottom: 20px;
-  padding-right: 5%;
 }
 
 .dashboard-head h2 {
@@ -18,12 +19,21 @@
   gap: 50px; /* Space between the ValueCard components */
 }
 
-.dashboard {
-  padding-left: 10px;
+.overview-edit {
+  border-radius: 8px;
+  padding: 5px;
+  align-self: center;
 }
-
-.dashboard-head {
-  margin-bottom: 20px;
+.overview-edit button {
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: black;
 }
 
 .overview-values {
@@ -45,7 +55,9 @@
 .dashboard-sub-cat > * {
   flex-grow: 1;
   flex-basis: calc((100% - 40px) / 3); /* 3 items per row with 20px gap */
-  min-width: calc((100% - 20px) / 2); /* 2 items per row when space is limited */
+  min-width: calc(
+    (100% - 20px) / 2
+  ); /* 2 items per row when space is limited */
   max-width: 100%; /* Full width on very small screens */
   margin-bottom: 10px; /* Add vertical margin */
 }

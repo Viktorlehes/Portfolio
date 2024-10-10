@@ -9,12 +9,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
   }
   
   .asset-breakdown-header h2 {
     font-size: 20px;
     font-weight: 600;
+    color: #8b5cf6;
   }
   
   .view-more {

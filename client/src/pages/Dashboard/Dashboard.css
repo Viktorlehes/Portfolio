@@ -1,0 +1,10 @@
+.custom-headers {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+.dashboard {
+  padding-left: 10px;
+}

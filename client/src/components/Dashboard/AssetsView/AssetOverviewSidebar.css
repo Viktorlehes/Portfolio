@@ -11,22 +11,22 @@
   margin-bottom: 30px;
 }
 
-.category-header, .category-item {
+.asset-overview-header, .asset-overview-item {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
   padding: 10px 0;
   border-bottom: 1px solid #e0e0e0;
   align-items: center;
 }
 
-.category-header {
+.asset-overview-header {
   font-weight: bold;
   color: #666;
   font-size: 0.9em;
 }
 
-.category-item:nth-child(even) {
+.asset-overview-item:nth-child(even) {
   background-color: #f9f9f9;
 }
 
