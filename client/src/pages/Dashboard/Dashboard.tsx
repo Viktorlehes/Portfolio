@@ -1,5 +1,6 @@
 // src/pages/Dashboard.tsx
-import React, {useState} from "react";
+import React from "react";
+import { useLoaderData, LoaderFunction } from "react-router-dom";
 import { ViewType } from "../../components/Dashboard/ViewSelector";
 import CustomNavbar from "../../components/Default/CustomNavBar";
 import Viewselector from "../../components/Dashboard/ViewSelector";
@@ -13,15 +14,22 @@ import {
 } from "../../data/dashboarddata";
 import "./Dashboard.css";
 
+export const dashboardLoader: LoaderFunction = () => {
+  const savedView = localStorage.getItem('dashboardView');
+  return { currentView: (savedView as ViewType) || 'Wallets' };
+};
+
 const Dashboard: React.FC = () => {
-  const [currentView, setCurrentView] = useState<ViewType>('Wallets');
+  const { currentView } = useLoaderData() as { currentView: ViewType };
+  const [localView, setLocalView] = React.useState<ViewType>(currentView);
 
   const handleViewChange = (newView: ViewType) => {
-    setCurrentView(newView);
+    setLocalView(newView);
+    localStorage.setItem('dashboardView', newView);
   };
 
   const renderView = () => {
-    switch (currentView) {
+    switch (localView) {
       case 'Wallets':
         return <WalletsView assetsPortfolio1={assetsPortfolio1} assetsPortfolio2={assetsPortfolio2} assetsPortfolio3={assetsPortfolio3} data={data}/>;
       case 'Assets':
@@ -36,7 +44,7 @@ const Dashboard: React.FC = () => {
       <div className="page-header">
         <div className="custom-headers">
           <h1>Wealth Dashboard</h1>
-          <Viewselector currentView={currentView} onViewChange={handleViewChange} />
+          <Viewselector currentView={localView} onViewChange={handleViewChange} />
         </div>
         <CustomNavbar />
       </div>

@@ -4,12 +4,12 @@ import "./MetricCard.css";
 interface MetricCardProps {
   title: string;
   value: string;
-  change: string;
+  change?: string;
   time?: string;
   chart?: string;
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({ title, value, change, time = '24H', chart }) => (
+const MetricCard: React.FC<MetricCardProps> = ({ title, value, change = '', time = '24H', chart }) => (
   <div className="metric-card">
     <div className="header-container">
       <h3 className="title">{title}</h3>

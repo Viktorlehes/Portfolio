@@ -1,0 +1,33 @@
+.crypto-stats {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    background-color: #f0f0f0;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    justify-content: space-evenly;
+  }
+  
+  .crypto-stat {
+    margin-right: 15px;
+    white-space: nowrap;
+  }
+  
+  .crypto-value {
+    font-weight: bold;
+    color: #8b5cf6;
+  }
+  
+  .change {
+    font-size: 12px;
+    margin-left: 5px;
+  }
+  
+  .change.positive {
+    color: green;
+  }
+  
+  .change.negative {
+    color: red;
+  }

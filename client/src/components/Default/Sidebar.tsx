@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Wallet, PanelsTopLeft } from "lucide-react";
+import { LayoutDashboard, Wallet, PanelsTopLeft, HandCoins } from "lucide-react";
 import "./Sidebar.css";
 
 const Sidebar: React.FC = () => {
@@ -11,6 +11,7 @@ const Sidebar: React.FC = () => {
   const menuItems = [
     { icon: PanelsTopLeft, text: "Overview", path: "/" },
     { icon: LayoutDashboard, text: "Dashboard", path: "/Dashboard" },
+    { icon: HandCoins, text: "Earn", path: "/Earn" },
     { icon: Wallet, text: "Bundles", path: "/Bundles" },
   ];
   return (
