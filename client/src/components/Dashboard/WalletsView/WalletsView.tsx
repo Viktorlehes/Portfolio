@@ -1,47 +1,56 @@
 import React from "react";
-import Linechart from "./Linechart";
 import ValueCard from "./ValueCard";
 import AssetBreakdown from "./AssetBreakdown";
-import { Asset } from "../../../data/dashboarddata";
-import { Datapoint } from "../../../data/dashboarddata";
+import { components } from "../../../types/api-types";
 import { Pencil } from "lucide-react";
-import './WalletsView.css'
+import TokenPieChartBreakdown from "./tokenPieChartBreakdown";
+import "./WalletsView.css";
+
+type Wallet = components["schemas"]["Wallet"];
 
 interface WalletsViewProps {
-  assetsPortfolio1: Asset[];
-  assetsPortfolio2: Asset[];
-  assetsPortfolio3: Asset[];
-  data: Datapoint[];
+  wallets: Wallet[];
 }
 
-const WalletsView: React.FC<WalletsViewProps> = ({
-  assetsPortfolio1,
-  assetsPortfolio2,
-  assetsPortfolio3,
-  data,
-}) => {
+const WalletsView: React.FC<WalletsViewProps> = ({ wallets }) => {
+  const totalWalletValue = wallets.reduce(
+    (total, wallet) =>
+      total + wallet.tokens.reduce((sum, token) => sum + token.value, 0),
+    0
+  );
+
   return (
     <div>
       <section className="dashboard-head">
         <div className="overview-values">
-          <ValueCard label={"Total"} value={152250} color="#000100" />
-          <ValueCard label="Coinbase" value={85800} color="#8884d8" />
-          <ValueCard label="Nexo" value={61300} color="#82ca9d" />
-          <ValueCard label="Uniswap" value={51500} color="#ffc658" />
+          <ValueCard label={"Total"} value={totalWalletValue} color="#000100" />
+          {wallets.map((wallet) => (
+            <ValueCard
+              key={wallet.address}
+              label={wallet.name}
+              value={wallet.tokens.reduce((sum, token) => sum + token.value, 0)}
+              color={wallet.color}
+            />
+          ))}
         </div>
+        
         <div className="overview-edit">
+        <TokenPieChartBreakdown wallets={wallets}/>
           <button onClick={() => (window.location.href = "/Dashboard/manage")}>
             <Pencil />
           </button>
         </div>
       </section>
 
-      <Linechart data={data} />
-
       <section className="dashboard-sub-cat">
-        <AssetBreakdown name={"Coinbase"} assets={assetsPortfolio1} />
-        <AssetBreakdown name={"Nexo"} assets={assetsPortfolio2} />
-        <AssetBreakdown name={"Uniswap"} assets={assetsPortfolio3} />
+        {wallets.map((wallet) => (
+          <AssetBreakdown
+            key={wallet.address}
+            name={wallet.name}
+            color={wallet.color}
+            tokens={wallet.tokens}
+          />
+        ))}
       </section>
     </div>
   );

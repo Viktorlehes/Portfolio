@@ -6,8 +6,23 @@ from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 import json
 from bs4 import BeautifulSoup
 import re
+from dotenv import load_dotenv
+import os
+import motor.motor_asyncio
+
+load_dotenv()
+coinmarket_api_key = os.getenv("CM_API_KEY")
+coingecko_api_key = os.getenv("CG_DEMO_API_KEY")
 
 router = APIRouter()
+
+MONGO_URI = os.getenv("DB_URI")
+
+client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
+db = client['Main']  # Database name
+
+wallets_collection = db["Wallets"]
+tokens_collection = db["Tokens"]
 
 @router.get('/cryptostats')
 async def get_cryptostats():
@@ -92,7 +107,7 @@ async def get_currencies():
     
     headers = {
         'Accepts': 'application/json',
-        'X-CMC_PRO_API_KEY': '0cdba0da-0893-4720-a937-dfc06fbc6119'
+        'X-CMC_PRO_API_KEY': coinmarket_api_key
     }
     
     session = Session()
@@ -115,7 +130,7 @@ async def get_currencies():
     
     headers = {
         'Accepts': 'application/json',
-        'X-CMC_PRO_API_KEY': '0cdba0da-0893-4720-a937-dfc06fbc6119'
+        'X-CMC_PRO_API_KEY': coinmarket_api_key
     }
     
     session = Session()
@@ -130,7 +145,7 @@ async def get_currencies():
 
 @router.get("/ping")
 async def ping_coingecko():
-    url = f"https://api.coingecko.com/api/v3/ping?x_cg_demo_api_key=CG-miHc56F8UN3wDzBaSAKnshtP"
+    url = f"https://api.coingecko.com/api/v3/ping?x_cg_demo_api_key={coingecko_api_key}"
     
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
@@ -138,7 +153,7 @@ async def ping_coingecko():
 
 @router.get("/global")
 async def global_coingecko():
-    url = f"https://api.coingecko.com/api/v3/global?x_cg_demo_api_key=CG-miHc56F8UN3wDzBaSAKnshtP"
+    url = f"https://api.coingecko.com/api/v3/global?x_cg_demo_api_key={coingecko_api_key}"
     
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
@@ -146,7 +161,7 @@ async def global_coingecko():
 
 @router.get("/catagories")
 async def catagories_coingecko():
-    url = f"https://api.coingecko.com/api/v3/coins/categories?x_cg_demo_api_key=CG-miHc56F8UN3wDzBaSAKnshtP"
+    url = f"https://api.coingecko.com/api/v3/coins/categories?x_cg_demo_api_key={coingecko_api_key}"
     
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
@@ -154,7 +169,7 @@ async def catagories_coingecko():
 
 @router.get("/catagorie/{catagorie}")
 async def catagories_coingecko(catagorie: str):
-    url = f"https://api.coingecko.com/api/v3/coins/categories/{catagorie}?x_cg_demo_api_key=CG-miHc56F8UN3wDzBaSAKnshtP"
+    url = f"https://api.coingecko.com/api/v3/coins/categories/{catagorie}?x_cg_demo_api_key=CG-{coingecko_api_key}"
     
     async with httpx.AsyncClient() as client:
         response = await client.get(url)

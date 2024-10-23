@@ -1,4 +1,4 @@
-#!/Users/viktorlehes/Documents/VisualStudio/github/Portfolio/server/bin/python3.12
+#!/Users/viktorlehes/Documents/github/Portfolio/server/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys

@@ -17,7 +17,7 @@
   
   .value-card-value {
     font-size: 24px;
-    font-weight: bold;
+    font-weight: 500;
     color: #111827; /* Dark color for the amount */
   }
   

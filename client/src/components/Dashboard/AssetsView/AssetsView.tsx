@@ -1,17 +1,48 @@
 import React from "react";
 import "./AssetsView.css";
 import MetricCard from "../../overview/MetricCard";
-import chart1image from "../../../assets/chart1.png";
-import chart2image from "../../../assets/chart2.png";
-import chart3image from "../../../assets/chart3.png";
-import chart4image from "../../../assets/chart4.png";
-import AssetBreakdown from "../WalletsView/AssetBreakdown";
+import { components } from "../../../types/api-types";
 import AssetOverviewSidebar from "../AssetsView/AssetOverviewSidebar";
-import { testAssetOverviewData } from "../../../data/dashboarddata";
-import { assetOverviewPortfolio } from "../../../data/dashboarddata";
-import { Settings2, CirclePlus } from "lucide-react";
+import { Settings2, CirclePlus } from "lucide-react"; 
 
-const AssetsView: React.FC = () => {
+type Wallet = components['schemas']['Wallet']
+
+interface AssetViewProps {
+  wallets: Wallet[];
+}
+
+export interface Asset {
+  name: string;
+  value: number;
+  change: number;
+  amount: number;
+  price: number;
+}
+
+const AssetsView: React.FC<AssetViewProps> = ({wallets}) => {
+  const totalValuePerAsset = wallets.reduce((acc, wallet) => {
+    wallet.tokens.forEach(token => {
+      if (!acc[token.name]) {
+        acc[token.name] = { value: 0, change24h: 0, amount: 0, price: 0 };
+      }
+      acc[token.name].value += token.value;
+      acc[token.name].change24h += token.change24h;
+      acc[token.name].amount += token.amount;
+      acc[token.name].price = token.price;
+    });
+    return acc;
+  }, {} as Record<string, { value: number, change24h: number, amount: number, price: number }>);
+
+  const totalValueArray: Asset[] = Object.entries(totalValuePerAsset).map(([name, data]) => ({
+    name,
+    value: data.value,
+    change: data.change24h,
+    amount: data.amount,
+    price: data.price
+    }));
+
+  console.log(totalValueArray);
+
   return (
     <div className="asset-overview-wrapper">
       <div className="main-content">
@@ -23,53 +54,25 @@ const AssetsView: React.FC = () => {
                 <Settings2 />
             </div>
         </div>
+
         <div className="asset-dashboard-grid">
-          <MetricCard
-            title="Bitcoin (BTC)"
-            value="$187,234"
-            change="-6.78%"
-            chart={chart1image}
-          />
-
-          <MetricCard
-            title="Ethereum (ETH)"
-            value="$119,574"
-            change="-4.67%"
-            chart={chart2image}
-          />
-
-          <MetricCard
-            title="Tether (USDT)"
-            value="57,234"
-            change="0.03%"
-            chart={chart3image}
-          />
-
-          <MetricCard
-            title="Solana (SOL)"
-            value="$7,954"
-            change="29.62%"
-            chart={chart4image}
-          />
-
-          <MetricCard
-            title="Solana (SOL)"
-            value="$7,954"
-            change="29.62%"
-            chart={chart4image}
-          />
-
-          <MetricCard
-            title="XRP (XRP)"
-            value="$7,954"
-            change="11.62%"
-            chart={chart1image}
-          />
+          {totalValueArray.map((asset, index) => {
+            return (
+              <MetricCard
+                key={index}
+                title={asset.name}
+                value={String(asset.value)}
+                change={ `${String(asset.change.toFixed(2))}%` }
+                amount={String(asset.amount)}
+              />
+            );
+          })}
         </div>
-        <AssetBreakdown name={"Other Assets"} assets={assetOverviewPortfolio} />
+
+        {/* <AssetBreakdown name={"Other Assets"} assets={assetOverviewPortfolio} /> */}
       </div>
       <div className="asset-overview-sidebar">
-        <AssetOverviewSidebar assets={testAssetOverviewData} />
+        <AssetOverviewSidebar assets={totalValueArray} />
       </div>
     </div>
   );

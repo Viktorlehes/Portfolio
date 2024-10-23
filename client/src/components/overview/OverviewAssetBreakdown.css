@@ -1,0 +1,81 @@
+.asset-breakdown {
+    background-color: white;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .asset-breakdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .asset-breakdown-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #8b5cf6;
+  }
+  
+  .view-more {
+    color: #3b82f6;
+    text-decoration: none;
+  }
+  
+  .view-more:hover {
+    text-decoration: underline;
+  }
+  
+  .asset-total {
+    margin-bottom: 16px;
+  }
+  
+  .asset-total span {
+    font-size: 24px;
+    font-weight: 700;
+  }
+  
+  .asset-bar {
+    height: 16px;
+    display: flex;
+    margin-bottom: 16px;
+  }
+  
+  .asset-bar div {
+    height: 100%;
+  }
+  
+  .asset-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 8px;
+  }
+  
+  .asset-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .asset-name {
+    display: flex;
+    align-items: center;
+  }
+  
+  .asset-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
+  
+  .asset-value {
+    display: flex;
+    gap: 16px;
+  }
+  
+  .asset-percentage {
+    width: 32px;
+    text-align: right;
+  }

@@ -1,21 +1,21 @@
 import React from 'react';
-import { AssetOverview } from '../../../data/dashboarddata';
 import './AssetOverviewSidebar.css'
+import { Asset } from './AssetsView';
 
 interface AssetOverviewSidebarProps {
-  assets: AssetOverview[]
+  assets: Asset[]
 }
 
 const AssetOverviewSidebar: React.FC<AssetOverviewSidebarProps> = ({ assets }) => {
-  const topEarners = assets.filter(ast => parseFloat(ast.change24h) >= 0)
-    .sort((a, b) => parseFloat(b.change24h) - parseFloat(a.change24h))
+  const topEarners: Asset[] = assets.filter(ast => ast.change >= 0)
+    .sort((a, b) => b.change - a.change)
     .slice(0, 5);
 
-  const topLosers = assets.filter(ast => parseFloat(ast.change24h) < 0)
-    .sort((a, b) => parseFloat(a.change24h) - parseFloat(b.change24h))
+  const topLosers: Asset[] = assets.filter(ast => ast.change < 0)
+    .sort((a, b) => a.change - b.change)
     .slice(0, 5);
 
-  const AssetOverview: React.FC<{ assets: AssetOverview[], title: string }> = ({ assets, title }) => (
+  const AssetOverview: React.FC<{ assets: Asset[], title: string }> = ({ assets, title }) => (
     <div className="category-list">
       <h3>{title}</h3>
       <div className="asset-overview-header">
@@ -23,15 +23,15 @@ const AssetOverviewSidebar: React.FC<AssetOverviewSidebarProps> = ({ assets }) =
         <span>Value</span>
         <span>Price</span>
         <span>24h</span>
-        <span>7d</span>
+        {/* <span>7d</span> */}
       </div>
       {assets.map((asset, index) => (
         <div key={index} className="asset-overview-item">
           <span>{asset.name}</span>
-            <span>${asset.totalValue}</span>
-        <span>${asset.value}</span> 
-          <span className={parseFloat(asset.change24h) >= 0 ? 'positive' : 'negative'}>{asset.change24h}%</span>
-          <span className={parseFloat(asset.change7d) >= 0 ? 'positive' : 'negative'}>{asset.change7d}%</span>
+          <span>${asset.value}</span>
+          <span>${asset.price}</span> 
+          <span className={asset.change >= 0 ? 'positive' : 'negative'}>{asset.change.toFixed(2)}%</span>
+          {/* <span className={asset.change7d >= 0 ? 'positive' : 'negative'}>{asset.change7d}%</span> */}
         </div>
       ))}
     </div>

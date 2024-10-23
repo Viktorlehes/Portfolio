@@ -6,6 +6,11 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.amount {
+  font-size: 16px;
+  color: #33333385;
+}
+
 .header-container {
   display: flex;
   justify-content: space-between;
@@ -28,6 +33,12 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+}
+
+.value-container-details {
+  gap: 5px;
+  display: flex;
+  flex-direction: column;
 }
 
 .value {

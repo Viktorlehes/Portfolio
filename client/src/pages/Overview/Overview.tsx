@@ -6,7 +6,7 @@ import CustomNavbar from "../../components/Default/CustomNavBar";
 import CryptoCategoriesSidebar from "../../components/overview/CryptoCatagorieList";
 import CryptoStats from '../../components/overview/CryptoStatsBar'
 import { testCategories } from "../../data/dashboarddata";
-import AssetBreakdown from "../../components/Dashboard/WalletsView/AssetBreakdown";
+import AssetBreakdown from "../../components/overview/OverviewAssetBreakdown";
 import { assetsPortfolio1 } from '../../data/dashboarddata'
 import chart1image from "../../assets/chart1.png";
 import chart2image from "../../assets/chart2.png";
@@ -19,7 +19,6 @@ export interface ValueChange {
   change: string;
 }
 
-// Main interface for the crypto stats data
 export interface CryptoStats {
   cryptos: string;
   exchanges: string;
