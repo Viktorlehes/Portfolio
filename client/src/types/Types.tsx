@@ -12,3 +12,10 @@ export interface Token {
     name: string;
     color: string;
   }
+
+  export interface DashboardContext {
+    wallets: Wallet[];
+    onAddWallet: (wallet: Wallet) => void;
+    onUpdateWallet: (wallet: Wallet) => void;
+    onDeleteWallet: (address: string) => void;
+  }

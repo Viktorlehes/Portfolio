@@ -1,0 +1,318 @@
+.single-wallet-container {
+  padding: 24px;
+}
+
+.wallet-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-right: 30px;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  color: #666;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #f3f4f6;
+}
+
+.wallet-content {
+  margin-top: 24px;
+}
+
+.assets-section {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+}
+
+.section-total {
+  color: #666;
+  font-size: 16px;
+}
+
+.assets-table {
+  width: 100%;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 1fr;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 1fr;
+  padding: 16px 0;
+  border-bottom: 1px solid #eee;
+  align-items: center;
+  color: #333;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.asset-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.token-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: black;
+  font-size: 16px;
+  background-color: #f3f4f6;
+  border: rgba(0, 0, 0, 0.27) solid 0.3px;
+  overflow: hidden;
+}
+
+.token-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.token-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.token-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.token-chain {
+  font-size: 12px;
+  color: #666;
+}
+
+.value-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+
+.change-value {
+  font-size: 12px;
+}
+
+.change-value.positive {
+  color: #22c55e;
+}
+
+.change-value.negative {
+  color: #ef4444;
+}
+
+.loan-value {
+  color: #ef4444;
+}
+
+/* Toggle styles */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e5e7eb;
+  transition: 0.4s;
+  border-radius: 22px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+input:checked + .toggle-slider {
+  background-color: #8b5cf6;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(22px);
+}
+
+.toggle-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.col-price, .col-balance, .col-value {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Overview values section */
+.overview-values {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.overview-edit {
+  display: flex;
+  gap: 8px;
+}
+
+.overview-edit button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.overview-edit button:hover {
+  background-color: #f3f4f6;
+  color: #333;
+}
+
+.dashboard-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Header styles */
+.wallet-header h1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+
+.defi-protocol-group {
+  margin-bottom: 32px;
+}
+
+.defi-protocol-group:last-child {
+  margin-bottom: 0;
+}
+
+.protocol-header {
+  padding: 16px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.protocol-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.protocol-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.position-type {
+  text-transform: capitalize;
+  color: #666;
+  font-size: 14px;
+}
+
+.defi-protocol-group .table-header,
+.defi-protocol-group .table-row {
+  grid-template-columns: 2fr 1fr 1.5fr 1fr;
+}
+
+.defi-protocol-group .assets-table {
+  margin-top: 8px;
+}
+
+.defi-protocol-group .table-header {
+  padding: 12px 0;
+}
+
+/* Position metadata styles */
+.token-chain {
+  font-size: 12px;
+  color: #666;
+  text-transform: capitalize;
+}
+
+/* Adjust the spacing for nested tables */
+.defi-protocol-group + .defi-protocol-group {
+  margin-top: 24px;
+  border-top: 1px solid #eee;
+  padding-top: 24px;
+}

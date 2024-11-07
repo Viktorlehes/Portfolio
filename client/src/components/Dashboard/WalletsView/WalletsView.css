@@ -1,72 +1,134 @@
+/* Update the dashboard-head styles */
 .dashboard-head {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 6px;
+  padding-left: 15px;
+  margin-bottom: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 5px;
-}
-
-.dashboard-head h2 {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 10px;
-  margin-right: auto;
-  align-self: center;
-}
-
-.overview-edit {
-  display: flex;
-  border-radius: 8px;
-  padding: 5px;
-  align-items: center;
-  gap: 50px;
-}
-.overview-edit button {
-  height: 50px;
-  width: 50px;
-  background-color: #f9f9f9;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: black;
+  height: auto;
+  margin-top: 0;
 }
 
 .overview-values {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 24px;
 }
 
+.overview-edit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  margin-left: 24px;
+  flex-shrink: 0;
+}
+
+.overview-edit button {
+  background-color: #f9f9f9;
+  border: none;
+  border-radius: 8px;
+  height: 40px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #666;
+}
+
+.overview-edit button:hover {
+  background-color: #f3f4f6;
+  color: #8b5cf6;
+}
+
+/* Update ValueCard styles */
+.value-card {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-width: 200px;
+  border-right: 1px solid #eee;
+}
+
+.value-card:first-child {
+  padding-left: 0;
+}
+
+.value-card:last-child {
+  padding-right: 0;
+  border-right: none;
+}
+
+.value-card-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #8b5cf6;
+  margin-bottom: 8px;
+}
+
+.value-card-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Keep existing responsive styles */
 .dashboard-sub-cat {
   display: flex;
+  justify-content: space-evenly;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 10px;
   width: 100%;
   margin-top: 20px;
   margin-bottom: 10px;
 }
 
-.dashboard-sub-cat > * {
-  flex-grow: 1;
-  flex-basis: calc((100% - 40px) / 3); /* 3 items per row with 20px gap */
-  min-width: calc(
-    (100% - 20px) / 2
-  ); /* 2 items per row when space is limited */
-  max-width: 50%; /* Full width on very small screens */
-  margin-bottom: 10px; /* Add vertical margin */
-}
-
 @media (max-width: 1200px) {
   .dashboard-sub-cat > * {
-    flex-basis: calc((100% - 20px) / 2); /* 2 items per row */
+    flex-basis: calc((100% - 20px) / 3);
   }
 }
 
 @media (max-width: 768px) {
-  .dashboard-sub-cat > * {
-    flex-basis: 100%; /* 1 item per row on small screens */
+  .dashboard-head {
+    flex-direction: column;
+    gap: 24px;
   }
+
+  .overview-edit {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .overview-values {
+    gap: 16px;
+  }
+
+  .value-card {
+    padding: 16px 0;
+    min-width: 150px;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+  }
+
+  .value-card:last-child {
+    border-bottom: none;
+  }
+
+  .dashboard-sub-cat > * {
+    flex-basis: 100%;
+  }
+}
+
+.dashboard-chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

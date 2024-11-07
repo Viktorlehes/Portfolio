@@ -1,7 +1,7 @@
 import React from 'react';
 import './viewselector.css';
 
-export type ViewType = 'Wallets' | 'Assets';
+export type ViewType = 'Wallets' | 'Assets' | 'Manage';
 
 interface ViewSelectorProps {
     currentView: ViewType;

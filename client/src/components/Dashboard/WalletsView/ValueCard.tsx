@@ -1,15 +1,14 @@
-// src/components/ValueCard.tsx
 import React from 'react';
-import './ValueCard.css';
 
 interface ValueCardProps {
   label: string;
   value: number;
   color: string;
+  isPercent?: boolean;
+  isText?: boolean;
 }
 
-const ValueCard: React.FC<ValueCardProps> = ({ label, value, color }) => {
-  // Format the number with commas for thousands
+const ValueCard: React.FC<ValueCardProps> = ({ label, value, color, isPercent = false, isText = false }) => {
   const formattedValue = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -17,9 +16,11 @@ const ValueCard: React.FC<ValueCardProps> = ({ label, value, color }) => {
   }).format(value);
 
   return (
-    <div className="value-card" style={{ '--card-color': color } as React.CSSProperties}>
-      <div className="value-card-title" style={{ color: color }}>{label}</div>
-      <div className="value-card-value">{formattedValue}</div>
+    <div className="value-card">
+      <div className="value-card-title" style={{ color }}>{label}</div>
+      <div className="value-card-value" style={{ color: isPercent ? (value >= 0 ? "green" : "red" ) : 'black' }}>
+      {isPercent ? `${value.toFixed(2)}%` : isText ? value : formattedValue}
+      </div>
     </div>
   );
 };

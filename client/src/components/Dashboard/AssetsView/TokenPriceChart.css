@@ -1,0 +1,19 @@
+.tooltip {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tooltip-date {
+  color: #666;
+  font-size: 14px;
+  margin: 0 0 4px 0;
+}
+
+.tooltip-price {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}

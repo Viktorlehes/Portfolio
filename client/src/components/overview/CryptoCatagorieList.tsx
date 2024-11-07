@@ -7,6 +7,7 @@ interface CryptoCategoriesSidebarProps {
 }
 
 const CryptoCategoriesSidebar: React.FC<CryptoCategoriesSidebarProps> = ({ categories }) => {
+  
   const sortedCategories = categories
     .sort((a, b) => parseFloat(b.change24h) - parseFloat(a.change24h));
 

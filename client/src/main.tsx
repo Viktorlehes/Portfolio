@@ -5,8 +5,8 @@ import App from "./App";
 import Overview, { cryptoStatsLoader } from "./pages/Overview/Overview";
 import Dashboard, { dashboardLoader } from "./pages/Dashboard/Dashboard";
 import Bundles from "./pages/Bundles/Bundles";
-import ManageWallets from "./pages/Dashboard/ManageWallets";
 import Temp from "./pages/misc/Temp";
+import SingleWalletView, { walletLoader } from "./pages/Dashboard/SingleWalletView";
 
 const router = createBrowserRouter([
   {
@@ -22,10 +22,13 @@ const router = createBrowserRouter([
         path: "Dashboard",
         element: <Dashboard />,
         loader: dashboardLoader,
-      },
-      {
-        path: "Dashboard/manage",
-        element: <ManageWallets/>,
+        children: [
+          {
+            path: "wallet/:walletAddress",
+            element: <SingleWalletView />,
+            loader: walletLoader,
+          }
+        ]
       },
       {
         path: "Earn",

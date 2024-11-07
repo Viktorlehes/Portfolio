@@ -28,8 +28,8 @@ const AssetOverviewSidebar: React.FC<AssetOverviewSidebarProps> = ({ assets }) =
       {assets.map((asset, index) => (
         <div key={index} className="asset-overview-item">
           <span>{asset.name}</span>
-          <span>${asset.value}</span>
-          <span>${asset.price}</span> 
+          <span>${asset.value.toFixed(2)}</span>
+          <span>${asset.price.toFixed(2)}</span> 
           <span className={asset.change >= 0 ? 'positive' : 'negative'}>{asset.change.toFixed(2)}%</span>
           {/* <span className={asset.change7d >= 0 ? 'positive' : 'negative'}>{asset.change7d}%</span> */}
         </div>

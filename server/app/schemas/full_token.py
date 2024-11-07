@@ -13,7 +13,7 @@ class Platform(BaseModel):
     slug: str
     token_address: str
 
-class Quote(BaseModel):
+class USDQuote(BaseModel):
     price: float
     volume_24h: float
     volume_change_24h: float
@@ -29,7 +29,7 @@ class Quote(BaseModel):
     tvl: Optional[float]
     last_updated: str
 
-class FullToken(BaseModel):
+class FullCMCToken(BaseModel):
     _id: dict
     id: int
     name: str
@@ -50,4 +50,4 @@ class FullToken(BaseModel):
     self_reported_market_cap: Optional[float]
     tvl_ratio: Optional[float]
     last_updated: str
-    quote: dict
+    quote: dict[str, USDQuote]
