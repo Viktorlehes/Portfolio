@@ -1,0 +1,1 @@
+#Move all token related routes to a new file called tokens.py
