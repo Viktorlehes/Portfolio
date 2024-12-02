@@ -1,5 +1,7 @@
 /* src/components/Overview/Overview.css */
 
+
+
 .overview-page-header {
   display: grid;
   grid-template-rows: 65px 40px;
@@ -17,6 +19,12 @@
   background-color: #ffffff;
   padding: 16px 24px;
   border-bottom: 1px solid #e5e7eb;
+  
+}
+.overview-main-header-content h1 {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0;
 }
 
 .overview {
@@ -32,21 +40,27 @@
   align-items: center;
 }
 
-.overview-wrapper {
-  display: grid;
-  grid-template-columns: 3fr 1fr;
-  gap: 20px;
+.coinglass-data-bar {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  width: 100%;
 }
 
 .overview-bar {
   width: 100%;
 }
 
+.overview-token-table {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
 .catagorie-overview {
   display: flex;
   flex-direction: column;
   position: relative;
-  min-width: 400px;
 }
 
 .market-data {

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import './NewConnection.css';
-
 interface NewConnectionProps {
   onAddWallet: (address: string, name: string, color: string, walletType: string) => Promise<{ success: boolean; error?: string }>;
 }
@@ -8,11 +7,17 @@ interface NewConnectionProps {
 const NewConnection: React.FC<NewConnectionProps> = ({onAddWallet}) => {
   const [walletAddress, setWalletAddress] = useState('');
   const [portfolioName, setPortfolioName] = useState('');
-  const [selectedColor, setSelectedColor] = useState('#FF0000');
+  const [selectedColor, setSelectedColor] = useState('#22c55e'); // Default to safe (green)
   const [walletType, setWalletType] = useState('simple');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const colorOptions = [
+    { label: 'Safe', color: '#22c55e' },
+    { label: 'Normal', color: '#f97316' },
+    { label: 'Risky', color: '#ef4444' }
+  ];
 
   const resetStates = () => {
     setIsLoading(false);
@@ -23,7 +28,7 @@ const NewConnection: React.FC<NewConnectionProps> = ({onAddWallet}) => {
   const resetForm = () => {
     setWalletAddress('');
     setPortfolioName('');
-    setSelectedColor('#FF0000');
+    setSelectedColor('#22c55e');
     setWalletType('simple');
   };
 
@@ -67,13 +72,25 @@ const NewConnection: React.FC<NewConnectionProps> = ({onAddWallet}) => {
         </div>
       )}
       <div className="color-selector">
-        <label htmlFor="colorPicker">Color Selector</label>
-        <input
-          type="color"
-          id="colorPicker"
-          value={selectedColor}
-          onChange={(e) => setSelectedColor(e.target.value)}
-        />
+        <label>Wallet Type</label>
+        <div className="color-boxes">
+          {colorOptions.map((option) => (
+            <div
+              key={option.label}
+              className={`color-box ${selectedColor === option.color ? 'selected' : ''}`}
+              onClick={() => setSelectedColor(option.color)}
+              style={{
+                backgroundColor: option.color,
+              }}
+            >
+              <span className="color-label">{option.label}</span>
+            </div>
+          ))}
+        </div>
+        <p className="info-text">
+          A safe wallet is for long-term holds, normal is for regular trading, and risky is for high-risk trading.
+          Default Alerts will be based on the wallet type you select.
+        </p>
       </div>
       <div className="wallet-address">
         <label htmlFor="walletAddress">Wallet Address</label>
@@ -102,13 +119,19 @@ const NewConnection: React.FC<NewConnectionProps> = ({onAddWallet}) => {
         <p className="char-count">{portfolioName.length}/24 characters</p>
       </div>
       <div className="wallet-type-selector">
+        <label htmlFor="walletType">Wallet Type</label>
         <select
+          id="walletType"
           value={walletType}
           onChange={(e) => setWalletType(e.target.value)}
         >
           <option value="simple">Simple</option>
           <option value="full">Full</option>
         </select>
+        <p className="info-text wallet-type-info">
+          Simple - Only tokens<br />
+          Full - Tokens and defi positions
+        </p>
       </div>
       <button 
         className="create-btn" 

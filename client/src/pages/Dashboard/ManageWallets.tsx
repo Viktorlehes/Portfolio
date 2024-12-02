@@ -13,7 +13,7 @@ interface ManageWalletsProps {
   onViewChange: (view: ViewType) => void;
   onDeleteWallet: (address: string) => void;
   onAddWallet: (address: string, name: string, color: string, walletType: string) => Promise<{ success: boolean; error?: string }>;
-  onEditWallet: (wallet: Wallet) => void;
+  onEditWallet: (wallet: Wallet) => Promise<{ success: boolean; error?: string }>;
 }
 
 const ManageWallets: React.FC<ManageWalletsProps> = ({

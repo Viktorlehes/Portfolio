@@ -6,22 +6,26 @@ interface MetricCardProps {
   title: string;
   value: string;
   change?: string;
+  absoluteChange?: string;
   time?: string;
   Chart?: React.ReactNode;
   amount?: string;
   icon?: React.ReactNode;
+  handleClick?: () => void;
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({ 
-  title, 
-  value, 
-  change = '', 
-  time = '24H', 
-  Chart, 
+const MetricCard: React.FC<MetricCardProps> = ({
+  title,
+  value,
+  change = '',
+  absoluteChange,
+  time = '24H',
+  Chart,
   amount,
-  icon
+  icon,
+  handleClick
 }) => {
-  if (value.charAt(0) != '$') {
+  if (!value.startsWith('$')) {
     value = `$${value}`;
   }
 
@@ -31,8 +35,14 @@ const MetricCard: React.FC<MetricCardProps> = ({
     </div>
   );
 
+  const changeValue = parseFloat(change);
+
   return (
-    <div className="metric-card">
+    <div className="metric-card redirectable-card"
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+    >
       <div className="header-container">
         <div className="icon-container">
           {icon || defaultIcon}
@@ -47,15 +57,24 @@ const MetricCard: React.FC<MetricCardProps> = ({
           <p className="value">{value}</p>
           <p className="amount">{amount}</p>
         </div>
-        <p className={`change ${parseFloat(change) < 0 ? 'negative' : 'positive'}`}>
-          {change}
-        </p>
+        <div className="change-container">
+          <p className={`change ${changeValue < 0 ? 'negative' : 'positive'}`}>
+            {change}
+          </p>
+          {absoluteChange && (
+            <p className={`absolute-change ${changeValue < 0 ? 'negative' : 'positive'}`}>
+              ({absoluteChange})
+            </p>
+          )}
+        </div>
       </div>
-      <div style={{height: "100px"}}>
-      {Chart ? Chart : <></>}
-      </div>
+      {Chart ?
+        <div className="chart-container-asset">
+          {Chart}
+        </div>
+        : null}
     </div>
   );
-}
+};
 
 export default MetricCard;

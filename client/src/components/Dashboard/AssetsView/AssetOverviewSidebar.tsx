@@ -1,6 +1,7 @@
 import React from 'react';
 import './AssetOverviewSidebar.css'
 import { Asset } from './AssetsView';
+import { CircleDollarSign } from 'lucide-react';
 
 interface AssetOverviewSidebarProps {
   assets: Asset[]
@@ -16,32 +17,31 @@ const AssetOverviewSidebar: React.FC<AssetOverviewSidebarProps> = ({ assets }) =
     .slice(0, 5);
 
   const AssetOverview: React.FC<{ assets: Asset[], title: string }> = ({ assets, title }) => (
-    <div className="category-list">
+    <div className="overview-category">
       <h3>{title}</h3>
-      <div className="asset-overview-header">
+      <div className="overview-header">
         <span>Name</span>
         <span>Value</span>
         <span>Price</span>
         <span>24h</span>
-        {/* <span>7d</span> */}
       </div>
       {assets.map((asset, index) => (
-        <div key={index} className="asset-overview-item">
-          <span>{asset.name}</span>
+        <div key={index} className="overview-row">
+          <span className="asset-name">{asset.icon ? <img src={asset.icon} alt={asset.name} className="icon" /> : <CircleDollarSign/> }{asset.symbol}</span>
           <span>${asset.value.toFixed(2)}</span>
-          <span>${asset.price.toFixed(2)}</span> 
-          <span className={asset.change >= 0 ? 'positive' : 'negative'}>{asset.change.toFixed(2)}%</span>
-          {/* <span className={asset.change7d >= 0 ? 'positive' : 'negative'}>{asset.change7d}%</span> */}
+          <span>${asset.price.toFixed(2)}</span>
+          <span className={`overview-change ${asset.change >= 0 ? 'positive' : 'negative'}`}>
+            {asset.change >= 0 ? '+' : ''}{asset.change.toFixed(2)}%
+          </span>
         </div>
       ))}
     </div>
   );
 
   return (
-    <div className="crypto-categories-sidebar">
-      <h2>Assets</h2>
-      <AssetOverview assets={topEarners} title="Top Earners" />
-      <AssetOverview assets={topLosers} title="Top Losers" />
+    <div className="asset-overview-container">
+      {topEarners.length > 0 && <AssetOverview assets={topEarners} title="Top Earners" />}
+      {topLosers.length > 0 && <AssetOverview assets={topLosers} title="Top Losers" />}
     </div>
   );
 };

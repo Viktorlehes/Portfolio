@@ -1,6 +1,6 @@
 .metric-card {
   background-color: white;
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -54,8 +54,9 @@
 
 .value-container {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
+  margin: 12px 0;
 }
 
 .value-container-details {
@@ -71,25 +72,35 @@
   margin: 0;
 }
 
+.change-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
 .change {
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 500;
   margin: 0;
 }
 
-.change.negative {
-  color: #ff4136;
+.absolute-change {
+  font-size: 12px;
+  margin: 0;
+  opacity: 0.8;
 }
 
-.change.positive {
-  color: #2ecc40;
+.change.negative, .absolute-change.negative {
+  color: #ef4444;
 }
 
-.chart {
-  margin-top: 16px;
+.change.positive, .absolute-change.positive {
+  color: #22c55e;
+}
+
+.chart-container-asset {
   width: 100%;
-  max-width: 250px;
-  height: auto;
-  display: block;
-  margin: 0 auto;
+  height: 100px;
+  margin-top: 8px;
 }

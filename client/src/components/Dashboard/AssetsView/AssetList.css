@@ -1,12 +1,12 @@
 .assets-table {
   width: 100%;
   background: white;
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 24px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.table-header {
+.table-header-asset-list {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1.5fr 1fr;
   padding: 12px 0;
@@ -16,7 +16,7 @@
   font-weight: 500;
 }
 
-.table-row {
+.table-row-asset-list {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1.5fr 1fr;
   padding: 16px 0;

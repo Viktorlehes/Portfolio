@@ -119,3 +119,17 @@ input:checked + .toggle-slider:before {
   color: #8b5cf6;
 }
 
+.redirectable-card {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.redirectable-card:hover {
+  background-color: rgba(59, 131, 246, 0.112);
+}
+
+.redirectable-card:focus-visible {
+  outline: none;
+  background-color: rgba(59, 131, 246, 0.264);
+  box-shadow: 0 0 0 2px #3b82f6;
+}

@@ -1,0 +1,149 @@
+.table-container {
+  background: white;
+  border-radius: 2px;
+  padding: 10px;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+  width: 100%;
+  position: relative;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 600px;
+  position: relative;
+}
+
+.tokens-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+.tokens-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: white;
+}
+
+.tokens-table th {
+  padding: 8px 18px;
+  text-align: right;
+  font-weight: 500;
+  color: #666;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  background: white; /* Ensure background is solid */
+}
+
+.tokens-table th:first-child {
+  text-align: left;
+}
+
+.token-row {
+  border-bottom: 1px solid #eee;
+  height: 60px;
+}
+
+.token-row:last-child {
+  border-bottom: none;
+}
+
+.token-row td {
+  padding: 8px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.token-row td:first-child {
+  text-align: left;
+  font-weight: 500;
+  color: #333;
+}
+
+.price-cell, .volume-cell, .market-cap-cell {
+  font-weight: 600;
+  color: #333;
+}
+
+.positive-change {
+  color: #22c55e;
+  background-color: rgba(34, 197, 94, 0.1);
+}
+
+.negative-change {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.flow-cell {
+  font-weight: 500;
+}
+
+.positive-flow {
+  color: #22c55e;
+}
+
+.negative-flow {
+  color: #ef4444;
+}
+
+@media (hover: hover) {
+  .token-row:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+}
+
+/* Add these classes to your existing CSS */
+.change-cell {
+  font-weight: 400;
+  padding: 4px 8px;
+  color: #323232;
+}
+
+/* Positive changes */
+.change-cell-positive.intensity-1 {
+  background-color: rgba(34, 197, 94, 0.1);
+}
+
+.change-cell-positive.intensity-2 {
+  background-color: rgba(34, 197, 94, 0.2);
+}
+
+.change-cell-positive.intensity-3 {
+  background-color: rgba(34, 197, 94, 0.3);
+}
+
+.change-cell-positive.intensity-4 {
+  background-color: rgba(34, 197, 94, 0.4);
+}
+
+.change-cell-positive.intensity-5 {
+  background-color: rgba(34, 197, 94, 0.5);
+}
+
+/* Negative changes */
+.change-cell-negative.intensity-1 {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.change-cell-negative.intensity-2 {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.change-cell-negative.intensity-3 {
+  background-color: rgba(239, 68, 68, 0.3);
+}
+
+.change-cell-negative.intensity-4 {
+  background-color: rgba(239, 68, 68, 0.4);
+}
+
+.change-cell-negative.intensity-5 {
+  background-color: rgba(239, 68, 68, 0.5);
+}

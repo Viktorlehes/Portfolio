@@ -1,7 +1,7 @@
 import React from 'react';
 import './OverviewAssetBreakdown.css';
-
 import { Asset } from '../../data/dashboarddata';
+import { formatCurrency } from '../../utils/calc';
 
 interface AssetBreakdownProps {
   name: string;
@@ -19,15 +19,6 @@ const AssetBreakdown: React.FC<AssetBreakdownProps> = ({ name, assets }) => {
     percentage: ((asset.value / totalAmount) * 100).toFixed(2) // Round to 2 decimal places
   }));
 
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
   return (
     <div className="asset-breakdown">
       <div className="asset-breakdown-header">
@@ -35,7 +26,7 @@ const AssetBreakdown: React.FC<AssetBreakdownProps> = ({ name, assets }) => {
         <a href="#" className="view-more">View more &gt;</a>
       </div>
       <div className="asset-total">
-        <span>{formatCurrency(totalAmount)}</span>
+        <span>{formatCurrency(totalAmount, 0, 0)}</span>
       </div>
       <div className="asset-bar">
         {assetsWithPercentage.map((asset, index) => (
@@ -53,7 +44,7 @@ const AssetBreakdown: React.FC<AssetBreakdownProps> = ({ name, assets }) => {
               <span>{asset.name}</span>
             </div>
             <div className="asset-value">
-              <span>{formatCurrency(asset.value)}</span>
+              <span>{formatCurrency(asset.value, 0, 0)}</span>
               <span className="asset-percentage">{asset.percentage}%</span>
             </div>
           </div>

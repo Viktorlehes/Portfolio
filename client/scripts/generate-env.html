@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate ENV Values</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .input-group {
+            margin: 20px 0;
+        }
+        input {
+            padding: 8px;
+            font-size: 16px;
+        }
+        button {
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .output {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generate ENV Values</h1>
+    <div class="input-group">
+        <label>Enter PIN: </label>
+        <input type="password" id="pin" value="1234">
+        <button onclick="generateValues()">Generate</button>
+    </div>
+    <div id="output" class="output"></div>
+
+    <script>
+        function generateSecretKey() {
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        function generateValues() {
+            const pin = document.getElementById('pin').value;
+            const secretKey = generateSecretKey();
+            const encryptedPin = CryptoJS.AES.encrypt(pin, secretKey).toString();
+
+            const output = 
+`# Add these values to your .env file:
+
+VITE_PIN_SECRET_KEY="${secretKey}"
+VITE_ENCRYPTED_PIN="${encryptedPin}"
+
+# Make sure to save these values securely!`;
+
+            document.getElementById('output').textContent = output;
+        }
+    </script>
+</body>
+</html>

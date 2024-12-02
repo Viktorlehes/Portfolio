@@ -3,69 +3,84 @@ import { useNavigate } from "react-router-dom";
 import ValueCard from "./ValueCard";
 import AssetBreakdown from "./TokenBreakdown";
 import { components } from "../../../types/api-types";
-import { Pencil, RefreshCcw } from "lucide-react";
+import { Pencil } from "lucide-react";
 import "./WalletsView.css";
 import { ViewType } from "../ViewSelector";
+import { calculate24hChange } from "../../../utils/calc";
+import LoadingOverlay from "../../Default/LoadingOverlay";
 
 type Wallet = components["schemas"]["Wallet"];
-type FullToken = components["schemas"]["FullToken"];
-type DefiPosition = components["schemas"]["DefiPosition"];
 
 interface WalletsViewProps {
-  wallets: Wallet[];
+  wallets: Wallet[] | null;
   onViewChange: (view: ViewType) => void;
-  refreshWallets: () => void;
+  isLoading: boolean;
+  lastUpdated: number;
 }
 
-const WalletsView: React.FC<WalletsViewProps> = ({ wallets, onViewChange, refreshWallets }) => {
+const WalletsView: React.FC<WalletsViewProps> = ({ 
+  wallets, 
+  onViewChange, 
+  isLoading,
+  lastUpdated
+}) => {
   const navigate = useNavigate();
-  const totalWalletValue = wallets.reduce(
-    (sum, wallet) => sum + wallet.asset_total,
-    0
-  );
+
+  const onViewAsset = (assetId: string, assetName: string, isFungible: boolean) => {
+    const searchParams = new URLSearchParams({
+      name: assetName,
+      fungible: isFungible.toString(),
+    });
+    navigate(`/Dashboard/asset/${assetId}?${searchParams.toString()}`);
+  };
 
   const onViewWallet = (address: string) => {
     navigate(`wallet/${address}`);
   };
 
-  const calculate24hChange = (items: (FullToken | DefiPosition)[]) => {
-    return items.reduce((acc, item) => {
-        const change = item.hasOwnProperty('token_data')
-            ? (item as FullToken).token_data?.change24h || 0
-            : (item as DefiPosition).changes.percent_1d || 0;
-        return acc + change;
-    }, 0);  
-  };
+  // Only calculate totals if we have wallet data
+  const totalWalletValue = wallets ? wallets.reduce(
+    (sum, wallet) => sum + wallet.asset_total,
+    0
+  ) : 0;
 
-  const total24hChange = wallets.reduce((acc, wallet) => {return acc + calculate24hChange(wallet.tokens || []) + calculate24hChange(wallet.defi_positions || []);}, 0);
+  const total24hChange = wallets ? calculate24hChange(wallets) : 0;
 
-  const totalDefiValue = wallets.reduce(
+  const totalDefiValue = wallets ? wallets.reduce(
     (sum, wallet) => sum + wallet.defi_total,
     0
-  );
+  ) : 0;
+
   return (
     <div>
       <section className="dashboard-head">
         <div className="overview-values">
-          <ValueCard label={"Total"} value={totalWalletValue} color="#000100" />
-          <ValueCard
-            key={"defiTotal"}
-            label={"DeFi Total"}
-            value={totalDefiValue}
-            color={'black'}
+          <ValueCard 
+            label="Total" 
+            value={Math.round(totalWalletValue)} 
+            color="#000100" 
           />
           <ValueCard
-            key={"24hChange"}
-            label={"24h Change"}
-            value={total24hChange}
-            color={'black'}
+            label="DeFi Total"
+            value={Math.round(totalDefiValue)}
+            color="black"
+          />
+          <ValueCard
+            label="24h Change"
+            value={Math.round(total24hChange)}
+            color="black"
             isPercent={true}
           />
           <ValueCard
-            key={"numWallets"}
-            label={"Wallets"}
-            value={wallets.length}
-            color={'black'}
+            label="Wallets"
+            value={wallets ? wallets.length : 0}
+            color="black"
+            isText={true}
+          />
+          <ValueCard
+            label="Last Updated"
+            value={Math.round((new Date().getTime() - new Date(lastUpdated).getTime()) / 60000) + " min"}
+            color="black"
             isText={true}
           />
         </div>
@@ -73,26 +88,28 @@ const WalletsView: React.FC<WalletsViewProps> = ({ wallets, onViewChange, refres
           <button onClick={() => onViewChange("Manage" as ViewType)}>
             <Pencil />
           </button>
-          <button onClick={refreshWallets}>
-            <RefreshCcw />
-          </button>
         </div>
       </section>
-      <section className="dashboard-sub-cat">
-        {wallets.map((wallet) => (
+
+      {isLoading && !wallets ? (
+        <LoadingOverlay message="Loading wallets..." />
+      ) : (
+        <section className="dashboard-sub-cat">
+          {wallets!.map((wallet) => (
             <AssetBreakdown
               key={wallet.address}
               name={wallet.name}
               color={wallet.color}
               address={wallet.address}
               tokens={wallet.tokens || []}
-              totalDefiValue={wallet.defi_total}
-              totalValue={wallet.asset_total}
-              change24h={calculate24hChange(wallet.tokens || []) + calculate24hChange(wallet.defi_positions || [])}
+              totalDefiValue={Math.round(wallet.defi_total)}
+              totalValue={Math.round(wallet.asset_total)}
               onViewWallet={onViewWallet}
+              onViewAsset={onViewAsset}
             />
-        ))}
-      </section>
+          ))}
+        </section>
+      )}
     </div>
   );
 };

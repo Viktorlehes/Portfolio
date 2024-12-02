@@ -1,42 +1,72 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { AuthProvider } from "./auth/authContext";
 import App from "./App";
-import Overview, { cryptoStatsLoader } from "./pages/Overview/Overview";
+import Login from "./pages/misc/Login";
+import Overview, { overviewLoader } from "./pages/Overview/Overview";
 import Dashboard, { dashboardLoader } from "./pages/Dashboard/Dashboard";
 import Bundles from "./pages/Bundles/Bundles";
-import Temp from "./pages/misc/Temp";
 import SingleWalletView, { walletLoader } from "./pages/Dashboard/SingleWalletView";
+import SingleAssetView, { assetLoader } from "./pages/Dashboard/SingleAssetView";
+import Defi, { defiLoader } from "./pages/Defi/Defi";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <Login />,
+  },
   {
     path: "/",
     element: <App />,
     children: [
       {
         index: true,
-        element: <Overview />,
-        loader: cryptoStatsLoader,
+        element: (
+          <ProtectedRoute>
+            <Overview />
+          </ProtectedRoute>
+        ),
+        loader: overviewLoader,
       },
       {
         path: "Dashboard",
-        element: <Dashboard />,
+        element: (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        ),
         loader: dashboardLoader,
         children: [
           {
             path: "wallet/:walletAddress",
             element: <SingleWalletView />,
             loader: walletLoader,
+          },
+          {
+            path: "asset/:assetId",
+            element: <SingleAssetView />,
+            loader: assetLoader,
           }
         ]
       },
       {
-        path: "Earn",
-        element: <Temp />
+        path: "Defi",
+        element: (
+          <ProtectedRoute>
+            <Defi />
+          </ProtectedRoute>
+        ),
+        loader: defiLoader,
       },
       {
         path: "Bundles",
-        element: <Bundles />,
+        element: (
+          <ProtectedRoute>
+            <Bundles />
+          </ProtectedRoute>
+        ),
       },
     ],
   },
@@ -44,6 +74,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </React.StrictMode>
 );

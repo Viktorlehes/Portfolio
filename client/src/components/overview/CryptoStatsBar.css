@@ -15,19 +15,20 @@
   }
   
   .crypto-value {
-    font-weight: bold;
-    color: #8b5cf6;
+    font-weight: 600;
+    color: #333;
   }
   
   .change {
     font-size: 12px;
     margin-left: 5px;
+    font-weight: 500 !important; 
   }
   
   .change.positive {
-    color: green;
+    color: #22c55e;
   }
   
   .change.negative {
-    color: red;
+    color: #ef4444;
   }

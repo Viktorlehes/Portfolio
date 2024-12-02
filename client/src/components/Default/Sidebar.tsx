@@ -11,14 +11,14 @@ const Sidebar: React.FC = () => {
   const menuItems = [
     { icon: PanelsTopLeft, text: "Overview", path: "/" },
     { icon: LayoutDashboard, text: "Dashboard", path: "/Dashboard" },
-    { icon: HandCoins, text: "Earn", path: "/Earn" },
+    { icon: HandCoins, text: "Defi", path: "/Defi" },
     { icon: Wallet, text: "Bundles", path: "/Bundles" },
   ];
   return (
     <div className="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <span>W</span>
+          <span>M</span>
         </div>
         <span className="sidebar-title">Portfolio</span>
       </div>

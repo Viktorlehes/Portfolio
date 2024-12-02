@@ -49,6 +49,7 @@ class DefiPosition(BasePosition):
     protocol_icon: str
     protocol_chain: str
     protocol: str
+    position_name: str
     dapp: str
 
 class FullToken(BaseModel):

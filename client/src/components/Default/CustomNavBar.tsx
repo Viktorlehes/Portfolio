@@ -1,14 +1,20 @@
 import { useState } from 'react';
 import './CustomNavBar.css'
 
+interface Link {
+  id?: number;
+  name: string;
+  url: string;
+}
+
 const CustomNavbar = () => {
   const [links, setLinks] = useState([
-    { id: 1, name: 'Coinmarketcap', url: 'https://coinmarketcap.com/' },
-    { id: 2, name: 'Glassnode', url: 'https://studio.glassnode.com/home' },
-    { id: 3, name: 'Parsec', url: 'https://parsec.fi/dashboard' },
-    { id: 4, name: 'TokenMetrics', url: 'https://app.tokenmetrics.com/en/market' },
-    { id: 5, name: 'Intellectia', url: 'https://app.intellectia.ai/crypto' },
-  ]);
+    // { id: 1, name: 'Coinmarketcap', url: 'https://coinmarketcap.com/' },
+    // { id: 2, name: 'Glassnode', url: 'https://studio.glassnode.com/home' },
+    // { id: 3, name: 'Parsec', url: 'https://parsec.fi/dashboard' },
+    // { id: 4, name: 'TokenMetrics', url: 'https://app.tokenmetrics.com/en/market' },
+    // { id: 5, name: 'Intellectia', url: 'https://app.intellectia.ai/crypto' },
+  ] as Link[]);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [newLink, setNewLink] = useState({ name: '', url: '' });
@@ -38,6 +44,7 @@ const CustomNavbar = () => {
           +
         </button>
       </nav>
+      <div className='navbar-links'>
       {isDropdownOpen && (
         <div className="dropdown">
           <input
@@ -57,6 +64,7 @@ const CustomNavbar = () => {
           <button onClick={handleAdd} className="add-link-button">Add Link</button>
         </div>
       )}
+      </div>
     </div>
   );
 };

@@ -12,6 +12,7 @@ from typing import List, Tuple, Optional, Dict
 from datetime import datetime, timedelta
 from ..schemas.wallet import Wallet, WalletMode, PositionType, Token, DefiPosition, FullToken, BasePosition, Quantity, Changes
 from ..schemas.full_token import FullCMCToken
+from ..schemas.zeriontoken import ZerionToken, AssetLinks, AssetData, AssetRelationships, AssetAttributes, IconData, Flags, MarketData, MarketChanges, ExternalLink, Implementation, ChartRelation, ChartRelationData, ChartRelationLinks
 
 load_dotenv()
 coinmarket_api_key = os.getenv("CM_API_KEY")
@@ -27,6 +28,7 @@ db = client['Main']
 
 wallets_collection = db["Wallets"]
 tokens_collection = db["Tokens"]
+zerion_tokens = db["Zerion_Tokens"]
 
 @router.get('/wallets', response_model=List[Wallet], tags=["Dashboard"])
 async def get_wallets():
@@ -37,9 +39,7 @@ async def get_wallets():
         async with httpx.AsyncClient() as client:
             url = f"http://127.0.0.1:8000/update_tokens"
             response = await client.post(url)
-            if response.status_code == 200:
-                print("Tokens updated")
-            else:
+            if response.status_code != 200:
                 print("Failed to update tokens")
 
         current_time = datetime.now()
@@ -51,27 +51,21 @@ async def get_wallets():
         async for document in asynio_wallets:
             wallets.append(document)
 
-        wallets = list(wallets)
-
         if not wallets:
             return []
 
-        for wallet in wallets:
+        for index, wallet in enumerate(wallets):
             last_updated = wallet['last_updated']
 
+            print(f'Updating wallet {index}/{len(wallets)}')
+
             if (current_time - last_updated) > timedelta(minutes=5):
-                
-                print("Updating wallet")
 
                 wallet_data = WalletData(color=wallet['color'], name=wallet['name'], mode=wallet['wallet_mode'])
 
                 updated_wallet = await create_new_wallet(wallet['address'], wallet_data)
 
-                print("Updated wallet")
-
                 wallets[wallets.index(wallet)] = updated_wallet
-
-        print("Returning wallets")
 
         return wallets
     except Exception as e:
@@ -141,13 +135,10 @@ async def get_or_create_token(position: dict) -> Tuple[Optional[Dict], str]:
     })
     
     if token_data:
-        print(f"Token {symbol} found in database")
         # Determine token type based on presence of coingecko_id
         token_type = 'CG' if token_data.get('coingecko_id') else 'CMC'
         return token_data, token_type
     
-    # Try fetching from CMC first
-    print(f"Fetching {symbol} from CMC...")
     cmc_token_data: FullCMCToken = await fetch_token_from_api_CMC(symbol)
     
     if cmc_token_data:
@@ -155,7 +146,6 @@ async def get_or_create_token(position: dict) -> Tuple[Optional[Dict], str]:
             # Ensure we use the name from the position data
             cmc_token_data['name'] = name
             await tokens_collection.insert_one(cmc_token_data)
-            print(f"CMC token {symbol} inserted into DB")
             return cmc_token_data, 'CMC'
         except Exception as e:
             error_msg = f"Failed to insert CMC token {symbol} into DB: {str(e)}"
@@ -165,17 +155,14 @@ async def get_or_create_token(position: dict) -> Tuple[Optional[Dict], str]:
 
     # If CMC fails and zerion has no price data, try CoinGecko
     if position['attributes']['price'] is None:
-        print(f"Fetching {symbol} from CoinGecko...")
         cg_token_data = await fetch_token_from_api_CG(symbol, name)
         
         if cg_token_data:
-            print(cg_token_data)
             try:
                 # Add CoinGecko identifier
                 cg_token_data['coingecko_id'] = True
                 cg_token_data['name'] = name
                 await tokens_collection.insert_one(cg_token_data)
-                print(f"CoinGecko token {symbol} inserted into DB")
                 return cg_token_data, 'CG'
             except Exception as e:
                 error_msg = f"Failed to insert CoinGecko token {symbol} into DB: {str(e)}"
@@ -183,7 +170,6 @@ async def get_or_create_token(position: dict) -> Tuple[Optional[Dict], str]:
                 return None, error_msg
 
     # If no data found from either source, return zerion position
-    print(f"No external data found for {symbol}, using Zerion data")
     return None, 'zerion'
 
 def safe_get(d, keys, default=None):
@@ -326,7 +312,6 @@ async def get_token_price_chain(impls: List[Dict]) -> float:
             chain_id = impl['chain_id']
             address = impl['address']
             if chain_id and address:
-                print(f"Fetching token price for {address} on chain {chain_id}")
                 url = f"http://127.0.0.1:8000/token_via_chain/{chain_id}/{address}"
                 response = await client.get(url)
                 if response.status_code != 404:
@@ -391,9 +376,9 @@ def format_defi_position(position: dict) -> DefiPosition:
         protocol_icon=safe_get(position, ['attributes', 'application_metadata', 'icon', 'url'], ''),
         protocol_chain=safe_get(position, ['relationships', 'chain', 'data', 'id'], ''),
         protocol=safe_get(position, ['attributes', 'protocol'], ''),
+        position_name=safe_get(position, ['attributes', 'name'], ''),
         dapp=safe_get(position, ['relationships', 'dapp', 'data', 'id'], '')
     )
-
 
 class WalletData(BaseModel):
     color: str
@@ -450,13 +435,12 @@ async def create_new_wallet(
         # Calculate total value
         wallet.calculate_total_value()
 
-        wallet_exists = await wallets_collection.find_one({'address': wallet.address})
-
-        if wallet_exists:
-            await wallets_collection.delete_one({"address": wallet.address})
-            await wallets_collection.insert_one(wallet.model_dump())
-        else:
-            await wallets_collection.insert_one(wallet.model_dump())
+        # Update existing wallet or create new one using update_one with upsert
+        await wallets_collection.update_one(
+            {"address": wallet.address},
+            {"$set": wallet.model_dump()},
+            upsert=True
+        )
 
         return wallet
 
@@ -498,3 +482,235 @@ async def get_charts(fungible_id: dict):  # Change this to accept a JSON body
             return response.json()
         else:
             raise HTTPException(status_code=response.status_code, detail="Error fetching data from Zerion API")
+        
+@router.put("/manage/update_wallet/{wallet_address}")
+async def update_wallet(wallet_address: str, wallet_data: WalletData):
+    try:
+        wallet = await wallets_collection.find_one({"address": wallet_address.strip()})
+        if not wallet:
+            raise HTTPException(
+                status_code=404,
+                detail="Wallet not found"
+            )
+            
+        updated_wallet = await wallets_collection.update_one(
+            {"address": wallet_address}, 
+            {"$set": {
+                "color": wallet_data.color,
+                "name": wallet_data.name,
+                "wallet_mode": wallet_data.mode
+            }}
+        )
+        
+        # Fetch the updated wallet
+        updated_wallet = await wallets_collection.find_one({"address": wallet_address})
+        updated_wallet['_id'] = str(updated_wallet['_id'])
+        return updated_wallet
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}"
+        )
+    
+@router.post("/allCharts")
+async def get_charts(fungible_id: dict):  # Change this to accept a JSON body
+    chart = dict({})
+    async with httpx.AsyncClient() as client:
+        url = f"https://api.zerion.io/v1/fungibles/{fungible_id['fungible_id']}/charts/day"
+        headers = {
+            "accept": "application/json",
+            "authorization": f"Basic {ZERION_API_KEY}==",
+        }
+        response = await client.get(url, headers=headers)
+        if response.status_code == 200:
+            chart['day'] = response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail="Error fetching data from Zerion API")
+        
+        url = f"https://api.zerion.io/v1/fungibles/{fungible_id['fungible_id']}/charts/week"
+        headers = {
+            "accept": "application/json",
+            "authorization": f"Basic {ZERION_API_KEY}==",
+        }
+        response = await client.get(url, headers=headers)
+        if response.status_code == 200:
+            chart['week'] = response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail="Error fetching data from Zerion API")
+        
+        url = f"https://api.zerion.io/v1/fungibles/{fungible_id['fungible_id']}/charts/month"
+        headers = {
+            "accept": "application/json",
+            "authorization": f"Basic {ZERION_API_KEY}==",
+        }
+        response = await client.get(url, headers=headers)
+        if response.status_code == 200:
+            chart['month'] = response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail="Error fetching data from Zerion API")
+        
+    if chart:
+        return chart
+    else:
+        raise HTTPException(status_code=404, detail="Error fetching data from Zerion API")
+
+def format_zerion_token(token):
+    # First create the ZerionToken object as before
+    zerion_token = ZerionToken(
+        links=AssetLinks(
+            self=safe_get(token, ['links', 'self'], '')
+        ),
+        data=AssetData(
+            type=safe_get(token, ['data', 'type'], ''),
+            id=safe_get(token, ['data', 'id'], ''),
+            attributes=AssetAttributes(
+                name=safe_get(token, ['data', 'attributes', 'name'], ''),
+                symbol=safe_get(token, ['data', 'attributes', 'symbol'], ''),
+                description=safe_get(token, ['data', 'attributes', 'description'], ''),
+                icon=IconData(
+                    url=safe_get(token, ['data', 'attributes', 'icon', 'url'], '')
+                ),
+                flags=Flags(
+                    verified=safe_get(token, ['data', 'attributes', 'flags', 'verified'], False)
+                ),
+                external_links=safe_get(token, ['data', 'attributes', 'external_links'], []),
+                implementations=safe_get(token, ['data', 'attributes', 'implementations'], []),
+                market_data=MarketData(
+                    total_supply=safe_get(token, ['data', 'attributes', 'market_data', 'total_supply'], 0),
+                    circulating_supply=safe_get(token, ['data', 'attributes', 'market_data', 'circulating_supply'], 0),
+                    market_cap=safe_get(token, ['data', 'attributes', 'market_data', 'market_cap'], 0),
+                    fully_diluted_valuation=safe_get(token, ['data', 'attributes', 'market_data', 'fully_diluted_valuation'], 0),
+                    price=safe_get(token, ['data', 'attributes', 'market_data', 'price'], 0),
+                    changes=MarketChanges(
+                        percent_1d=safe_get(token, ['data', 'attributes', 'market_data', 'changes', 'percent_1d'], 0),
+                        percent_30d=safe_get(token, ['data', 'attributes', 'market_data', 'changes', 'percent_30d'], 0),
+                        percent_90d=safe_get(token, ['data', 'attributes', 'market_data', 'changes', 'percent_90d'], 0),
+                        percent_365d=safe_get(token, ['data', 'attributes', 'market_data', 'changes', 'percent_365d'], 0)
+                    )
+                )
+            ),
+            relationships=AssetRelationships(
+                chart_day=ChartRelation(
+                    links=ChartRelationLinks(
+                        related=safe_get(token, ['data', 'relationships', 'chart_day', 'links', 'related'], '')
+                    ),
+                    data=ChartRelationData(
+                        type=safe_get(token, ['data', 'relationships', 'chart_day', 'data', 'type'], ''),
+                        id=safe_get(token, ['data', 'relationships', 'chart_day', 'data', 'id'], '')
+                    )
+                ),
+                chart_hour=ChartRelation(
+                    links=ChartRelationLinks(
+                        related=safe_get(token, ['data', 'relationships', 'chart_hour', 'links', 'related'], '')
+                    ),
+                    data=ChartRelationData(
+                        type=safe_get(token, ['data', 'relationships', 'chart_hour', 'data', 'type'], ''),
+                        id=safe_get(token, ['data', 'relationships', 'chart_hour', 'data', 'id'], '')
+                    )
+                ),
+                chart_max=ChartRelation(
+                    links=ChartRelationLinks(
+                        related=safe_get(token, ['data', 'relationships', 'chart_max', 'links', 'related'], '')
+                    ),
+                    data=ChartRelationData(
+                        type=safe_get(token, ['data', 'relationships', 'chart_max', 'data', 'type'], ''),
+                        id=safe_get(token, ['data', 'relationships', 'chart_max', 'data', 'id'], '')
+                    )
+                ),
+                chart_month=ChartRelation(
+                    links=ChartRelationLinks(
+                        related=safe_get(token, ['data', 'relationships', 'chart_month', 'links', 'related'], '')
+                    ),
+                    data=ChartRelationData(
+                        type=safe_get(token, ['data', 'relationships', 'chart_month', 'data', 'type'], ''),
+                        id=safe_get(token, ['data', 'relationships', 'chart_month', 'data', 'id'], '')
+                    )
+                ),
+                chart_week=ChartRelation(
+                    links=ChartRelationLinks(
+                        related=safe_get(token, ['data', 'relationships', 'chart_week', 'links', 'related'], '')
+                    ),
+                    data=ChartRelationData(
+                        type=safe_get(token, ['data', 'relationships', 'chart_week', 'data', 'type'], ''),
+                        id=safe_get(token, ['data', 'relationships', 'chart_week', 'data', 'id'], '')
+                    )
+                ),
+                chart_year=ChartRelation(
+                    links=ChartRelationLinks(
+                        related=safe_get(token, ['data', 'relationships', 'chart_year', 'links', 'related'], '')
+                    ),
+                    data=ChartRelationData(
+                        type=safe_get(token, ['data', 'relationships', 'chart_year', 'data', 'type'], ''),
+                        id=safe_get(token, ['data', 'relationships', 'chart_year', 'data', 'id'], '')
+                    )
+                )
+            )
+        )
+    )
+    
+    # Convert the Pydantic model to a dictionary
+    return zerion_token.model_dump()
+
+class FungibleIdRequest(BaseModel):
+    fungible_id: str
+
+@router.post("/zerionToken", response_model=ZerionToken)
+async def get_zerion_token(request: FungibleIdRequest):
+    fungible_id = request.fungible_id
+    
+    # Check if we have a cached version
+    cached_token = await zerion_tokens.find_one({"fungible_id": fungible_id})
+    
+    if cached_token:
+        # Convert the datetime string back to datetime object if needed
+        last_updated = safe_get(cached_token, ['last_updated'])
+        if isinstance(last_updated, str):
+            last_updated = datetime.fromisoformat(last_updated.replace('Z', '+00:00'))
+            
+        # Check if the cache is still valid (less than 5 minutes old)
+        if last_updated and datetime.now() - last_updated < timedelta(minutes=5):
+            # Convert stored dict back to ZerionToken model
+            return ZerionToken.model_validate(cached_token)
+    
+    # Fetch new data from Zerion API
+    async with httpx.AsyncClient() as client:
+        url = f"https://api.zerion.io/v1/fungibles/{fungible_id}?currency=usd"
+        headers = {
+            "accept": "application/json",
+            "authorization": f"Basic {ZERION_API_KEY}==",
+        }
+        
+        response = await client.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            response_data = response.json()
+            
+            # Add timestamp to the data
+            current_time = datetime.now()
+            
+            # Format the token data
+            formatted_token = format_zerion_token(response_data)
+            
+            # Add fungible_id and last_updated to the formatted data
+            formatted_token.update({
+                'fungible_id': fungible_id,
+                'last_updated': current_time
+            })
+            
+            # Store in database
+            await zerion_tokens.update_one(
+                {"fungible_id": fungible_id},
+                {"$set": formatted_token},
+                upsert=True
+            )
+            
+            # Return as ZerionToken model
+            return ZerionToken.model_validate(formatted_token)
+        else:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail="Error fetching data from Zerion API"
+            )

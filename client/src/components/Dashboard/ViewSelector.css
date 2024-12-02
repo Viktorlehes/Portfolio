@@ -6,7 +6,7 @@
   
   .wallet-selector select {
     border: 1px solid #d1d5db;
-    border-radius: 9999px;
+    border-radius: 2px;
     padding: 8px 16px;
     background-color: white;
     color: #374151;

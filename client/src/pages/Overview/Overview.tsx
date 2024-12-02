@@ -1,98 +1,197 @@
-// src/components/Overview/Overview.tsx
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { LoaderFunction, useLoaderData } from "react-router-dom";
 import "./Overview.css";
-import MetricCard from "../../components/overview/MetricCard";
 import CustomNavbar from "../../components/Default/CustomNavBar";
 import CryptoCategoriesSidebar from "../../components/overview/CryptoCatagorieList";
-import CryptoStats from '../../components/overview/CryptoStatsBar'
-import { testCategories } from "../../data/dashboarddata";
-import AssetBreakdown from "../../components/overview/OverviewAssetBreakdown";
-import { assetsPortfolio1 } from '../../data/dashboarddata'
-import { LoaderFunction, useLoaderData } from "react-router-dom";
+import CryptoStatsBar from '../../components/overview/CryptoStatsBar';
 import { components } from "../../types/api-types";
+import CoinglassMetricsBar from "../../components/overview/CoinglassMetricBar";
+import TotalWorth from "../../components/overview/TotalWorth";
+import { getCachedData, isDataExpired } from "../../utils/api";
+import { OverviewTokensTable } from "../../components/overview/OverviewTokensTable";
 
 type MarketData = components["schemas"]["MarketDataResponse"];
-type Token = components["schemas"]["FullToken"];
+type FearGreedResponse = components["schemas"]["FearGreedResponse"];
+type Wallet = components["schemas"]["Wallet"];
+type CGLSApiResponse = components["schemas"]["APIResponse"];
+type TokenOverviewResponse = components['schemas']['TokenOverviewData'];
+type CategoryResponse = components['schemas']['CategoryResponse'];
 
-// Utility function to check if the data is expired
-const isDataExpired = (timestamp: number, maxAgeInMinutes: number) => {
-  const now = new Date().getTime();
-  const ageInMinutes = (now - timestamp) / (1000 * 60);
-  return ageInMinutes > maxAgeInMinutes;
-};
-
-// React Router loader function
-export const cryptoStatsLoader: LoaderFunction = async () => {
-  const savedMarketData = localStorage.getItem('marketData');
-  const savedTokenData = localStorage.getItem('tokenData');
-
-  if (savedMarketData && savedTokenData) {
-    const parsedMarketData = JSON.parse(savedMarketData);
-    const parsedTokenData = JSON.parse(savedTokenData);
-    const { marketData, marketTimeStamp } = parsedMarketData;
-    const { tokenData, tokenTimeStamp} = parsedTokenData;
-
-    if (!isDataExpired(marketTimeStamp, 10) && !isDataExpired(tokenTimeStamp, 10)) {
-      return { marketData, tokenData };
-    }
-  }
-
-  // If no valid cached data, fetch from the FastAPI backend
-  try {
-    const marketDataResponse = await fetch('http://127.0.0.1:8000/overview/cryptostats');
-
-    const tokenDataResponse = await fetch('http://127.0.0.1:8000/token_via_id/1');
-    
-    if (!marketDataResponse.ok) {
-      throw new Error(`Failed to fetch marketData: ${marketDataResponse.statusText}`);
-    }
-
-    if (!tokenDataResponse.ok) {
-      throw new Error(`Failed to fetch tokenData: ${tokenDataResponse.statusText}`);
-    }
-
-    const marketData: MarketData = await marketDataResponse.json();
-
-    const tokenData: Token = await tokenDataResponse.json();
-
-    const currentTime = new Date().getTime();
-
-    localStorage.setItem("marketData", JSON.stringify({ marketData, marketTimeStamp: currentTime }));
-
-    localStorage.setItem("tokenData", JSON.stringify({ tokenData, tokenTimeStamp: currentTime }));
-
-    return { marketData, tokenData };
-
-  } catch (error) {
-    console.error('Error fetching crypto stats:', error);
-    throw new Error('Could not load crypto stats'); // This error will propagate to a route error boundary if you have one
-  }
-};
-
-interface CryptoStatsLoaderData {
-  marketData: MarketData;
-  tokenData: Token;
+interface ComponentLoadingState {
+  market: boolean;
+  fearGreed: boolean;
+  wallets: boolean;
+  cglsScrapeData: boolean;
+  TokenOverviewData: boolean;
+  cgCategories: boolean;
 }
 
+interface CachedData<T> {
+  data: T;
+  timestamp: number;
+}
+
+interface LoaderData {
+  marketData: CachedData<MarketData>;
+  fearGreedData: CachedData<FearGreedResponse>;
+  wallets: CachedData<Wallet[]>;
+  cglsScrapeData: CachedData<CGLSApiResponse>;
+  TokenOverviewData: CachedData<TokenOverviewResponse[]>;
+  cgCategories: CachedData<CategoryResponse>;
+}
+
+const CACHE_KEYS = {
+  MARKET: 'marketData',
+  FEAR_GREED: 'fearGreedData',
+  WALLETS: 'wallets',
+  CGLS: 'cglsScrapeData',
+  TOKENS: 'TokenOverviewData',
+  CG_CATAGORIES: 'cgCategories'
+} as const;
+
+const API_ENDPOINTS = {
+  MARKET: 'http://127.0.0.1:8000/overview/cryptostats',
+  FEAR_GREED: 'http://127.0.0.1:8000/overview/feargreedindex',
+  WALLETS: 'http://127.0.0.1:8000/dashboard/wallets',
+  CGLS: 'http://127.0.0.1:8000/overview/get-scraped-CGLS-data',
+  TOKEN_OVERVIEW: 'http://127.0.0.1:8000/overview/overview-tokens-table-data',
+  CG_CATAGORIES: 'http://127.0.0.1:8000/overview/get-crypto-catagories',
+} as const;
+
+export const overviewLoader: LoaderFunction = () => {
+  const cachedMarket = getCachedData(CACHE_KEYS.MARKET);
+  const cachedFearGreed = getCachedData(CACHE_KEYS.FEAR_GREED);
+  const cachedWallets = getCachedData(CACHE_KEYS.WALLETS);
+  const cachedCglsScrapeData = getCachedData(CACHE_KEYS.CGLS);
+  const cachedTokenOverviewData = getCachedData(CACHE_KEYS.TOKENS);
+  const cachedCategories = getCachedData(CACHE_KEYS.CG_CATAGORIES);
+
+  return {
+    marketData: { data: cachedMarket?.data || null, timestamp: cachedMarket?.timestamp || null } as CachedData<MarketData>,
+    fearGreedData: { data: cachedFearGreed?.data || null, timestamp: cachedFearGreed?.timestamp || null } as CachedData<FearGreedResponse>,
+    wallets: { data: cachedWallets?.data || [], timestamp: cachedWallets?.timestamp || null } as CachedData<Wallet[]>,
+    cglsScrapeData: { data: cachedCglsScrapeData?.data || null, timestamp: cachedCglsScrapeData?.timestamp || null } as CachedData<CGLSApiResponse>,
+    TokenOverviewData: { data: cachedTokenOverviewData?.data || [], timestamp: cachedTokenOverviewData?.timestamp || null } as CachedData<TokenOverviewResponse[]>,
+    cgCategories: { data: cachedCategories?.data || [], timestamp: cachedCategories?.timestamp || null } as CachedData<CategoryResponse>
+  } as LoaderData;
+};
+
 const Overview: React.FC = () => {
-  const loaderData = useLoaderData() as CryptoStatsLoaderData;
+  const cachedData = useLoaderData() as LoaderData;
+  const [overviewData, setOverviewData] = useState({
+    marketData: cachedData.marketData,
+    fearGreedData: cachedData.fearGreedData,
+    wallets: cachedData.wallets,
+    cglsScrapeData: cachedData.cglsScrapeData,
+    TokenOverviewData: cachedData.TokenOverviewData,
+    cgCategories: cachedData.cgCategories
+  });
 
-  const marketData = loaderData.marketData;
-  const tokenData = loaderData.tokenData;
+  const activeFetches = useRef(new Set<string>());
 
-  function formatCurrency (value: number) {
-    if (value >= 1e12) {
-      return `$${(value / 1e12).toFixed(1)}T`; // Trillions
-    } else if (value >= 1e9) {
-      return `$${(value / 1e9).toFixed(1)}B`; // Billions
-    } else if (value >= 1e6) {
-      return `$${(value / 1e6).toFixed(1)}M`; // Millions
-    } else if (value >= 1e3) {
-      return `$${(value / 1e3).toFixed(1)}K`; // Thousands
-    } else {
-      return `$${value.toFixed(2)}`; // Smaller values
+  const [loadingStates, setLoadingStates] = useState<ComponentLoadingState>({
+    market: !cachedData.marketData.data,
+    fearGreed: !cachedData.fearGreedData.data,
+    wallets: !cachedData.wallets.data,
+    cglsScrapeData: !cachedData.cglsScrapeData.data,
+    TokenOverviewData: !cachedData.TokenOverviewData.data,
+    cgCategories: !cachedData.cgCategories.data
+  });
+
+  // Map cache keys to state keys
+  const STATE_KEY_MAP = {
+    MARKET: 'marketData',
+    FEAR_GREED: 'fearGreedData',
+    WALLETS: 'wallets',
+    CGLS: 'cglsScrapeData',
+    TOKENS: 'TokenOverviewData',
+    CG_CATAGORIES: 'cgCategories'
+  } as const;
+
+  const fetchData = async (
+    endpoint: string,
+    cacheKey: keyof typeof CACHE_KEYS,
+    loadingKey: keyof ComponentLoadingState,
+    expirationMinutes: number = 5
+  ) => {
+    // If already fetching this endpoint, skip
+    if (activeFetches.current.has(endpoint)) {
+      return null;
     }
-  }
+
+    const stateKey = STATE_KEY_MAP[cacheKey];
+    const timestamp = overviewData[stateKey].timestamp || 0;
+    const shouldFetch = loadingStates[loadingKey] || isDataExpired(timestamp, expirationMinutes);
+
+    if (shouldFetch) {
+      try {
+        activeFetches.current.add(endpoint);
+        const response = await fetch(endpoint);
+        const data = await response.json();
+
+        if (!data || data.detail) {
+          return null;
+        }
+
+        const newCacheData = {
+          data: data,
+          timestamp: Date.now()
+        };
+
+        // Store in localStorage
+        localStorage.setItem(CACHE_KEYS[cacheKey], JSON.stringify(newCacheData));
+
+        // Update loading state
+        setLoadingStates(prev => ({ ...prev, [loadingKey]: false }));
+
+        return { key: stateKey, data: newCacheData };
+      } catch (error) {
+        console.error(`Error fetching ${cacheKey}:`, error);
+        return null;
+      } finally {
+        activeFetches.current.delete(endpoint);
+      }
+    }
+    return null;
+  };
+
+  const updateExpiredData = async () => {
+    const fetchPromises = [
+      fetchData(API_ENDPOINTS.MARKET, "MARKET", 'market'),
+      fetchData(API_ENDPOINTS.FEAR_GREED, 'FEAR_GREED', 'fearGreed'),
+      fetchData(API_ENDPOINTS.WALLETS, 'WALLETS', 'wallets'),
+      fetchData(API_ENDPOINTS.CGLS, 'CGLS', 'cglsScrapeData'),
+      fetchData(API_ENDPOINTS.TOKEN_OVERVIEW, 'TOKENS', 'TokenOverviewData'),
+      fetchData(API_ENDPOINTS.CG_CATAGORIES, 'CG_CATAGORIES', 'cgCategories')
+    ];
+
+    const results = await Promise.all(fetchPromises);
+
+    // Filter out null results and update state in one batch
+    const validResults = results.filter(result => result !== null);
+    if (validResults.length > 0) {
+      setOverviewData(prev => {
+        const newState = { ...prev };
+        validResults.forEach(result => {
+          if (result) {
+            newState[result.key] = result.data;
+          }
+        });
+        return newState;
+      });
+    }
+  };
+
+  useEffect(() => {
+    updateExpiredData();
+    const intervalId = setInterval(updateExpiredData, 60000); // Check every minute
+
+    return () => {
+      clearInterval(intervalId);
+      activeFetches.current.clear();
+    };
+  }, []);
+
   return (
     <div className="default-page">
       <div className="overview-page-header">
@@ -101,59 +200,30 @@ const Overview: React.FC = () => {
           <CustomNavbar />
         </div>
         <div>
-          <CryptoStats cryptoStats={marketData} />
+          <CryptoStatsBar
+            cryptoStats={overviewData.marketData.data}
+            feargreeddata={overviewData.fearGreedData.data}
+            isLoading={{
+              market: loadingStates.market,
+              fearGreed: loadingStates.fearGreed
+            }}
+          />
         </div>
       </div>
       <div className="page-content">
         <div className="overview-wrapper">
           <div className="main-content">
-            <div className="dashboard-grid">
-              <div className="dashboard-grid-item">
-                <MetricCard
-                  title="Total Market Cap"
-                  value={`${formatCurrency(marketData.data.quote.USD.total_market_cap)}`}
-                  change={`${marketData.data.quote.USD.total_market_cap_yesterday_percentage_change.toFixed(2)}%`}
-                />
-              </div>
-              <div className="dashboard-grid-item">
-                <MetricCard
-                  title="Altcoin Market Cap"
-                  value={`${formatCurrency(marketData.data.quote.USD.altcoin_market_cap)}`}
-                />
-              </div>
-              <div className="dashboard-grid-item">
-                <MetricCard
-                  title="Bitcoin Market Cap"
-                  value={`${formatCurrency(tokenData.quote.USD.market_cap)}`}
-                  change="2.61%"
-                />
-              </div>
-              <div className="dashboard-grid-item">
-                <MetricCard
-                  title="Bitcoin Dominance"
-                  value={`${marketData.data.btc_dominance.toFixed(2)}%`}
-                  change={`${marketData.data.btc_dominance_24h_percentage_change.toFixed(2)}%`}
-                />
-              </div>
-              <div className="dashboard-grid-item">
-                <MetricCard
-                  title="Trading Volume"
-                  value={`${formatCurrency(marketData.data.quote.USD.total_volume_24h)}`}
-                  change={`${marketData.data.quote.USD.total_volume_24h_yesterday_percentage_change.toFixed(2)}%`}
-                />
-              </div>
-              <div className="dashboard-grid-item">
-                <MetricCard
-                  title="Defi Market Cap"
-                  value={`${formatCurrency(marketData.data.quote.USD.defi_market_cap)}`}
-                  change={`${marketData.data.quote.USD.defi_24h_percentage_change.toFixed(2)}%`}
-                />
-              </div>
-            </div>
-            <AssetBreakdown name={'Total Assets'} assets={assetsPortfolio1} />
-          </div>
-          <div className="catagorie-overview">
-            <CryptoCategoriesSidebar categories={testCategories} />
+            <section className="coinglass-data-bar">
+              <CoinglassMetricsBar data={overviewData.cglsScrapeData.data} isLoading={loadingStates.cglsScrapeData} />
+              <TotalWorth
+                wallets={overviewData.wallets.data}
+                isLoading={loadingStates.wallets}
+              />
+            </section>
+            <section className="overview-token-table">
+              <OverviewTokensTable tokens={overviewData.TokenOverviewData.data} isLoading={loadingStates.TokenOverviewData} />
+              <CryptoCategoriesSidebar categories={overviewData.cgCategories.data} isLoading={loadingStates.cgCategories} />
+            </section>
           </div>
         </div>
       </div>

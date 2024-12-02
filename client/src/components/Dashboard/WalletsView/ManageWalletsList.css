@@ -1,62 +1,209 @@
-.manage-wallets {
-    background-color: white;
-    max-width: 600px;
-    width: 400px;
-    margin: 0 auto;
-    padding: 20px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-  }
+.wallet-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
 
-  h2 {
-    margin-top: 0;
-    color: #333;
-  }
+.wallet-item {
+  background: white;
+  margin-bottom: 10px;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
 
-  .wallet-list {
-    list-style-type: none;
-    padding: 0;
-  }
+.wallet-info {
+  margin-bottom: 10px;
+}
 
-  .wallet-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 0;
-    border-bottom: 1px solid #eee;
-  }
+.wallet-info h3 {
+  margin: 0 0 5px 0;
+  color: #333;
+}
 
-  .wallet-info h3 {
-    margin: 0 0 5px 0;
-    font-size: 18px;
-    color: #333;
-  }
+.wallet-info p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
 
-  .wallet-info p {
-    margin: 0;
-    font-size: 14px;
-    color: #666;
-  }
+.wallet-actions {
+  display: flex;
+  gap: 10px;
+}
 
-  .wallet-actions {
-    display: flex;
-    gap: 10px;
-  }
+.edit-btn, .remove-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
 
-  .edit-btn, .remove-btn {
-    padding: 5px 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-  }
+.edit-btn {
+  background-color: #007bff;
+  color: white;
+}
 
-  .edit-btn {
-    background-color: #007bff;
-    color: white;
-  }
+.remove-btn {
+  background-color: #dc3545;
+  color: white;
+}
 
-  .remove-btn {
-    background-color: #dc3545;
-    color: white;
-  }
+.edit-section {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #ddd;
+}
+
+.edit-field {
+  margin-bottom: 15px;
+}
+
+.full-address {
+  margin-bottom: 15px;
+}
+
+.full-address label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.full-address p {
+  margin: 0;
+  color: #666;
+  font-family: monospace;
+  background: #f5f5f5;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.edit-field label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.edit-field input, .edit-field select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.color-boxes {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.color-box {
+  width: calc(33.33% - 7px);
+  height: 40px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+  border: 2px solid transparent;
+}
+
+.color-box:hover {
+  transform: translateY(-2px);
+}
+
+.color-box.selected {
+  border-color: #333;
+}
+
+.color-label {
+  color: white;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.char-count {
+  font-size: 12px;
+  color: #666;
+  text-align: right;
+  margin: 5px 0 0 0;
+}
+
+.info-text {
+  font-size: 12px;
+  color: #666;
+  margin: 5px 0 0 0;
+  line-height: 1.4;
+}
+
+.save-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.save-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #dc3545;
+  margin: 10px 0;
+  font-size: 14px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  min-width: 300px;
+}
+
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.loading-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

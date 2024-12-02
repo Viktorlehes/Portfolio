@@ -1,87 +1,91 @@
 import React from 'react';
-import { CryptoCategory } from '../../data/dashboarddata';
-import './CryptoCatagorieList.css'
+import './CryptoCatagorieList.css';
+import { components } from '../../types/api-types';
+import { formatCurrencySuffix } from '../../utils/calc';
 
-interface CryptoCategoriesSidebarProps {
-  categories: CryptoCategory[];
+type CategoryResponse = components['schemas']['CategoryResponse'];
+
+interface CryptoCategoriesListProps {
+  categories: CategoryResponse | null;
+  isLoading: boolean;
 }
 
-const CryptoCategoriesSidebar: React.FC<CryptoCategoriesSidebarProps> = ({ categories }) => {
-  
-  const sortedCategories = categories
-    .sort((a, b) => parseFloat(b.change24h) - parseFloat(a.change24h));
+interface CategoryRowProps {
+  category: CategoryResponse[0];
+  onClick: (id: string) => void;
+}
+
+const CategoryRow: React.FC<CategoryRowProps> = ({ category, onClick }) => {
+  const getChangeIntensity = (change: number): number => {
+    const absChange = Math.abs(change);
+    if (absChange < 1) return 1;
+    if (absChange < 2) return 2;
+    if (absChange < 5) return 3;
+    if (absChange < 10) return 4;
+    return 5;
+  };
+
+  const getChangeClass = (change: number) => {
+    const direction = change >= 0 ? 'positive' : 'negative';
+    const intensity = getChangeIntensity(change);
+    return `change-cell change-cell-${direction} intensity-${intensity}`;
+  };
 
   return (
-    <div className="crypto-categories-sidebar">
-      <h2>Categories</h2>
-      <div className="category-list">
-        <div className="category-header">
-          <span>Category</span>
-          <span>24h</span>
-          <span>7d</span>
-          <span># of coins</span>
-        </div>
-        {sortedCategories.map((category, index) => (
-          <div key={index} className="category-item">
-            <span>{category.category}</span>
-            <span className={parseFloat(category.change24h) >= 0 ? 'positive' : 'negative'}>{category.change24h}</span>
-            <span className={parseFloat(category.change7d) >= 0 ? 'positive' : 'negative'}>{category.change7d}</span>
-            <span>{category.numberOfCoins}</span>
-          </div>
-        ))}
+    <tr className="category-row" onClick={() => onClick(category.id)}>
+      <td>{category.name}</td>
+      <td className={getChangeClass(category.market_cap_change_24h)}>
+        {category.market_cap_change_24h > 0 ? '+' : ''}
+        {category.market_cap_change_24h.toFixed(2)}%
+      </td>
+      <td className="market-cap-cell">
+        {formatCurrencySuffix(category.market_cap)}
+      </td>
+      <td className="volume-cell">
+        {formatCurrencySuffix(category.volume_24h)}
+      </td>
+    </tr>
+  );
+};
+
+export const CryptoCategoriesList: React.FC<CryptoCategoriesListProps> = ({ 
+  categories, 
+  isLoading 
+}) => {
+  const handleRedirect = (id: string) => {
+    window.open(`https://www.coingecko.com/en/categories/${id}`, '_blank');
+  };
+
+  const sortedCategories = React.useMemo(() => {
+    if (!categories) return [];
+    return [...categories].sort((a, b) => b.market_cap - a.market_cap);
+  }, [categories]);
+
+  return (
+    <div className="table-container categories-container">
+      <div className="table-scroll">
+        <table className="tokens-table categories-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>24h%</th>
+              <th>Mc</th>
+              <th>Vol</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!isLoading && categories && sortedCategories.map((category, index) => (
+              <CategoryRow 
+                key={index} 
+                category={category} 
+                onClick={handleRedirect}
+              />
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 };
 
-export default CryptoCategoriesSidebar;
-
-
-
-// import React from 'react';
-// import { CryptoCategory } from '../../data/dashboarddata';
-// import './CryptoCatagorieList.css'
-
-// interface CryptoCategoriesSidebarProps {
-//   categories: CryptoCategory[];
-// }
-
-// const CryptoCategoriesSidebar: React.FC<CryptoCategoriesSidebarProps> = ({ categories }) => {
-//   const topEarners = categories.filter(cat => parseFloat(cat.change24h) >= 0)
-//     .sort((a, b) => parseFloat(b.change24h) - parseFloat(a.change24h))
-//     .slice(0, 5);
-
-//   const topLosers = categories.filter(cat => parseFloat(cat.change24h) < 0)
-//     .sort((a, b) => parseFloat(a.change24h) - parseFloat(b.change24h))
-//     .slice(0, 5);
-
-//   const CategoryList: React.FC<{ categories: CryptoCategory[], title: string }> = ({ categories, title }) => (
-//     <div className="category-list">
-//       <h3>{title}</h3>
-//       <div className="category-header">
-//         <span>Category</span>
-//         <span>24h</span>
-//         <span>7d</span>
-//         <span># of coins</span>
-//       </div>
-//       {categories.map((category, index) => (
-//         <div key={index} className="category-item">
-//           <span>{category.category}</span>
-//           <span className={parseFloat(category.change24h) >= 0 ? 'positive' : 'negative'}>{category.change24h}</span>
-//           <span className={parseFloat(category.change7d) >= 0 ? 'positive' : 'negative'}>{category.change7d}</span>
-//           <span>{category.numberOfCoins}</span>
-//         </div>
-//       ))}
-//     </div>
-//   );
-
-//   return (
-//     <div className="crypto-categories-sidebar">
-//       <h2>Categories</h2>
-//       <CategoryList categories={topEarners} title="Top Earners" />
-//       <CategoryList categories={topLosers} title="Top Losers" />
-//     </div>
-//   );
-// };
-
-// export default CryptoCategoriesSidebar;
+export default CryptoCategoriesList;

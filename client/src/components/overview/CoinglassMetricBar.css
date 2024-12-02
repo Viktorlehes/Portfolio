@@ -1,0 +1,87 @@
+.cgm-container {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    background: white;
+    border-radius: 2px;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.046);
+    margin-bottom: 10px;
+    width: 100%;
+  }
+  
+  .cgm-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .cgm-metric-item{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 24px;
+    border-right: 1px solid #eee;
+  }
+  
+  .cgm-metric-item:last-child {
+    border-right: none;
+  }
+
+  .cgm-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: end;
+    min-height: 25px;
+  }
+
+  .cgm-title div {
+    color: #666;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-align: center;    
+  }
+  
+  .cgm-subtitle {
+    color: #666;
+    font-size: 10px;
+    margin-top: 2px;
+  }
+  
+  .cgm-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin: 4px 0;
+  }
+  
+  .cgm-change {
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .cgm-positive {
+    color: #22c55e;
+  }
+  
+  .cgm-negative {
+    color: #ef4444;
+  }
+  
+  .cgm-loading {
+    width: 100%;
+    height: 96px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }

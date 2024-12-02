@@ -1,50 +1,59 @@
-.crypto-categories-sidebar {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  background-color: white;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-.category-list {
-  margin-bottom: 30px;
+/* CryptoCategoriesList.css */
+.categories-container {
+  max-width: 370px;
+  min-width: 290px;
 }
 
-.category-header, .category-item {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid #e0e0e0;
-  align-items: center;
+.categories-table {
+  font-size: 14px;
 }
 
-.category-header {
-  font-weight: bold;
+.categories-table th {
+  padding: 8px 12px;
+  text-align: right;
+  font-weight: 500;
   color: #666;
-  font-size: 0.9em;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  background: white;
 }
 
-
-.category-item:nth-child(even) {
-  background-color: #f9f9f9;
+.categories-table th:first-child {
+  text-align: left;
 }
 
-.top-gainers img {
-  width: 20px;
-  height: 20px;
-  margin-right: 5px;
+.category-row {
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  height: 48px;
 }
 
-.positive {
-  color: #2ecc40;
+.category-row:last-child {
+  border-bottom: none;
 }
 
-.negative {
-  color: #ff4136;
+.category-row td {
+  padding: 8px 12px;
+  text-align: right;
+  
 }
 
-h2, h3 {
-  margin-bottom: 15px;
+.category-row td:first-child {
+  text-align: left;
+  font-weight: 500;
+  color: #333;
+}
+
+.market-cap-cell,
+.volume-cell {
+  font-weight: 500;
+  color: #333;
+}
+
+@media (hover: hover) {
+  .category-row:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
 }
