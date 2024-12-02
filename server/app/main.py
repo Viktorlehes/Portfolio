@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import motor.motor_asyncio
-from app.routers import overview, bundles, dashboard
+from routers import overview, bundles, dashboard
 import os
 from requests import Request, Session
 from .schemas.full_token import FullCMCToken
