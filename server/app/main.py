@@ -3,11 +3,11 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import motor.motor_asyncio
-from routers import overview, bundles, dashboard
 import os
 from requests import Request, Session
-from .schemas.full_token import FullCMCToken
-from .schemas.token import Token
+from app.routers import overview, bundles, dashboard
+from app.schemas.full_token import FullCMCToken
+from app.schemas.token import Token
 from pymongo import UpdateOne
 import asyncio
 import math

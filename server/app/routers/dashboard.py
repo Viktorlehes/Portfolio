@@ -1,3 +1,4 @@
+#Dashboard.py
 from fastapi import APIRouter, Response, status
 import httpx
 from dotenv import load_dotenv
@@ -5,14 +6,14 @@ import os
 import motor.motor_asyncio
 from bson import ObjectId
 from fastapi import HTTPException 
-from ..schemas.token import Token
-from ..schemas.wallet import Wallet
+from schemas.wallet import Wallet
 from pydantic import BaseModel
 from typing import List, Tuple, Optional, Dict
 from datetime import datetime, timedelta
-from ..schemas.wallet import Wallet, WalletMode, PositionType, Token, DefiPosition, FullToken, BasePosition, Quantity, Changes
-from ..schemas.full_token import FullCMCToken
-from ..schemas.zeriontoken import ZerionToken, AssetLinks, AssetData, AssetRelationships, AssetAttributes, IconData, Flags, MarketData, MarketChanges, ExternalLink, Implementation, ChartRelation, ChartRelationData, ChartRelationLinks
+from app.schemas.token import Token
+from app.schemas.wallet import Wallet, WalletMode, PositionType, Token, DefiPosition, FullToken, BasePosition, Quantity, Changes
+from app.schemas.full_token import FullCMCToken
+from app.schemas.zeriontoken import ZerionToken, AssetLinks, AssetData, AssetRelationships, AssetAttributes, IconData, Flags, MarketData, MarketChanges, ExternalLink, Implementation, ChartRelation, ChartRelationData, ChartRelationLinks
 
 load_dotenv()
 coinmarket_api_key = os.getenv("CM_API_KEY")
