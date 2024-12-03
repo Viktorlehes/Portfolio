@@ -4,9 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import overview, dashboard, tokens, wallets
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from fastapi import Depends
 
 # Utils
 from app.utils.token_updates import update_all_tokens 
+from app.core.auth import verify_api_key
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,10 +40,10 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(overview.router, prefix="/overview", tags=["Overview"])
-app.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
-app.include_router(tokens.router, prefix="/tokens", tags=["Tokens"])
-app.include_router(wallets.router, prefix="/wallets", tags=["Wallets"])
+app.include_router(overview.router, prefix="/overview", tags=["Overview"], dependencies=[Depends(verify_api_key)])
+app.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"], dependencies=[Depends(verify_api_key)])
+app.include_router(tokens.router, prefix="/tokens", tags=["Tokens"], dependencies=[Depends(verify_api_key)])
+app.include_router(wallets.router, prefix="/wallets", tags=["Wallets"], dependencies=[Depends(verify_api_key)])
 
 if __name__ == "__main__":
     import uvicorn

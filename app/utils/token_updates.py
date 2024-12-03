@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from pymongo import UpdateOne
 
 from app.core.db import tokens_collection  # Move DB setup to core/db.py
-from app.core.config import CM_API_KEY, CG_API_KEY  # Move env vars to core/config.py
+from app.core.config import CM_API_KEY, CG_DEMO_API_KEY  # Move env vars to core/config.py
 
 async def update_all_tokens():
     url = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest'
@@ -115,7 +115,7 @@ async def update_all_tokens():
 
         headers = {
             "accept": "application/json",
-            "x-cg-demo-api-key": CG_API_KEY
+            "x-cg-demo-api-key": CG_DEMO_API_KEY
         }
 
         session = Session()

@@ -9,6 +9,7 @@ import CoinglassMetricsBar from "../../components/overview/CoinglassMetricBar";
 import TotalWorth from "../../components/overview/TotalWorth";
 import { getCachedData, isDataExpired } from "../../utils/api";
 import { OverviewTokensTable } from "../../components/overview/OverviewTokensTable";
+import { api } from "../../utils/api";
 
 type MarketData = components["schemas"]["MarketDataResponse"];
 type FearGreedResponse = components["schemas"]["FearGreedResponse"];
@@ -50,12 +51,12 @@ const CACHE_KEYS = {
 } as const;
 
 const API_ENDPOINTS = {
-  MARKET: 'http://127.0.0.1:8000/overview/cryptostats',
-  FEAR_GREED: 'http://127.0.0.1:8000/overview/feargreedindex',
-  WALLETS: 'http://127.0.0.1:8000/wallets/get_wallets',
-  CGLS: 'http://127.0.0.1:8000/overview/get-scraped-CGLS-data',
-  TOKEN_OVERVIEW: 'http://127.0.0.1:8000/overview/overview-tokens-table-data',
-  CG_CATAGORIES: 'http://127.0.0.1:8000/overview/get-crypto-catagories',
+  MARKET: '/overview/cryptostats',
+  FEAR_GREED: '/overview/feargreedindex',
+  WALLETS: '/wallets/get_wallets',
+  CGLS: '/overview/get-scraped-CGLS-data',
+  TOKEN_OVERVIEW: '/overview/overview-tokens-table-data',
+  CG_CATAGORIES: '/overview/get-crypto-catagories',
 } as const;
 
 export const overviewLoader: LoaderFunction = () => {
@@ -126,8 +127,7 @@ const Overview: React.FC = () => {
     if (shouldFetch) {
       try {
         activeFetches.current.add(endpoint);
-        const response = await fetch(endpoint);
-        const data = await response.json();
+        const data = await api.get(endpoint);
 
         if (!data || data.detail) {
           return null;

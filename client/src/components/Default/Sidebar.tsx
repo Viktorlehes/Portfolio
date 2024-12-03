@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Wallet, PanelsTopLeft, HandCoins } from "lucide-react";
+import { LayoutDashboard, PanelsTopLeft, HandCoins } from "lucide-react";
 import "./Sidebar.css";
 
 const Sidebar: React.FC = () => {
@@ -12,8 +12,8 @@ const Sidebar: React.FC = () => {
     { icon: PanelsTopLeft, text: "Overview", path: "/" },
     { icon: LayoutDashboard, text: "Dashboard", path: "/Dashboard" },
     { icon: HandCoins, text: "Defi", path: "/Defi" },
-    { icon: Wallet, text: "Bundles", path: "/Bundles" },
   ];
+  
   return (
     <div className="sidebar">
       <div className="sidebar-header">

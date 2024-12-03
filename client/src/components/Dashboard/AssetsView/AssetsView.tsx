@@ -12,6 +12,7 @@ import { CircleDollarSign } from 'lucide-react';
 import LoadingOverlay from "../../Default/LoadingOverlay";
 import { useNavigate } from "react-router-dom";
 import { getCachedData, isDataExpired } from "../../../utils/api";
+import { api } from "../../../utils/api";
 
 type Wallet = components['schemas']['Wallet'];
 type FullToken = components['schemas']['FullToken'];
@@ -26,7 +27,7 @@ const CACHE_KEYS = {
 } as const;
 
 const API_ENDPOINTS = {
-  CHARTS: 'http://127.0.0.1:8000/dashboard/charts'
+  CHARTS: '/dashboard/charts'
 } as const;
 
 interface AssetViewProps {
@@ -153,17 +154,10 @@ const AssetsView: React.FC<AssetViewProps> = ({ wallets, isLoading }) => {
       fetchingRef.current.add(fungible_id);
 
       try {
-        const response = await fetch(API_ENDPOINTS.CHARTS, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ fungible_id }),
-        });
-
-        if (!response.ok) throw new Error('Network response was not ok');
-
-        const chartData = await response.json();
+        const chartData = await api.post(
+          API_ENDPOINTS.CHARTS,  // Update this path to match your API_ENDPOINTS.CHARTS
+          { fungible_id }
+        );
 
         setChartState(prev => {
           const newState = {

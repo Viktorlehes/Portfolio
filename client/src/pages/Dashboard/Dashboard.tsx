@@ -8,7 +8,9 @@ import WalletsView from "../../components/Dashboard/WalletsView/WalletsView"
 import AssetsView from '../../components/Dashboard/AssetsView/AssetsView'
 import ManageWallets from "./ManageWallets";
 import { isDataExpired, getCachedData } from "../../utils/api";
+import { api } from "../../utils/api";
 import "./Dashboard.css";
+
 
 type Wallet = components["schemas"]["Wallet"];
 
@@ -34,7 +36,7 @@ const CACHE_KEYS = {
 } as const;
 
 const API_ENDPOINTS = {
-  WALLETS: 'http://127.0.0.1:8000/wallets/get_wallets',
+  WALLETS: '/wallets/get_wallets',
 } as const;
 
 export const dashboardLoader: LoaderFunction = async () => {
@@ -65,11 +67,10 @@ const Dashboard: React.FC = () => {
   const updateExpiredData = async () => {
     const updates: Promise<void>[] = [];
     const newData = { ...dashboardData };
-
+  
     if (loadingStates.wallets || isDataExpired(dashboardData.wallets.timestamp || 0)) {
       updates.push(
-        fetch(API_ENDPOINTS.WALLETS)
-          .then(res => res.json())
+        api.get(API_ENDPOINTS.WALLETS)
           .then(wallets => {
             newData.wallets = {
               data: wallets,
@@ -78,11 +79,20 @@ const Dashboard: React.FC = () => {
             localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify(newData.wallets));
             setLoadingStates(prev => ({ ...prev, wallets: false }));
           })
+          .catch(error => {
+            console.error('Error fetching wallets:', error);
+            setLoadingStates(prev => ({ ...prev, wallets: false }));
+          })
       );
     }
+  
     if (updates.length > 0) {
-      await Promise.all(updates);
-      setDashboardData(newData);
+      try {
+        await Promise.all(updates);
+        setDashboardData(newData);
+      } catch (error) {
+        console.error('Error updating data:', error);
+      }
     }
   };
 
@@ -119,16 +129,10 @@ const Dashboard: React.FC = () => {
 
   const handleDeleteWallet = async (address: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/dashboard/manage/delete_wallet/${address}`, {
-        method: 'DELETE',
-      });
-
-      if (response.status !== 204) {
-        throw new Error('Failed to delete wallet');
-      }
-
+      await api.delete(`/dashboard/manage/delete_wallet/${address}`);
+      
       const updatedWallets = dashboardData.wallets.data.filter(wallet => wallet.address !== address);
-
+      
       setDashboardData(prevData => ({
         ...prevData,
         wallets: {
@@ -136,12 +140,12 @@ const Dashboard: React.FC = () => {
           timestamp: Date.now()
         }
       }));
-
+  
       localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
         data: updatedWallets,
         timestamp: Date.now()
       }));
-
+  
       return { success: true };
     } catch (error) {
       console.error('Error deleting wallet:', error);
@@ -150,50 +154,45 @@ const Dashboard: React.FC = () => {
   };
 
   const handleAddWallet = async (address: string, name: string, color: string, walletType: string) => {
+    // Check if wallet exists locally
     const walletExists = dashboardData.wallets.data.some(wallet => wallet.address === address);
-
     if (walletExists) {
       return { success: false, error: 'Wallet already exists' };
     }
-
+  
     try {
-      const response = await fetch(`http://127.0.0.1:8000/dashboard/manage/new_wallet/${address}`, {
-        method: 'POST',
-        body: JSON.stringify({ name, color, mode: walletType }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const newWallet = await response.json() as Wallet;
-
-        // Create new array with updated data
-        const updatedWallets = [...dashboardData.wallets.data, newWallet];
-
-        // Update state
-        setDashboardData(prevData => ({
-          ...prevData,
-          wallets: {
-            data: updatedWallets,
-            timestamp: Date.now()
-          }
-        }));
-
-        // Update localStorage
-        localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
-          data: updatedWallets, // Use the new array, not spread operator
+      const newWallet = await api.post(
+        `/dashboard/manage/new_wallet/${address}`,
+        { name, color, mode: walletType }
+      ) as Wallet;
+  
+      // Create new array with updated data
+      const updatedWallets = [...dashboardData.wallets.data, newWallet];
+  
+      // Update state
+      setDashboardData(prevData => ({
+        ...prevData,
+        wallets: {
+          data: updatedWallets,
           timestamp: Date.now()
-        }));
-
-        return { success: true };
-      } else {
-        const errorMessage = response.status === 500 ?
-          'Server error: Unable to process your request' :
-          'An unexpected error occurred';
-        return { success: false, error: errorMessage };
-      }
+        }
+      }));
+  
+      // Update localStorage
+      localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
+        data: updatedWallets,
+        timestamp: Date.now()
+      }));
+  
+      return { success: true };
     } catch (error) {
+      console.error('Error adding wallet:', error);
+      // Provide more specific error messages based on the error type
+      if (error instanceof Error) {
+        if (error.message.includes('500')) {
+          return { success: false, error: 'Server error: Unable to process your request' };
+        }
+      }
       return { success: false, error: 'Network error: Unable to connect to server' };
     }
   };
@@ -204,33 +203,20 @@ const Dashboard: React.FC = () => {
       color: wallet.color,
       mode: wallet.wallet_mode
     };
-
+  
     console.log('Updating wallet:', wallet.address);
-
+  
     try {
-      const response = await fetch(`http://127.0.0.1:8000/dashboard/manage/update_wallet/${wallet.address}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateData)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        return {
-          success: false,
-          error: errorData.detail || 'Failed to update wallet'
-        };
-      }
-
-      const data: Wallet = await response.json();
-
+      const data = await api.put(
+        `/dashboard/manage/update_wallet/${wallet.address}`,
+        updateData
+      ) as Wallet;
+  
       // Create updated wallets array
       const updatedWallets = dashboardData.wallets.data.map(w =>
         w.address === data.address ? data : w
       );
-
+  
       // Update state
       setDashboardData(prevWallets => ({
         ...prevWallets,
@@ -239,15 +225,28 @@ const Dashboard: React.FC = () => {
           timestamp: Date.now()
         }
       }));
-
+  
       // Update localStorage with the new array
       localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
         data: updatedWallets,
         timestamp: Date.now()
       }));
-
+  
       return { success: true };
     } catch (error) {
+      console.error('Error updating wallet:', error);
+      
+      // Handle different types of errors
+      if (error instanceof Error) {
+        const errorMessage = error.message;
+        if (errorMessage.includes('detail')) {
+          return {
+            success: false,
+            error: errorMessage
+          };
+        }
+      }
+  
       return {
         success: false,
         error: 'Network error: Unable to connect to server'

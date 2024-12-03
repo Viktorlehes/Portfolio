@@ -55,7 +55,7 @@ async def get_wallets():
         for index, wallet in enumerate(wallets):
             last_updated = wallet['last_updated']
 
-            print(f'Updating wallet {index}/{len(wallets)}')
+            print(f'Updating wallet {index+1}/{len(wallets)}')
 
             if (current_time - last_updated) > timedelta(minutes=5):
 

@@ -9,6 +9,7 @@ import { formatCurrency, formatPercent, formatNumber } from "../../utils/calc";
 import { getCachedData, isDataExpired } from "../../utils/api";
 import LoadingOverlay from "../../components/Default/LoadingOverlay";
 import { ExtendedDefiPosition } from "../Defi/Defi";
+import { api } from "../../utils/api";
 
 type Wallet = components["schemas"]["Wallet"];
 type FullToken = components["schemas"]["FullToken"];
@@ -24,7 +25,7 @@ const CACHE_KEYS = {
 } as const;
 
 const API_ENDPOINTS = {
-    WALLETS: 'http://127.0.0.1:8000/dashboard/wallets',
+    WALLETS: '/dashboard/wallets',
 } as const;
 
 interface LoaderData {
@@ -139,25 +140,26 @@ const SingleWalletView: React.FC = () => {
     useEffect(() => {
         const updateWalletData = async () => {
             if (isDataExpired(wallets.timestamp || 0)) {
-                setLoadingStates(prev => ({ ...prev, wallets: true }));
-                console.log('Wallets Loading:', loadingStates.wallets );
-                
-                try {
-                    const response = await fetch(API_ENDPOINTS.WALLETS);
-                    const newWallets: Wallet[] = await response.json();
-                    localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
-                        data: newWallets,
-                        timestamp: Date.now()
-                    }));
-                    setcachedWalletWallet(newWallets.find(wallet => wallet.address === walletAddress) || null);
-                } catch (error) {
-                    console.error('Error updating wallets:', error);
-                } finally {
-                    setLoadingStates(prev => ({ ...prev, wallets: false }));
-                    console.log('Wallets Loading:', loadingStates.wallets );
-                }
+              setLoadingStates(prev => ({ ...prev, wallets: true }));
+              console.log('Wallets Loading:', loadingStates.wallets);
+          
+              try {
+                const newWallets: Wallet[] = await api.get(API_ENDPOINTS.WALLETS);
+          
+                localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
+                  data: newWallets,
+                  timestamp: Date.now()
+                }));
+          
+                setcachedWalletWallet(newWallets.find(wallet => wallet.address === walletAddress) || null);
+              } catch (error) {
+                console.error('Error updating wallets:', error);
+              } finally {
+                setLoadingStates(prev => ({ ...prev, wallets: false }));
+                console.log('Wallets Loading:', loadingStates.wallets);
+              }
             }
-        };
+          };
         updateWalletData();
         const intervalId = setInterval(updateWalletData, 60000);
         return () => clearInterval(intervalId);

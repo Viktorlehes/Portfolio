@@ -6,7 +6,6 @@ import App from "./App";
 import Login from "./pages/misc/Login";
 import Overview, { overviewLoader } from "./pages/Overview/Overview";
 import Dashboard, { dashboardLoader } from "./pages/Dashboard/Dashboard";
-import Bundles from "./pages/Bundles/Bundles";
 import SingleWalletView, { walletLoader } from "./pages/Dashboard/SingleWalletView";
 import SingleAssetView from "./pages/Dashboard/SingleAssetView";
 import { assetLoader } from "./pages/Dashboard/SingleAssetLoader";
@@ -60,14 +59,6 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         loader: defiLoader,
-      },
-      {
-        path: "Bundles",
-        element: (
-          <ProtectedRoute>
-            <Bundles />
-          </ProtectedRoute>
-        ),
       },
     ],
   },

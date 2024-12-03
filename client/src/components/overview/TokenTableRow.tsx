@@ -11,7 +11,7 @@ interface TokenTableRowProps {
 
 export const TokenTableRow: React.FC<TokenTableRowProps> = ({ data }) => {
     const formatPercentage = (value: number) => {
-        return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+        return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
     };
 
     const formatNetFlow = (value: number) => {

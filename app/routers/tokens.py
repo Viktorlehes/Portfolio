@@ -19,7 +19,7 @@ from app.utils.formatters import format_zerion_token
 
 # Environment variables
 from app.core.config import CM_API_KEY
-from app.core.config import CG_API_KEY
+from app.core.config import CG_DEMO_API_KEY
 from app.core.config import ZERION_API_KEY
 
 # DB
@@ -307,7 +307,7 @@ async def get_token_via_chain(chain: str, token_address: str):
 
     headers = {
     "accept": "application/json",
-    "x-cg-demo-api-key": CG_API_KEY
+    "x-cg-demo-api-key": CG_DEMO_API_KEY
     }
 
     session = Session()

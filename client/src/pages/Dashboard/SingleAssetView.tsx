@@ -9,6 +9,7 @@ import { formatCurrency, formatNumber, formatPercent } from '../../utils/calc';
 import { isDataExpired } from '../../utils/api';
 import { RefreshCcw } from 'lucide-react';
 import { formatCurrencySuffix } from '../../utils/calc';
+import { api } from '../../utils/api';
 
 type Wallet = components["schemas"]["Wallet"];
 type FullToken = components["schemas"]["FullToken"];
@@ -20,7 +21,7 @@ interface CachedData<T> {
 }
 
 const API_ENDPOINTS = {
-    WALLETS: 'http://127.0.0.1:8000/wallets/get_wallets',
+    WALLETS: '/wallets/get_wallets',
 } as const;
 
 const CACHE_KEYS = {
@@ -69,29 +70,11 @@ interface LoadingStates {
 }
 
 async function fetchZerionToken(fungible_id: string): Promise<ZerionToken> {
-    const response = await fetch('http://127.0.0.1:8000/tokens/zerionToken', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fungible_id }),
-    });
-
-    if (!response.ok) throw new Error('Network response was not ok');
-    return response.json();
+    return api.post('/tokens/zerionToken', { fungible_id });
 }
 
 async function fetchChartData(fungible_id: string): Promise<allChartsData> {
-    const response = await fetch('http://127.0.0.1:8000/dashboard/allCharts', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fungible_id }),
-    });
-
-    if (!response.ok) throw new Error('Network response was not ok');
-    return response.json();
+    return api.post('/dashboard/allCharts', { fungible_id });
 }
 
 function getCachedChartData(fungible_id: string): allChartsData | null {
@@ -171,22 +154,24 @@ const SingleAssetView: React.FC = () => {
     useEffect(() => {
         const updateWalletData = async () => {
             if (isDataExpired(wallets.timestamp || 0)) {
-                setLoadingStates(prev => ({ ...prev, wallets: true }));
-                try {
-                    const response = await fetch(API_ENDPOINTS.WALLETS);
-                    const newWallets = await response.json();
-                    localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
-                        data: newWallets,
-                        timestamp: Date.now()
-                    }));
-                    setCurrentWallets(newWallets);
-                } catch (error) {
-                    console.error('Error updating wallets:', error);
-                } finally {
-                    setLoadingStates(prev => ({ ...prev, wallets: false }));
-                }
+              setLoadingStates(prev => ({ ...prev, wallets: true }));
+              
+              try {
+                const newWallets = await api.get(API_ENDPOINTS.WALLETS);
+                
+                localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
+                  data: newWallets,
+                  timestamp: Date.now()
+                }));
+                
+                setCurrentWallets(newWallets);
+              } catch (error) {
+                console.error('Error updating wallets:', error);
+              } finally {
+                setLoadingStates(prev => ({ ...prev, wallets: false }));
+              }
             }
-        };
+          };
         updateWalletData();
         const intervalId = setInterval(updateWalletData, 60000);
         return () => clearInterval(intervalId);

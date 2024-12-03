@@ -7,6 +7,7 @@ import "./Defi.css";
 import DefiPositions from "../../components/Dashboard/WalletView/DefiPositions";
 import { getCachedData, isDataExpired } from "../../utils/api";
 import LoadingOverlay from "../../components/Default/LoadingOverlay";
+import { api } from "../../utils/api";
 
 type Wallet = components["schemas"]["Wallet"];
 type DefiPosition = components["schemas"]["DefiPosition"];
@@ -26,7 +27,7 @@ const CACHE_KEYS = {
 } as const;
 
 const API_ENDPOINTS = {
-    WALLETS: 'http://127.0.0.1:8000/wallets/get_wallets',
+    WALLETS: '/wallets/get_wallets',
 } as const;
 
 interface LoaderData {
@@ -59,8 +60,8 @@ const DefiView: React.FC = () => {
                     setLoadingStates(prev => ({ ...prev, wallets: true }));
                 }
                 try {
-                    const response = await fetch(API_ENDPOINTS.WALLETS);
-                    const newWallets: Wallet[] = await response.json();
+                    const data = await api.get(API_ENDPOINTS.WALLETS);
+                    const newWallets: Wallet[] = await data.json();
                     localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
                         data: newWallets,
                         timestamp: Date.now()

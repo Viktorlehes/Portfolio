@@ -24,7 +24,7 @@ from app.schemas.market.Catagory_data import CategoryResponse
 from app.scripts.coinglass_scrape import APIResponse as CGLS_APIResponse, scrape_coinglass
 
 # Environment variables
-from app.core.config import CM_API_KEY, CG_API_KEY, CGLS_API_KEY
+from app.core.config import CM_API_KEY, CG_DEMO_API_KEY, CGLS_API_KEY
 
 # MongoDB setup
 from app.core.db import tokens_collection, coinglass_collection
@@ -338,7 +338,7 @@ async def get_crypto_catagories():
         
         headers = {
             'Accepts': 'application/json',
-            'x-cg-demo-api-key': CG_API_KEY
+            'x-cg-demo-api-key': CG_DEMO_API_KEY
         }
         
         response = await client.get(url, headers=headers)
@@ -356,7 +356,7 @@ async def get_crypto_catagories(catagory: str):
         
         headers = {
             'Accepts': 'application/json',
-            'x-cg-demo-api-key': CG_API_KEY
+            'x-cg-demo-api-key': CG_DEMO_API_KEY
         }
         
         response = await client.get(url, headers=headers)
