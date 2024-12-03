@@ -34,7 +34,7 @@ const CACHE_KEYS = {
 } as const;
 
 const API_ENDPOINTS = {
-  WALLETS: 'http://127.0.0.1:8000/dashboard/wallets',
+  WALLETS: 'http://127.0.0.1:8000/wallets/get_wallets',
 } as const;
 
 export const dashboardLoader: LoaderFunction = async () => {

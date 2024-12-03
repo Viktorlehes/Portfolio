@@ -50,7 +50,7 @@ export const TokenTableRow: React.FC<TokenTableRowProps> = ({ data }) => {
     return (
         <tr className="token-row">
             <td>{data.name}</td>
-            <td className="price-cell">{formatCurrencySuffix(data.price)}</td>
+            <td className="price-cell">${data.price.toFixed(2)}</td>
             <td className={`change-cell ${getPercentageClass(data.change24h)}`}>
                 {formatPercentage(data.change24h)}
             </td>

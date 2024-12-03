@@ -8,7 +8,8 @@ import Overview, { overviewLoader } from "./pages/Overview/Overview";
 import Dashboard, { dashboardLoader } from "./pages/Dashboard/Dashboard";
 import Bundles from "./pages/Bundles/Bundles";
 import SingleWalletView, { walletLoader } from "./pages/Dashboard/SingleWalletView";
-import SingleAssetView, { assetLoader } from "./pages/Dashboard/SingleAssetView";
+import SingleAssetView from "./pages/Dashboard/SingleAssetView";
+import { assetLoader } from "./pages/Dashboard/SingleAssetLoader";
 import Defi, { defiLoader } from "./pages/Defi/Defi";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 

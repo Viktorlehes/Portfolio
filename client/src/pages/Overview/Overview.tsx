@@ -52,7 +52,7 @@ const CACHE_KEYS = {
 const API_ENDPOINTS = {
   MARKET: 'http://127.0.0.1:8000/overview/cryptostats',
   FEAR_GREED: 'http://127.0.0.1:8000/overview/feargreedindex',
-  WALLETS: 'http://127.0.0.1:8000/dashboard/wallets',
+  WALLETS: 'http://127.0.0.1:8000/wallets/get_wallets',
   CGLS: 'http://127.0.0.1:8000/overview/get-scraped-CGLS-data',
   TOKEN_OVERVIEW: 'http://127.0.0.1:8000/overview/overview-tokens-table-data',
   CG_CATAGORIES: 'http://127.0.0.1:8000/overview/get-crypto-catagories',
@@ -183,9 +183,14 @@ const Overview: React.FC = () => {
   };
 
   useEffect(() => {
-    updateExpiredData();
-    const intervalId = setInterval(updateExpiredData, 60000); // Check every minute
-
+    // Check if any loading state is true (meaning data was null from loader)
+    const hasNullData = Object.values(loadingStates).some(isLoading => isLoading);
+    
+    if (hasNullData) {
+      updateExpiredData();
+    }
+  
+    const intervalId = setInterval(updateExpiredData, 60000);
     return () => {
       clearInterval(intervalId);
       activeFetches.current.clear();

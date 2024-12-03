@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useLoaderData, useNavigate, LoaderFunction, LoaderFunctionArgs } from 'react-router-dom';
+import { useLoaderData, useNavigate } from 'react-router-dom';
 import { components } from "../../types/api-types";
 import { ArrowLeft, Flag } from 'lucide-react';
 import ValueCard from '../../components/Dashboard/WalletsView/ValueCard';
 import TokenPriceChart, { ChartData } from '../..//components/Dashboard/AssetsView/TokenPriceChart';
 import './SingleAssetView.css';
 import { formatCurrency, formatNumber, formatPercent } from '../../utils/calc';
-import { getCachedData, isDataExpired } from '../../utils/api';
+import { isDataExpired } from '../../utils/api';
 import { RefreshCcw } from 'lucide-react';
 import { formatCurrencySuffix } from '../../utils/calc';
 
@@ -20,7 +20,7 @@ interface CachedData<T> {
 }
 
 const API_ENDPOINTS = {
-    WALLETS: 'http://127.0.0.1:8000/dashboard/wallets',
+    WALLETS: 'http://127.0.0.1:8000/wallets/get_wallets',
 } as const;
 
 const CACHE_KEYS = {
@@ -68,34 +68,8 @@ interface LoadingStates {
     chartData: boolean;
 }
 
-// Loader function
-export const assetLoader: LoaderFunction = async ({
-    params,
-    request
-}: LoaderFunctionArgs): Promise<AssetLoaderData> => {
-    const url = new URL(request.url);
-    const assetName = url.searchParams.get('name') || '';
-    const isFungible = url.searchParams.get('fungible') === 'true';
-
-    if (!params.assetId) {
-        throw new Error('Asset ID is required');
-    }
-
-    const cachedWallets = getCachedData(CACHE_KEYS.WALLETS);
-
-    return {
-        assetId: params.assetId,
-        assetName,
-        isFungible,
-        wallets: {
-            data: cachedWallets ? cachedWallets.data : null,
-            timestamp: cachedWallets ? cachedWallets.timestamp : 0
-        }
-    };
-};
-
 async function fetchZerionToken(fungible_id: string): Promise<ZerionToken> {
-    const response = await fetch('http://127.0.0.1:8000/dashboard/zerionToken', {
+    const response = await fetch('http://127.0.0.1:8000/tokens/zerionToken', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -373,7 +347,10 @@ const SingleAssetView: React.FC = () => {
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    <h1>{assetName}</h1>
+                    {zerionTokenData?.data.attributes.icon.url && (
+                        <img src={zerionTokenData.data.attributes.icon.url} alt={assetName} style={{'width': '40px', 'height': '40px' }} />
+                    )}
+                    <h1>{assetName} ({zerionTokenData?.data.attributes.symbol})</h1>
                 </div>
                 <div className="overview-values">
                     <ValueCard

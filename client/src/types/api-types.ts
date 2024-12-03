@@ -174,114 +174,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/bundles/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Bundles */
-        get: operations["get_bundles_bundles__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/bundles/{bundle_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Bundle */
-        get: operations["get_bundle_bundles__bundle_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/dashboard/wallets": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Wallets */
-        get: operations["get_wallets_dashboard_wallets_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/dashboard/manage/delete_wallet/{wallet_address}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Delete Wallet
-         * @description Delete a wallet by its ID.
-         */
-        delete: operations["delete_wallet_dashboard_manage_delete_wallet__wallet_address__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/dashboard/manage/new_wallet/{wallet_address}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create New Wallet
-         * @description Create a new wallet with its positions based on selected mode.
-         */
-        post: operations["create_new_wallet_dashboard_manage_new_wallet__wallet_address__post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/dashboard/test": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Test */
-        post: operations["test_dashboard_test_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/dashboard/charts": {
         parameters: {
             query?: never;
@@ -293,23 +185,6 @@ export interface paths {
         put?: never;
         /** Get Charts */
         post: operations["get_charts_dashboard_charts_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/dashboard/manage/update_wallet/{wallet_address}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Update Wallet */
-        put: operations["update_wallet_dashboard_manage_update_wallet__wallet_address__put"];
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -333,24 +208,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/dashboard/zerionToken": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Get Zerion Token */
-        post: operations["get_zerion_token_dashboard_zerionToken_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/update_tokens": {
+    "/tokens/update_tokens": {
         parameters: {
             query?: never;
             header?: never;
@@ -360,14 +218,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Update Tokens */
-        post: operations["update_tokens_update_tokens_post"];
+        post: operations["update_tokens_tokens_update_tokens_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/token_via_id/{token_id}": {
+    "/tokens/token_via_id/{token_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -375,7 +233,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get Token Via Id */
-        get: operations["get_token_via_id_token_via_id__token_id__get"];
+        get: operations["get_token_via_id_tokens_token_via_id__token_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -384,7 +242,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/token_via_symbol/{token_symbol}": {
+    "/tokens/token_via_symbol/{token_symbol}": {
         parameters: {
             query?: never;
             header?: never;
@@ -392,7 +250,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get Token By Symbol */
-        get: operations["get_token_by_symbol_token_via_symbol__token_symbol__get"];
+        get: operations["get_token_by_symbol_tokens_token_via_symbol__token_symbol__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -401,7 +259,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/token_via_CG": {
+    "/tokens/token_via_CG": {
         parameters: {
             query?: never;
             header?: never;
@@ -411,14 +269,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Get Token Via Cg */
-        post: operations["get_token_via_CG_token_via_CG_post"];
+        post: operations["get_token_via_CG_tokens_token_via_CG_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/token_via_chain/{chain}/{token_address}": {
+    "/tokens/token_via_chain/{chain}/{token_address}": {
         parameters: {
             query?: never;
             header?: never;
@@ -426,7 +284,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get Token Via Chain */
-        get: operations["get_token_via_chain_token_via_chain__chain___token_address__get"];
+        get: operations["get_token_via_chain_tokens_token_via_chain__chain___token_address__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -435,7 +293,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/tokens/latest": {
+    "/tokens/tokens/latest": {
         parameters: {
             query?: never;
             header?: never;
@@ -443,10 +301,101 @@ export interface paths {
             cookie?: never;
         };
         /** Get Latest Tokens */
-        get: operations["get_latest_tokens_tokens_latest_get"];
+        get: operations["get_latest_tokens_tokens_tokens_latest_get"];
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tokens/zerionToken": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Get Zerion Token */
+        post: operations["get_zerion_token_tokens_zerionToken_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/get_wallets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Wallets */
+        get: operations["get_wallets_wallets_get_wallets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/manage/new_wallet/{wallet_address}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create New Wallet
+         * @description Create a new wallet with its positions based on selected mode.
+         */
+        post: operations["create_new_wallet_wallets_manage_new_wallet__wallet_address__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/manage/update_wallet/{wallet_address}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Wallet */
+        put: operations["update_wallet_wallets_manage_update_wallet__wallet_address__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/manage/delete_wallet/{wallet_address}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Wallet
+         * @description Delete a wallet by its ID.
+         */
+        delete: operations["delete_wallet_wallets_manage_delete_wallet__wallet_address__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -673,7 +622,7 @@ export interface components {
             derivatives_24h_percentage_change: number;
             /** Quote */
             quote: {
-                [key: string]: components["schemas"]["app__schemas__market_data__USDQuote"];
+                [key: string]: components["schemas"]["app__schemas__market__market_data__USDQuote"];
             };
             /**
              * Last Updated
@@ -834,7 +783,7 @@ export interface components {
         /** FearGreedResponse */
         FearGreedResponse: {
             data: components["schemas"]["ValueData"];
-            status: components["schemas"]["app__schemas__feargreed_response__Status"];
+            status: components["schemas"]["app__schemas__market__feargreed_response__Status"];
         };
         /** Flags */
         Flags: {
@@ -882,7 +831,7 @@ export interface components {
             last_updated: string;
             /** Quote */
             quote: {
-                [key: string]: components["schemas"]["app__schemas__full_token__USDQuote"];
+                [key: string]: components["schemas"]["app__schemas__tokens__full_token__USDQuote"];
             };
         };
         /** FullToken */
@@ -943,7 +892,7 @@ export interface components {
         };
         /** MarketDataResponse */
         MarketDataResponse: {
-            status: components["schemas"]["app__schemas__market_data__Status"];
+            status: components["schemas"]["app__schemas__market__market_data__Status"];
             data: components["schemas"]["CryptoData"];
         };
         /** MetricItem */
@@ -1182,7 +1131,7 @@ export interface components {
             data: components["schemas"]["AssetData"];
         };
         /** Status */
-        app__schemas__feargreed_response__Status: {
+        app__schemas__market__feargreed_response__Status: {
             /**
              * Timestamp
              * Format: date-time
@@ -1197,39 +1146,8 @@ export interface components {
             /** Credit Count */
             credit_count: number;
         };
-        /** USDQuote */
-        app__schemas__full_token__USDQuote: {
-            /** Price */
-            price: number;
-            /** Volume 24H */
-            volume_24h: number;
-            /** Volume Change 24H */
-            volume_change_24h: number;
-            /** Percent Change 1H */
-            percent_change_1h: number;
-            /** Percent Change 24H */
-            percent_change_24h: number;
-            /** Percent Change 7D */
-            percent_change_7d: number;
-            /** Percent Change 30D */
-            percent_change_30d: number;
-            /** Percent Change 60D */
-            percent_change_60d: number;
-            /** Percent Change 90D */
-            percent_change_90d: number;
-            /** Market Cap */
-            market_cap: number;
-            /** Market Cap Dominance */
-            market_cap_dominance: number;
-            /** Fully Diluted Market Cap */
-            fully_diluted_market_cap: number;
-            /** Tvl */
-            tvl: number | null;
-            /** Last Updated */
-            last_updated: string;
-        };
         /** Status */
-        app__schemas__market_data__Status: {
+        app__schemas__market__market_data__Status: {
             /**
              * Timestamp
              * Format: date-time
@@ -1247,7 +1165,7 @@ export interface components {
             notice?: string | null;
         };
         /** USDQuote */
-        app__schemas__market_data__USDQuote: {
+        app__schemas__market__market_data__USDQuote: {
             /** Total Market Cap */
             total_market_cap: number;
             /** Total Volume 24H */
@@ -1294,6 +1212,37 @@ export interface components {
              * Last Updated
              * Format: date-time
              */
+            last_updated: string;
+        };
+        /** USDQuote */
+        app__schemas__tokens__full_token__USDQuote: {
+            /** Price */
+            price: number;
+            /** Volume 24H */
+            volume_24h: number;
+            /** Volume Change 24H */
+            volume_change_24h: number;
+            /** Percent Change 1H */
+            percent_change_1h: number;
+            /** Percent Change 24H */
+            percent_change_24h: number;
+            /** Percent Change 7D */
+            percent_change_7d: number;
+            /** Percent Change 30D */
+            percent_change_30d: number;
+            /** Percent Change 60D */
+            percent_change_60d: number;
+            /** Percent Change 90D */
+            percent_change_90d: number;
+            /** Market Cap */
+            market_cap: number;
+            /** Market Cap Dominance */
+            market_cap_dominance: number;
+            /** Fully Diluted Market Cap */
+            fully_diluted_market_cap: number;
+            /** Tvl */
+            tvl: number | null;
+            /** Last Updated */
             last_updated: string;
         };
     };
@@ -1527,163 +1476,6 @@ export interface operations {
             };
         };
     };
-    get_bundles_bundles__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    get_bundle_bundles__bundle_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                bundle_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_wallets_dashboard_wallets_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Wallet"][];
-                };
-            };
-        };
-    };
-    delete_wallet_dashboard_manage_delete_wallet__wallet_address__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                wallet_address: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_new_wallet_dashboard_manage_new_wallet__wallet_address__post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                wallet_address: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WalletData"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    test_dashboard_test_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
     get_charts_dashboard_charts_post: {
         parameters: {
             query?: never;
@@ -1694,41 +1486,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": Record<string, never>;
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_wallet_dashboard_manage_update_wallet__wallet_address__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                wallet_address: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WalletData"];
             };
         };
         responses: {
@@ -1785,40 +1542,7 @@ export interface operations {
             };
         };
     };
-    get_zerion_token_dashboard_zerionToken_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FungibleIdRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ZerionToken"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_tokens_update_tokens_post: {
+    update_tokens_tokens_update_tokens_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1838,7 +1562,7 @@ export interface operations {
             };
         };
     };
-    get_token_via_id_token_via_id__token_id__get: {
+    get_token_via_id_tokens_token_via_id__token_id__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1869,7 +1593,7 @@ export interface operations {
             };
         };
     };
-    get_token_by_symbol_token_via_symbol__token_symbol__get: {
+    get_token_by_symbol_tokens_token_via_symbol__token_symbol__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1900,7 +1624,7 @@ export interface operations {
             };
         };
     };
-    get_token_via_CG_token_via_CG_post: {
+    get_token_via_CG_tokens_token_via_CG_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1933,7 +1657,7 @@ export interface operations {
             };
         };
     };
-    get_token_via_chain_token_via_chain__chain___token_address__get: {
+    get_token_via_chain_tokens_token_via_chain__chain___token_address__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1965,7 +1689,7 @@ export interface operations {
             };
         };
     };
-    get_latest_tokens_tokens_latest_get: {
+    get_latest_tokens_tokens_tokens_latest_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1981,6 +1705,160 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_zerion_token_tokens_zerionToken_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FungibleIdRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ZerionToken"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_wallets_wallets_get_wallets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Wallet"][];
+                };
+            };
+        };
+    };
+    create_new_wallet_wallets_manage_new_wallet__wallet_address__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wallet_address: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WalletData"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_wallet_wallets_manage_update_wallet__wallet_address__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wallet_address: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WalletData"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_wallet_wallets_manage_delete_wallet__wallet_address__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wallet_address: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
