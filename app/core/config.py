@@ -1,5 +1,4 @@
 import os
-
 MONGO_URI = os.getenv("DB_URI")
 CM_API_KEY = os.getenv("CM_API_KEY")
 CG_API_KEY = os.getenv("CG_DEMO_API_KEY")
