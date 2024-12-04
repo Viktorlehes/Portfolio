@@ -18,7 +18,7 @@ export const getCachedData = (key: string): CachedData<any> | null => {
   }
 };
 
-export const isDataExpired = (timestamp: number, maxAgeInMinutes: number = 5): boolean => {
+export const isDataExpired = (timestamp: number, maxAgeInMinutes: number = 10): boolean => {
   return (Date.now() - timestamp) / (1000 * 60) > maxAgeInMinutes;
 };
 

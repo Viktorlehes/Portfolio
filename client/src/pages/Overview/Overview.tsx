@@ -113,7 +113,7 @@ const Overview: React.FC = () => {
     endpoint: string,
     cacheKey: keyof typeof CACHE_KEYS,
     loadingKey: keyof ComponentLoadingState,
-    expirationMinutes: number = 5
+    expirationMinutes: number = 10
   ) => {
     // If already fetching this endpoint, skip
     if (activeFetches.current.has(endpoint)) {
