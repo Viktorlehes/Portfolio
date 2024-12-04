@@ -33,7 +33,7 @@ app = FastAPI(lifespan=lifespan)
 # Set up CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", 'https://portfolio-self-chi-74.vercel.app/'],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
