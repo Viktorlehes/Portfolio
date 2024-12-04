@@ -1,5 +1,5 @@
 import React from 'react';
-import './viewselector.css';
+import './ViewSelector.css';
 
 export type ViewType = 'Wallets' | 'Assets' | 'Manage';
 
