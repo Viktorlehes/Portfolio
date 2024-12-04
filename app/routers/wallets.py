@@ -14,6 +14,7 @@ from app.schemas.wallet.wallet import (
 from app.schemas.tokens.full_token import FullCMCToken
 from app.utils.formatters import format_token, format_defi_position, format_zerion_token
 from app.routers.tokens import get_token_by_symbol, get_token_via_CG, get_token_price_chain
+from app.utils.token_updates import update_all_tokens
 
 # Environment variables
 from app.core.config import ZERION_API_KEY
@@ -34,11 +35,7 @@ async def get_wallets():
     print("Fetching wallets")
 
     try:
-        async with httpx.AsyncClient() as client:
-            url = f"http://127.0.0.1:8000/tokens/update_tokens"
-            response = await client.post(url)
-            if response.status_code != 200:
-                print("Failed to update tokens")
+        await update_all_tokens()
 
         current_time = datetime.now()
 
@@ -61,9 +58,13 @@ async def get_wallets():
 
                 wallet_data = WalletData(color=wallet['color'], name=wallet['name'], mode=wallet['wallet_mode'])
 
-                updated_wallet = await create_new_wallet(wallet['address'], wallet_data)
+                try:
+                    new_wallet = await create_new_wallet(wallet['address'], wallet_data)
+                except Exception as e:
+                    print(f"Error updating wallet {wallet['address']}: {str(e)}")
+                    new_wallet = wallet
 
-                wallets[wallets.index(wallet)] = updated_wallet
+                wallets[wallets.index(wallet)] = new_wallet
 
         return wallets
     except Exception as e:
@@ -81,7 +82,11 @@ async def get_new_wallet(wallet_address: str):
             "authorization": f"Basic {ZERION_API_KEY}==",
         }
         
+        print(f"Fetching wallet data from Zerion API for {wallet_address}")
+        
         response = await client.get(url, headers=headers)
+        
+        print(f"Response status code: {response.status_code}")
 
         if response.status_code == 200:
             return response.json()
@@ -153,6 +158,8 @@ async def create_new_wallet(
 
         wallet_positions = []
         defi_positions = []
+        
+        print("Processing wallet positions...")
 
         for position in raw_wallet_data["data"]:
             position_type = PositionType(position['attributes']['position_type'])
@@ -169,6 +176,8 @@ async def create_new_wallet(
             defi = await process_defi_positions(defi_positions)
         else:
             defi = []
+
+        print("Processing complete!")
 
         # Create wallet object
         wallet = Wallet(

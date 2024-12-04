@@ -6,6 +6,8 @@ from typing import List
 from requests import Session
 from fastapi import HTTPException
 from pymongo import UpdateOne
+from datetime import datetime
+import pytz
 
 from app.core.db import tokens_collection  # Move DB setup to core/db.py
 from app.core.config import CM_API_KEY, CG_DEMO_API_KEY  # Move env vars to core/config.py
@@ -25,6 +27,19 @@ async def update_all_tokens():
         cmc_ids = []
         cg_ids = []
         for token in tokens:
+            last_updated = token.get('last_updated', None)
+            
+            if last_updated:
+                # Parse the ISO timestamp to datetime object
+                last_updated = datetime.fromisoformat(last_updated.replace('Z', '+00:00'))
+                
+                # Get current UTC time
+                current_time = datetime.now(pytz.UTC)
+                
+                # Skip tokens updated in the last 1 minute
+                if (current_time - last_updated).total_seconds() < 60:
+                    continue
+                    
             if "coingecko_id" in token:
                 cg_ids.append(token['id'])
             else:
