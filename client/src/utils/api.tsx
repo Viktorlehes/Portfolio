@@ -82,7 +82,7 @@ export const api = {
 
 export async function getWallets(): Promise<Wallet[]> {
   try {
-    const responseData = await api.get('/dashboard/wallets');
+    const responseData = await api.get('/wallet/get_wallets');
     return responseData;
   } catch (error) {
     console.error('Error fetching crypto stats:', error);

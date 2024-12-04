@@ -25,7 +25,7 @@ const CACHE_KEYS = {
 } as const;
 
 const API_ENDPOINTS = {
-    WALLETS: '/dashboard/wallets',
+    WALLETS: '/wallet/get_wallets',
 } as const;
 
 interface LoaderData {
