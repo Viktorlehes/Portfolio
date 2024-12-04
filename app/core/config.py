@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     VITE_ENCRYPTED_PIN: str
     VITE_API_KEY: str
     VITE_API_URL: str
+    PROXY_USERNAME: str
+    PROXY_PASSWORD: str
     
     class Config:
         env_file = ".env"
@@ -28,3 +30,5 @@ VITE_PIN_SECRET_KEY = settings.VITE_PIN_SECRET_KEY
 VITE_ENCRYPTED_PIN = settings.VITE_ENCRYPTED_PIN
 API_KEY = settings.VITE_API_KEY
 VITE_API_URL = settings.VITE_API_URL
+PROXY_USERNAME = settings.PROXY_USERNAME
+PROXY_PASSWORD = settings.PROXY_PASSWORD

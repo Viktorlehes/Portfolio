@@ -8,6 +8,8 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 
+from app.core.config import PROXY_USERNAME, PROXY_PASSWORD
+
 # Pydantic Models
 class MetricItem(BaseModel):
     text: str
@@ -39,6 +41,15 @@ def setup_driver():
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
+    
+    # Add ProxyMesh proxy to avoid detection
+    PROXY = f"http://{PROXY_USERNAME}:{PROXY_PASSWORD}@us-ca.proxymesh.com:31280"
+    
+    chrome_options.add_argument(f'--proxy-server={PROXY}')
+    
+    # Add random user agent to help avoid detection
+    chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+    
     service = Service(ChromeDriverManager().install())
     return webdriver.Chrome(service=service, options=chrome_options)
 
@@ -69,6 +80,9 @@ async def scrape_coinglass() -> APIResponse:
     metrics = {}
     
     try:
+        driver.get('https://ifconfig.me')  # This will show the proxy IP
+        print(f"Current IP: {driver.find_element(By.TAG_NAME, 'body').text}")
+        
         driver.get('https://www.coinglass.com/')
         wait = WebDriverWait(driver, 10)
         
