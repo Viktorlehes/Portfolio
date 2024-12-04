@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { encryptPin, decryptPin, generateSessionToken, validateSessionToken } from './crypto';
+import { decryptPin, generateSessionToken, validateSessionToken } from './crypto';
 import { RateLimiter } from './rateLimit';
 import { AUTH_CONFIG } from './config';
 
