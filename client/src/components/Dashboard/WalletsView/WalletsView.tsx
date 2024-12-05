@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ValueCard from "./ValueCard";
 import AssetBreakdown from "./TokenBreakdown";
 import { components } from "../../../types/api-types";
-import { Pencil } from "lucide-react";
+import { Pencil, RefreshCcw } from "lucide-react";
 import "./WalletsView.css";
 import { ViewType } from "../ViewSelector";
 import { calculate24hChange } from "../../../utils/calc";
@@ -12,17 +12,19 @@ import LoadingOverlay from "../../Default/LoadingOverlay";
 type Wallet = components["schemas"]["Wallet"];
 
 interface WalletsViewProps {
-  wallets: Wallet[] | null;
+  wallets: Wallet[];
   onViewChange: (view: ViewType) => void;
-  isLoading: boolean;
+  isNull: boolean;
   lastUpdated: number;
+  forcedUpdate: () => void;
 }
 
-const WalletsView: React.FC<WalletsViewProps> = ({ 
-  wallets, 
-  onViewChange, 
-  isLoading,
-  lastUpdated
+const WalletsView: React.FC<WalletsViewProps> = ({
+  wallets,
+  onViewChange,
+  isNull,
+  lastUpdated,
+  forcedUpdate
 }) => {
   const navigate = useNavigate();
 
@@ -39,26 +41,28 @@ const WalletsView: React.FC<WalletsViewProps> = ({
   };
 
   // Only calculate totals if we have wallet data
-  const totalWalletValue = wallets ? wallets.reduce(
+  const totalWalletValue = !isNull ? wallets.reduce(
     (sum, wallet) => sum + wallet.asset_total,
     0
   ) : 0;
 
-  const total24hChange = wallets ? calculate24hChange(wallets) : 0;
+  const total24hChange = !isNull ? calculate24hChange(wallets) : 0;
 
-  const totalDefiValue = wallets ? wallets.reduce(
+  const totalDefiValue = !isNull ? wallets.reduce(
     (sum, wallet) => sum + wallet.defi_total,
     0
   ) : 0;
+
+  const sortedWallets = !isNull ? wallets.sort((a, b) => (b.asset_total + b.defi_total) - (a.asset_total + a.defi_total)) : [];
 
   return (
     <div>
       <section className="dashboard-head">
         <div className="overview-values">
-          <ValueCard 
-            label="Total" 
-            value={Math.round(totalWalletValue)} 
-            color="#000100" 
+          <ValueCard
+            label="Total"
+            value={Math.round(totalWalletValue)}
+            color="#000100"
           />
           <ValueCard
             label="DeFi Total"
@@ -88,14 +92,17 @@ const WalletsView: React.FC<WalletsViewProps> = ({
           <button onClick={() => onViewChange("Manage" as ViewType)}>
             <Pencil />
           </button>
+          <button onClick={() => forcedUpdate()}>
+            <RefreshCcw />
+          </button>
         </div>
       </section>
 
-      {isLoading && !wallets ? (
+      {isNull ? (
         <LoadingOverlay message="Loading wallets..." />
       ) : (
         <section className="dashboard-sub-cat">
-          {wallets!.map((wallet) => (
+          {sortedWallets!.map((wallet) => (
             <AssetBreakdown
               key={wallet.address}
               name={wallet.name}

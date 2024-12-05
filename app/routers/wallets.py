@@ -310,18 +310,21 @@ async def update_wallet(wallet_address: str, wallet_data: WalletData):
         
 @router.delete("/manage/delete_wallet/{wallet_address}")
 async def delete_wallet(wallet_address: str):
-    """Delete a wallet by its ID."""
+    """Delete a wallet by its address."""
     try:
-        wallet = await wallets_collection.find_one({"address": wallet_address})
-        if not wallet:
+        # Find and delete the wallet
+        result = await wallets_collection.delete_one({"address": wallet_address})
+        
+        # Check if anything was actually deleted
+        if result.deleted_count == 0:
             raise HTTPException(
                 status_code=404,
                 detail="Wallet not found"
             )
-
-        await wallets_collection.delete_one({"address": wallet_address})
+            
+        # Return 204 No Content for successful deletion
         return Response(status_code=status.HTTP_204_NO_CONTENT)
-
+        
     except HTTPException as he:
         raise he
     except Exception as e:

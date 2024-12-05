@@ -6,6 +6,7 @@
   margin-bottom: 10px;
   width: 100%;
   position: relative;
+  overflow: hidden;
 }
 
 .table-scroll {
@@ -57,11 +58,12 @@
 .token-row td {
   padding: 8px;
   text-align: right;
-  white-space: nowrap;
+  max-width: 100px;
 }
 
 .token-row td:first-child {
   text-align: left;
+  padding-left: 26px;
   font-weight: 500;
   color: #333;
 }

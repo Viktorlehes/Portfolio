@@ -7,7 +7,7 @@ type Wallet = components["schemas"]["Wallet"];
 
 interface TotalWorthProps {
   wallets: Wallet[] | null;
-  isLoading: boolean;
+  isNull: boolean;
 }
 
 interface WorthMetrics {
@@ -58,9 +58,9 @@ const WorthDisplay: React.FC<{
   label: string;
   value: number;
   change: number;
-  isLoading: boolean;
+  isNull: boolean;
   small?: boolean;
-}> = ({ label, value, change, isLoading, small = false }) => {
+}> = ({ label, value, change, isNull, small = false }) => {
   const getChangeClass = (value: number) => value >= 0 ? 'tw-positive' : 'tw-negative';
   const ChangeValueComponent = small ? 'tw-change-value-small' : 'tw-change-value';
 
@@ -68,10 +68,10 @@ const WorthDisplay: React.FC<{
     <div className={small ? 'tw-breakdown-item' : ''}>
       <div className={small ? 'tw-breakdown-label' : 'tw-title'}>{label}</div>
       <div className={small ? 'tw-breakdown-value' : 'tw-total-amount'}>
-        {isLoading ? "-" : formatCurrencySuffix(value)}
+        {isNull ? "-" : formatCurrencySuffix(value)}
       </div>
       <div className={small ? 'tw-breakdown-changes' : 'tw-changes'}>
-        {isLoading ? (
+        {isNull ? (
           <span className={ChangeValueComponent}>-</span>
         ) : (
           <span className={`${ChangeValueComponent} ${getChangeClass(change)}`}>
@@ -83,10 +83,10 @@ const WorthDisplay: React.FC<{
   );
 };
 
-const TotalWorth: React.FC<TotalWorthProps> = ({ wallets, isLoading }) => {
+const TotalWorth: React.FC<TotalWorthProps> = ({ wallets, isNull }) => {
   const metrics = React.useMemo(() => 
-    calculateMetrics(isLoading ? null : wallets),
-    [wallets, isLoading]
+    calculateMetrics(isNull ? null : wallets),
+    [wallets, isNull]
   );
 
   return (
@@ -97,7 +97,7 @@ const TotalWorth: React.FC<TotalWorthProps> = ({ wallets, isLoading }) => {
             label="TOTAL WORTH"
             value={metrics.totalWalletValue}
             change={metrics.total24hWalletChange}
-            isLoading={isLoading}
+            isNull={isNull}
           />
         </div>
         <div className="tw-breakdown">
@@ -105,14 +105,14 @@ const TotalWorth: React.FC<TotalWorthProps> = ({ wallets, isLoading }) => {
             label="DeFi"
             value={metrics.totalDefiValue}
             change={metrics.totalDefi24hChange}
-            isLoading={isLoading}
+            isNull={isNull}
             small
           />
           <WorthDisplay
             label="Assets"
             value={metrics.totalAssetValue}
             change={metrics.totalAsset24hChange}
-            isLoading={isLoading}
+            isNull={isNull}
             small
           />
         </div>

@@ -9,7 +9,7 @@ type FearGreedResponse = components['schemas']['FearGreedResponse'];
 interface CryptoStatsProps {
   cryptoStats: MarketData | null;
   feargreeddata: FearGreedResponse | null;
-  isLoading: {
+  isNull: {
     market: boolean;
     fearGreed: boolean;
   };
@@ -18,9 +18,9 @@ interface CryptoStatsProps {
 const CryptoStatsBar: React.FC<CryptoStatsProps> = ({
   cryptoStats,
   feargreeddata,
-  isLoading
+  isNull
 }) => {
-  const shouldShowDash = isLoading.market || !cryptoStats;
+  const shouldShowDash = isNull.market;
 
   const marketCapValue = shouldShowDash ? "-" : 
     formatCurrencySuffix(cryptoStats?.data?.quote?.USD?.total_market_cap || 0);
@@ -35,7 +35,7 @@ const CryptoStatsBar: React.FC<CryptoStatsProps> = ({
   const dominanceValue = shouldShowDash ? "-" :
     `BTC: ${cryptoStats?.data?.btc_dominance.toFixed(1)}% ETH: ${cryptoStats?.data?.eth_dominance.toFixed(1)}%`;
 
-  const fearGreedValue = (isLoading.fearGreed || !feargreeddata) ? "-" :
+  const fearGreedValue = (isNull.fearGreed) ? "-" :
     `${feargreeddata?.data?.value} ${feargreeddata?.data?.value_classification}`;
 
   const getChangeClass = (value: number | undefined | null) => {

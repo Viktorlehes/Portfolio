@@ -134,9 +134,12 @@ const DefiPositions: React.FC<{ positions: ExtendedDefiPosition[], displayTotal?
         return acc;
     }, {} as Record<string, { positions: ExtendedDefiPosition[], totalValue: number, icon: string, protocolLink: string }>);
 
-    const totalValue = Object.values(groupedPositions)
-        .reduce((sum, group) => sum + group.totalValue, 0);
+    const totalValue = Object.values(groupedPositions).reduce((sum, group) => sum + group.totalValue, 0);
 
+    const sortedGroups = Object.fromEntries(
+        Object.entries(groupedPositions).sort(([, a], [, b]) => b.totalValue - a.totalValue)
+    );
+    
     return (
         <div className="assets-section">
             {displayTotal &&
@@ -148,7 +151,7 @@ const DefiPositions: React.FC<{ positions: ExtendedDefiPosition[], displayTotal?
             </div>
             }
 
-            {Object.entries(groupedPositions).map(([protocol, { positions, totalValue, icon, protocolLink }]) => (
+            {Object.entries(sortedGroups).map(([protocol, { positions, totalValue, icon, protocolLink }]) => (
                 <ProtocolGroup
                     key={protocol}
                     protocol={protocol}

@@ -7,9 +7,10 @@ type TokenOverviewResponse = components['schemas']['TokenOverviewData'];
 
 interface TokenTableRowProps {
     data: TokenOverviewResponse;
+    rank: number;
 }
 
-export const TokenTableRow: React.FC<TokenTableRowProps> = ({ data }) => {
+export const TokenTableRow: React.FC<TokenTableRowProps> = ({ data, rank }) => {
     const formatPercentage = (value: number) => {
         return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
     };
@@ -49,6 +50,7 @@ export const TokenTableRow: React.FC<TokenTableRowProps> = ({ data }) => {
 
     return (
         <tr className="token-row">
+            <td>{rank}</td>
             <td>{data.name}</td>
             <td className="price-cell">${data.price.toFixed(2)}</td>
             <td className={`change-cell ${getPercentageClass(data.change24h)}`}>

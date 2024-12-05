@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { LoaderFunction, useLoaderData } from "react-router-dom";
 import "./Overview.css";
 import CustomNavbar from "../../components/Default/CustomNavBar";
@@ -10,6 +10,7 @@ import TotalWorth from "../../components/overview/TotalWorth";
 import { getCachedData, isDataExpired } from "../../utils/api";
 import { OverviewTokensTable } from "../../components/overview/OverviewTokensTable";
 import { api } from "../../utils/api";
+import { useActiveFetches, isEndpointFetching } from "../../context/ActiveFetchesContext";
 
 type MarketData = components["schemas"]["MarketDataResponse"];
 type FearGreedResponse = components["schemas"]["FearGreedResponse"];
@@ -79,18 +80,8 @@ export const overviewLoader: LoaderFunction = () => {
 
 const Overview: React.FC = () => {
   const cachedData = useLoaderData() as LoaderData;
-  const [overviewData, setOverviewData] = useState({
-    marketData: cachedData.marketData,
-    fearGreedData: cachedData.fearGreedData,
-    wallets: cachedData.wallets,
-    cglsScrapeData: cachedData.cglsScrapeData,
-    TokenOverviewData: cachedData.TokenOverviewData,
-    cgCategories: cachedData.cgCategories
-  });
-
-  const activeFetches = useRef(new Set<string>());
-
-  const [loadingStates, setLoadingStates] = useState<ComponentLoadingState>({
+  const [overviewData, setOverviewData] = useState<LoaderData>(cachedData);
+  const [nullStates, setNullStates] = useState<ComponentLoadingState>({
     market: !cachedData.marketData.data,
     fearGreed: !cachedData.fearGreedData.data,
     wallets: !cachedData.wallets.data,
@@ -99,102 +90,204 @@ const Overview: React.FC = () => {
     cgCategories: !cachedData.cgCategories.data
   });
 
-  // Map cache keys to state keys
-  const STATE_KEY_MAP = {
-    MARKET: 'marketData',
-    FEAR_GREED: 'fearGreedData',
-    WALLETS: 'wallets',
-    CGLS: 'cglsScrapeData',
-    TOKENS: 'TokenOverviewData',
-    CG_CATAGORIES: 'cgCategories'
-  } as const;
-
-  const fetchData = async (
-    endpoint: string,
-    cacheKey: keyof typeof CACHE_KEYS,
-    loadingKey: keyof ComponentLoadingState,
-    expirationMinutes: number = 10
-  ) => {
-    // If already fetching this endpoint, skip
-    if (activeFetches.current.has(endpoint)) {
-      return null;
-    }
-
-    const stateKey = STATE_KEY_MAP[cacheKey];
-    const timestamp = overviewData[stateKey].timestamp || 0;
-    const shouldFetch = loadingStates[loadingKey] || isDataExpired(timestamp, expirationMinutes);
-
-    if (shouldFetch) {
-      try {
-        activeFetches.current.add(endpoint);
-        const data = await api.get(endpoint);
-
-        if (!data || data.detail) {
-          return null;
-        }
-
-        const newCacheData = {
-          data: data,
-          timestamp: Date.now()
-        };
-
-        // Store in localStorage
-        localStorage.setItem(CACHE_KEYS[cacheKey], JSON.stringify(newCacheData));
-
-        // Update loading state
-        setLoadingStates(prev => ({ ...prev, [loadingKey]: false }));
-
-        return { key: stateKey, data: newCacheData };
-      } catch (error) {
-        console.error(`Error fetching ${cacheKey}:`, error);
-        return null;
-      } finally {
-        activeFetches.current.delete(endpoint);
-      }
-    }
-    return null;
-  };
+  const activeFetches = useActiveFetches();
 
   const updateExpiredData = async () => {
-    const fetchPromises = [
-      fetchData(API_ENDPOINTS.MARKET, "MARKET", 'market'),
-      fetchData(API_ENDPOINTS.FEAR_GREED, 'FEAR_GREED', 'fearGreed'),
-      fetchData(API_ENDPOINTS.WALLETS, 'WALLETS', 'wallets'),
-      fetchData(API_ENDPOINTS.CGLS, 'CGLS', 'cglsScrapeData'),
-      fetchData(API_ENDPOINTS.TOKEN_OVERVIEW, 'TOKENS', 'TokenOverviewData'),
-      fetchData(API_ENDPOINTS.CG_CATAGORIES, 'CG_CATAGORIES', 'cgCategories')
-    ];
+    const updates: Promise<void>[] = [];
+    const newData = { ...overviewData };
 
-    const results = await Promise.all(fetchPromises);
+    if (nullStates.wallets || isDataExpired(overviewData.wallets.timestamp || 0)) {
+      if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.WALLETS)) {
+        activeFetches.current.add(API_ENDPOINTS.WALLETS);
+        updates.push(
+          api.get(API_ENDPOINTS.WALLETS)
+            .then(wallets => {
+              newData.wallets = {
+                data: wallets,
+                timestamp: Date.now()
+              };
+              localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify(newData.wallets));
+              setNullStates(prev => ({ ...prev, wallets: false }));
+            })
+            .catch(error => {
+              console.error('Error fetching wallets:', error);
+              if (nullStates.wallets) {
+                setNullStates(prev => ({ ...prev, wallets: true }));
+              } else {
+                setNullStates(prev => ({ ...prev, wallets: false }));
+              }
+              activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+            })
+            .finally(() => {
+              activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+            }
+            )
+        );
+      }
+    }
 
-    // Filter out null results and update state in one batch
-    const validResults = results.filter(result => result !== null);
-    if (validResults.length > 0) {
-      setOverviewData(prev => {
-        const newState = { ...prev };
-        validResults.forEach(result => {
-          if (result) {
-            newState[result.key] = result.data;
-          }
-        });
-        return newState;
-      });
+    if (nullStates.market || isDataExpired(overviewData.marketData.timestamp || 0)) {
+      if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.MARKET)) {
+        activeFetches.current.add(API_ENDPOINTS.MARKET);
+        updates.push(
+          api.get(API_ENDPOINTS.MARKET)
+            .then(marketData => {
+              newData.marketData = {
+                data: marketData,
+                timestamp: Date.now()
+              };
+              localStorage.setItem(CACHE_KEYS.MARKET, JSON.stringify(newData.marketData));
+              setNullStates(prev => ({ ...prev, market: false }));
+            })
+            .catch(error => {
+              console.error('Error fetching market data:', error);
+              if (nullStates.market) {
+                setNullStates(prev => ({ ...prev, market: true }));
+              }
+              setNullStates(prev => ({ ...prev, market: false }));
+              activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+            })
+            .finally(() => {
+              activeFetches.current.delete(API_ENDPOINTS.MARKET);
+            }
+            )
+        );
+      }
+    }
+
+    if (nullStates.fearGreed || isDataExpired(overviewData.fearGreedData.timestamp || 0)) {
+      if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.FEAR_GREED)) {
+        activeFetches.current.add(API_ENDPOINTS.FEAR_GREED);
+        updates.push(
+          api.get(API_ENDPOINTS.FEAR_GREED)
+            .then(fearGreedData => {
+              newData.fearGreedData = {
+                data: fearGreedData,
+                timestamp: Date.now()
+              };
+              localStorage.setItem(CACHE_KEYS.FEAR_GREED, JSON.stringify(newData.fearGreedData));
+              setNullStates(prev => ({ ...prev, fearGreed: false }));
+            })
+            .catch(error => {
+              console.error('Error fetching fear/greed data:', error);
+              if (nullStates.fearGreed) {
+                setNullStates(prev => ({ ...prev, fearGreed: true }));
+              }
+              setNullStates(prev => ({ ...prev, fearGreed: false }));
+              activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+            })
+            .finally(() => {
+              activeFetches.current.delete(API_ENDPOINTS.FEAR_GREED);
+            }
+            )
+        );
+      }
+    }
+
+    if (nullStates.cglsScrapeData || isDataExpired(overviewData.cglsScrapeData.timestamp || 0)) {
+      if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.CGLS)) {
+        activeFetches.current.add(API_ENDPOINTS.CGLS);
+        updates.push(
+          api.get(API_ENDPOINTS.CGLS)
+            .then(cglsData => {
+              newData.cglsScrapeData = {
+                data: cglsData,
+                timestamp: Date.now()
+              };
+              localStorage.setItem(CACHE_KEYS.CGLS, JSON.stringify(newData.cglsScrapeData));
+              setNullStates(prev => ({ ...prev, cglsScrapeData: false }));
+            })
+            .catch(error => {
+              console.error('Error fetching CGLS data:', error);
+              if (nullStates.cglsScrapeData) {
+                setNullStates(prev => ({ ...prev, cglsScrapeData: true }));
+              }
+              setNullStates(prev => ({ ...prev, cglsScrapeData: false }));
+              activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+            })
+            .finally(() => {
+              activeFetches.current.delete(API_ENDPOINTS.CGLS);
+            }
+            )
+        );
+      }
+    }
+
+    if (nullStates.TokenOverviewData || isDataExpired(overviewData.TokenOverviewData.timestamp || 0)) {
+      if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.TOKEN_OVERVIEW)) {
+        activeFetches.current.add(API_ENDPOINTS.TOKEN_OVERVIEW);
+        updates.push(
+          api.get(API_ENDPOINTS.TOKEN_OVERVIEW)
+            .then(tokenData => {
+              newData.TokenOverviewData = {
+                data: tokenData,
+                timestamp: Date.now()
+              };
+              localStorage.setItem(CACHE_KEYS.TOKENS, JSON.stringify(newData.TokenOverviewData));
+              setNullStates(prev => ({ ...prev, TokenOverviewData: false }));
+            })
+            .catch(error => {
+              console.error('Error fetching token overview data:', error);
+              if (nullStates.TokenOverviewData) {
+                setNullStates(prev => ({ ...prev, TokenOverviewData: true }));
+              }
+              setNullStates(prev => ({ ...prev, TokenOverviewData: false }));
+              activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+            })
+            .finally(() => {
+              activeFetches.current.delete(API_ENDPOINTS.TOKEN_OVERVIEW);
+            }
+            )
+        );
+      }
+    }
+
+    if (nullStates.cgCategories || isDataExpired(overviewData.cgCategories.timestamp || 0)) {
+      if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.CG_CATAGORIES)) {
+        activeFetches.current.add(API_ENDPOINTS.CG_CATAGORIES);
+        updates.push(
+          api.get(API_ENDPOINTS.CG_CATAGORIES)
+            .then(categories => {
+              newData.cgCategories = {
+                data: categories,
+                timestamp: Date.now()
+              };
+              localStorage.setItem(CACHE_KEYS.CG_CATAGORIES, JSON.stringify(newData.cgCategories));
+              setNullStates(prev => ({ ...prev, cgCategories: false }));
+            })
+            .catch(error => {
+              console.error('Error fetching cg categories:', error);
+              if (nullStates.cgCategories) {
+                setNullStates(prev => ({ ...prev, cgCategories: true }));
+              }
+              setNullStates(prev => ({ ...prev, cgCategories: false }));
+              activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+            })
+            .finally(() => {
+              activeFetches.current.delete(API_ENDPOINTS.CG_CATAGORIES);
+            }
+            )
+        );
+      }
+    }
+
+    if (updates.length > 0) {
+      try {
+        await Promise.all(updates);
+        setOverviewData(newData);
+      } catch (error) {
+        console.error('Error updating data:', error);
+      }
     }
   };
 
   useEffect(() => {
-    // Check if any loading state is true (meaning data was null from loader)
-    const hasNullData = Object.values(loadingStates).some(isLoading => isLoading);
-    
-    if (hasNullData) {
+    updateExpiredData();
+    const intervalId = setInterval(() => {
       updateExpiredData();
-    }
-  
-    const intervalId = setInterval(updateExpiredData, 60000);
-    return () => {
-      clearInterval(intervalId);
-      activeFetches.current.clear();
-    };
+    }, 60000); // 60000ms = 1 minute
+
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
@@ -208,9 +301,9 @@ const Overview: React.FC = () => {
           <CryptoStatsBar
             cryptoStats={overviewData.marketData.data}
             feargreeddata={overviewData.fearGreedData.data}
-            isLoading={{
-              market: loadingStates.market,
-              fearGreed: loadingStates.fearGreed
+            isNull={{
+              market: nullStates.market,
+              fearGreed: nullStates.fearGreed
             }}
           />
         </div>
@@ -219,15 +312,15 @@ const Overview: React.FC = () => {
         <div className="overview-wrapper">
           <div className="main-content">
             <section className="coinglass-data-bar">
-              <CoinglassMetricsBar data={overviewData.cglsScrapeData.data} isLoading={loadingStates.cglsScrapeData} />
+              <CoinglassMetricsBar data={overviewData.cglsScrapeData.data} isNull={nullStates.cglsScrapeData} />
               <TotalWorth
                 wallets={overviewData.wallets.data}
-                isLoading={loadingStates.wallets}
+                isNull={nullStates.wallets}
               />
             </section>
             <section className="overview-token-table">
-              <OverviewTokensTable tokens={overviewData.TokenOverviewData.data} isLoading={loadingStates.TokenOverviewData} />
-              <CryptoCategoriesSidebar categories={overviewData.cgCategories.data} isLoading={loadingStates.cgCategories} />
+              <OverviewTokensTable tokens={overviewData.TokenOverviewData.data} isNull={nullStates.TokenOverviewData} />
+              <CryptoCategoriesSidebar categories={overviewData.cgCategories.data} isNull={nullStates.cgCategories} />
             </section>
           </div>
         </div>

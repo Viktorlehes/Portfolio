@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLoaderData, useNavigate, LoaderFunction, LoaderFunctionArgs } from "react-router-dom";
 import { components } from "../../types/api-types";
-import { ArrowLeft } from "lucide-react";4
+import { ArrowLeft } from "lucide-react"; 4
 import ValueCard from "../../components/Dashboard/WalletsView/ValueCard";
 import DefiPositions from "../../components/Dashboard/WalletView/DefiPositions";
 import "./SingleWalletView.css";
@@ -10,6 +10,7 @@ import { getCachedData, isDataExpired } from "../../utils/api";
 import LoadingOverlay from "../../components/Default/LoadingOverlay";
 import { ExtendedDefiPosition } from "../Defi/Defi";
 import { api } from "../../utils/api";
+import { useActiveFetches, isEndpointFetching } from "../../context/ActiveFetchesContext";
 
 type Wallet = components["schemas"]["Wallet"];
 type FullToken = components["schemas"]["FullToken"];
@@ -39,7 +40,7 @@ export const walletLoader: LoaderFunction = async ({ params }: LoaderFunctionArg
     const cachedWallets = getCachedData(CACHE_KEYS.WALLETS) as CachedData<Wallet[]>;
 
     if (!cachedWallets) {
-        return { wallets: {data: null, timestamp: 0}, walletAddress: walletAddress ? walletAddress : '' };
+        return { wallets: { data: null, timestamp: 0 }, walletAddress: walletAddress ? walletAddress : '' };
     }
 
     return {
@@ -136,30 +137,36 @@ const SingleWalletView: React.FC = () => {
     const [loadingStates, setLoadingStates] = useState({
         wallets: !wallets.data
     });
+    const activeFetches = useActiveFetches();
 
     useEffect(() => {
         const updateWalletData = async () => {
             if (isDataExpired(wallets.timestamp || 0)) {
-              setLoadingStates(prev => ({ ...prev, wallets: true }));
-              console.log('Wallets Loading:', loadingStates.wallets);
-          
-              try {
-                const newWallets: Wallet[] = await api.get(API_ENDPOINTS.WALLETS);
-          
-                localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
-                  data: newWallets,
-                  timestamp: Date.now()
-                }));
-          
-                setcachedWalletWallet(newWallets.find(wallet => wallet.address === walletAddress) || null);
-              } catch (error) {
-                console.error('Error updating wallets:', error);
-              } finally {
-                setLoadingStates(prev => ({ ...prev, wallets: false }));
-                console.log('Wallets Loading:', loadingStates.wallets);
-              }
+                if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.WALLETS)) {
+                    activeFetches.current.add(API_ENDPOINTS.WALLETS);
+                    setLoadingStates(prev => ({ ...prev, wallets: true }));
+                    console.log('Wallets Loading:', loadingStates.wallets);
+
+                    try {
+                        const newWallets: Wallet[] = await api.get(API_ENDPOINTS.WALLETS);
+
+                        localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
+                            data: newWallets,
+                            timestamp: Date.now()
+                        }));
+
+                        setcachedWalletWallet(newWallets.find(wallet => wallet.address === walletAddress) || null);
+                    } catch (error) {
+                        console.error('Error updating wallets:', error);
+                        activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+                    } finally {
+                        setLoadingStates(prev => ({ ...prev, wallets: false }));
+                        console.log('Wallets Loading:', loadingStates.wallets);
+                        activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+                    }
+                }
             }
-          };
+        };
         updateWalletData();
         const intervalId = setInterval(updateWalletData, 60000);
         return () => clearInterval(intervalId);
@@ -216,7 +223,7 @@ const SingleWalletView: React.FC = () => {
     const defiPositions: ExtendedDefiPosition[] = filteredDefiPositions.map(position => ({
         ...position,
         walletAddress: cachedWallet ? cachedWallet.address : '',
-        walletName: cachedWallet? cachedWallet.name : ''
+        walletName: cachedWallet ? cachedWallet.name : ''
     }));
 
     const totalChange24h = calculate24hChange();
@@ -226,8 +233,8 @@ const SingleWalletView: React.FC = () => {
 
     const shortenAddress = (address: string, startLength: number = 8, endLength: number = 8): string => {
         return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
-      };
-    
+    };
+
     return (
         <div className="single-wallet-container">
             <section className="dashboard-head"
@@ -251,7 +258,7 @@ const SingleWalletView: React.FC = () => {
                     />
                     <ValueCard
                         label="Total"
-                        value={(cachedWallet?.asset_total || 0) + (cachedWallet?.defi_total || 0) }
+                        value={(cachedWallet?.asset_total || 0) + (cachedWallet?.defi_total || 0)}
                         color={'#666'}
                     />
                     <ValueCard

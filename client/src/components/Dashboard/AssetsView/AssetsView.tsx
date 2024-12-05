@@ -9,7 +9,6 @@ import TokenPriceChart from "./TokenPriceChart";
 import { ChartData } from "./TokenPriceChart";
 import { formatCurrency, formatPercent } from "../../../utils/calc";
 import { CircleDollarSign } from 'lucide-react';
-import LoadingOverlay from "../../Default/LoadingOverlay";
 import { useNavigate } from "react-router-dom";
 import { getCachedData, isDataExpired } from "../../../utils/api";
 import { api } from "../../../utils/api";
@@ -31,8 +30,8 @@ const API_ENDPOINTS = {
 } as const;
 
 interface AssetViewProps {
-  wallets: Wallet[] | null;
-  isLoading: boolean;
+  wallets: Wallet[];
+  isNull: boolean;
 }
 
 export interface Asset {
@@ -47,7 +46,7 @@ export interface Asset {
   fungible_id: string;
 }
 
-const AssetsView: React.FC<AssetViewProps> = ({ wallets, isLoading }) => {
+const AssetsView: React.FC<AssetViewProps> = ({ wallets, isNull }) => {
   const [showZeroValues, setShowZeroValues] = useState(false);
   const fetchingRef = useRef<Set<string>>(new Set());
   const navigate = useNavigate();
@@ -78,7 +77,7 @@ const AssetsView: React.FC<AssetViewProps> = ({ wallets, isLoading }) => {
     }
   };
 
-  const { totalValueArray, largest4Assets } = wallets ? useMemo(() => {
+  const { totalValueArray, largest4Assets } = !isNull ? useMemo(() => {
     const totalValuePerAsset = wallets.reduce((acc, wallet) => {
       wallet.tokens?.forEach(token => {
         const tokenData = token.token_data ? token.token_data : token.zerion_data;
@@ -257,12 +256,6 @@ const AssetsView: React.FC<AssetViewProps> = ({ wallets, isLoading }) => {
       <div className="asset-overview-sidebar">
         <AssetOverviewSidebar assets={[...largest4Assets, ...totalValueArray]} />
       </div>
-      {isLoading && !wallets &&
-        (
-          <LoadingOverlay message="Loading Asset Data..." />
-        )
-      }
-
     </div>
   );
 };

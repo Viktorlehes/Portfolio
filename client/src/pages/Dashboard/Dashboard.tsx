@@ -9,6 +9,7 @@ import AssetsView from '../../components/Dashboard/AssetsView/AssetsView'
 import ManageWallets from "./ManageWallets";
 import { isDataExpired, getCachedData } from "../../utils/api";
 import { api } from "../../utils/api";
+import { useActiveFetches, isEndpointFetching } from "../../context/ActiveFetchesContext";
 import "./Dashboard.css";
 
 
@@ -44,14 +45,14 @@ export const dashboardLoader: LoaderFunction = async () => {
   const savedView = localStorage.getItem(CACHE_KEYS.VIEW);
   const defaultView = 'Wallets' as ViewType;
   const currentView = savedView ? JSON.parse(savedView) as ViewType : defaultView;
-  
+
   const cachedWallets = getCachedData(CACHE_KEYS.WALLETS) as CachedData<Wallet[]>;
 
   return {
     currentView,
-    wallets: { 
-      data: cachedWallets?.data || [], 
-      timestamp: cachedWallets?.timestamp || null 
+    wallets: {
+      data: cachedWallets?.data || [],
+      timestamp: cachedWallets?.timestamp || null
     } as CachedData<Wallet[]>,
   } as LoaderData;
 }
@@ -59,33 +60,46 @@ export const dashboardLoader: LoaderFunction = async () => {
 const Dashboard: React.FC = () => {
   const cachedData = useLoaderData() as LoaderData;
   const [dashboardData, setDashboardData] = useState<LoaderData>(cachedData);
-  const [loadingStates, setLoadingStates] = useState({
+  const [nullStates, setnullStates] = useState({
     wallets: !dashboardData.wallets
   });
   const location = useLocation();
+  const activeFetches = useActiveFetches();
 
   const updateExpiredData = async () => {
     const updates: Promise<void>[] = [];
     const newData = { ...dashboardData };
-  
-    if (loadingStates.wallets || isDataExpired(dashboardData.wallets.timestamp || 0)) {
-      updates.push(
-        api.get(API_ENDPOINTS.WALLETS)
-          .then(wallets => {
-            newData.wallets = {
-              data: wallets,
-              timestamp: Date.now()
-            };
-            localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify(newData.wallets));
-            setLoadingStates(prev => ({ ...prev, wallets: false }));
-          })
-          .catch(error => {
-            console.error('Error fetching wallets:', error);
-            setLoadingStates(prev => ({ ...prev, wallets: false }));
-          })
-      );
+
+    if (nullStates.wallets || isDataExpired(dashboardData.wallets.timestamp || 0)) {
+      if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.WALLETS)) {
+        activeFetches.current.add(API_ENDPOINTS.WALLETS);
+        updates.push(
+          api.get(API_ENDPOINTS.WALLETS)
+            .then(wallets => {
+              newData.wallets = {
+                data: wallets,
+                timestamp: Date.now()
+              };
+              localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify(newData.wallets));
+              setnullStates(prev => ({ ...prev, wallets: false }));
+            })
+            .catch(error => {
+              console.error('Error fetching wallets:', error);
+              if (!dashboardData.wallets) {
+                setnullStates(prev => ({ ...prev, wallets: true }));
+              } else {
+                setnullStates(prev => ({ ...prev, wallets: false }));
+              }
+              activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+            })
+            .finally(() => {
+              activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+            }
+            )
+        );
+      }
     }
-  
+
     if (updates.length > 0) {
       try {
         await Promise.all(updates);
@@ -125,14 +139,45 @@ const Dashboard: React.FC = () => {
     localStorage.setItem(CACHE_KEYS.VIEW, JSON.stringify(newView));
   };
 
+  const forcedWalletUpdate = async () => {
+    const newData = { ...dashboardData };
+    setnullStates(prev => ({ ...prev, wallets: true }));
+    await api.get(API_ENDPOINTS.WALLETS)
+      .then(wallets => {
+        newData.wallets = {
+          data: wallets,
+          timestamp: Date.now()
+        };
+        localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify(newData.wallets));
+        setnullStates(prev => ({ ...prev, wallets: false }));
+      })
+      .catch(error => {
+        console.error('Error fetching wallets:', error);
+        if (!dashboardData.wallets) {
+          setnullStates(prev => ({ ...prev, wallets: true }));
+        } else {
+          setnullStates(prev => ({ ...prev, wallets: false }));
+        }
+      })
+      .finally(() => {
+        setnullStates(prev => ({ ...prev, wallets: false }));
+      });
+    setDashboardData(newData);
+  }
+
   const isWalletorAssetDetail = location.pathname.includes('/wallet') || location.pathname.includes('/asset');
 
   const handleDeleteWallet = async (address: string) => {
     try {
-      await api.delete(`/dashboard/manage/delete_wallet/${address}`);
-      
-      const updatedWallets = dashboardData.wallets.data.filter(wallet => wallet.address !== address);
-      
+      // Make the DELETE request and await the response
+      await api.delete(`/wallets/manage/delete_wallet/${address}`);
+
+      // If we get here, the deletion was successful
+      // Update the local state and cache
+      const updatedWallets = dashboardData.wallets.data.filter(
+        wallet => wallet.address !== address
+      );
+
       setDashboardData(prevData => ({
         ...prevData,
         wallets: {
@@ -140,15 +185,23 @@ const Dashboard: React.FC = () => {
           timestamp: Date.now()
         }
       }));
-  
-      localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
-        data: updatedWallets,
-        timestamp: Date.now()
-      }));
-  
+
+      // Update localStorage
+      localStorage.setItem(
+        CACHE_KEYS.WALLETS,
+        JSON.stringify({
+          data: updatedWallets,
+          timestamp: Date.now()
+        })
+      );
+
       return { success: true };
     } catch (error) {
       console.error('Error deleting wallet:', error);
+      // Check if it's a 404 error
+      if ((error as any)?.response?.status === 404) {
+        return { success: false, error: 'Wallet not found' };
+      }
       return { success: false, error: 'Failed to delete wallet' };
     }
   };
@@ -159,16 +212,16 @@ const Dashboard: React.FC = () => {
     if (walletExists) {
       return { success: false, error: 'Wallet already exists' };
     }
-  
+
     try {
       const newWallet = await api.post(
-        `/dashboard/manage/new_wallet/${address}`,
+        `/wallets/manage/new_wallet/${address}`,
         { name, color, mode: walletType }
       ) as Wallet;
-  
+
       // Create new array with updated data
       const updatedWallets = [...dashboardData.wallets.data, newWallet];
-  
+
       // Update state
       setDashboardData(prevData => ({
         ...prevData,
@@ -177,13 +230,13 @@ const Dashboard: React.FC = () => {
           timestamp: Date.now()
         }
       }));
-  
+
       // Update localStorage
       localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
         data: updatedWallets,
         timestamp: Date.now()
       }));
-  
+
       return { success: true };
     } catch (error) {
       console.error('Error adding wallet:', error);
@@ -191,6 +244,9 @@ const Dashboard: React.FC = () => {
       if (error instanceof Error) {
         if (error.message.includes('500')) {
           return { success: false, error: 'Server error: Unable to process your request' };
+        }
+        if (error.message.includes('400')) {
+          return { success: false, error: 'Invalid Wallet' };
         }
       }
       return { success: false, error: 'Network error: Unable to connect to server' };
@@ -203,20 +259,20 @@ const Dashboard: React.FC = () => {
       color: wallet.color,
       mode: wallet.wallet_mode
     };
-  
+
     console.log('Updating wallet:', wallet.address);
-  
+
     try {
       const data = await api.put(
-        `/dashboard/manage/update_wallet/${wallet.address}`,
+        `/wallets/manage/update_wallet/${wallet.address}`,
         updateData
       ) as Wallet;
-  
+
       // Create updated wallets array
       const updatedWallets = dashboardData.wallets.data.map(w =>
         w.address === data.address ? data : w
       );
-  
+
       // Update state
       setDashboardData(prevWallets => ({
         ...prevWallets,
@@ -225,17 +281,17 @@ const Dashboard: React.FC = () => {
           timestamp: Date.now()
         }
       }));
-  
+
       // Update localStorage with the new array
       localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
         data: updatedWallets,
         timestamp: Date.now()
       }));
-  
+
       return { success: true };
     } catch (error) {
       console.error('Error updating wallet:', error);
-      
+
       // Handle different types of errors
       if (error instanceof Error) {
         const errorMessage = error.message;
@@ -246,7 +302,7 @@ const Dashboard: React.FC = () => {
           };
         }
       }
-  
+
       return {
         success: false,
         error: 'Network error: Unable to connect to server'
@@ -262,16 +318,17 @@ const Dashboard: React.FC = () => {
 
     const view = dashboardData.currentView || 'Wallets';
 
-    switch (view) {      
+    switch (view) {
       case 'Wallets':
         return <WalletsView
           wallets={dashboardData.wallets.data}
           onViewChange={handleViewChange}
-          isLoading={loadingStates.wallets}
+          isNull={nullStates.wallets}
           lastUpdated={dashboardData.wallets.timestamp}
+          forcedUpdate={forcedWalletUpdate}
         />;
       case 'Assets':
-        return <AssetsView wallets={dashboardData.wallets.data} isLoading={loadingStates.wallets} />;
+        return <AssetsView wallets={dashboardData.wallets.data} isNull={nullStates.wallets} />;
       case 'Manage':
         return (
           <ManageWallets
@@ -284,11 +341,12 @@ const Dashboard: React.FC = () => {
           />
         );
       default:
-        return <WalletsView 
-        wallets={dashboardData.wallets.data}
-        onViewChange={handleViewChange}
-        isLoading={loadingStates.wallets}
-        lastUpdated={dashboardData.wallets.timestamp}
+        return <WalletsView
+          wallets={dashboardData.wallets.data}
+          onViewChange={handleViewChange}
+          isNull={nullStates.wallets}
+          lastUpdated={dashboardData.wallets.timestamp}
+          forcedUpdate={forcedWalletUpdate}
         />;
     }
   };

@@ -10,6 +10,7 @@ import { isDataExpired } from '../../utils/api';
 import { RefreshCcw } from 'lucide-react';
 import { formatCurrencySuffix } from '../../utils/calc';
 import { api } from '../../utils/api';
+import { useActiveFetches, isEndpointFetching } from '../../context/ActiveFetchesContext';
 
 type Wallet = components["schemas"]["Wallet"];
 type FullToken = components["schemas"]["FullToken"];
@@ -150,28 +151,35 @@ const SingleAssetView: React.FC = () => {
         zerionToken: true,
         chartData: true
     });
+    const activeFetches = useActiveFetches();
+
 
     useEffect(() => {
         const updateWalletData = async () => {
             if (isDataExpired(wallets.timestamp || 0)) {
-              setLoadingStates(prev => ({ ...prev, wallets: true }));
-              
-              try {
-                const newWallets = await api.get(API_ENDPOINTS.WALLETS);
-                
-                localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
-                  data: newWallets,
-                  timestamp: Date.now()
-                }));
-                
-                setCurrentWallets(newWallets);
-              } catch (error) {
-                console.error('Error updating wallets:', error);
-              } finally {
-                setLoadingStates(prev => ({ ...prev, wallets: false }));
-              }
+                if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.WALLETS)) {
+                    activeFetches.current.add(API_ENDPOINTS.WALLETS);
+                    setLoadingStates(prev => ({ ...prev, wallets: true }));
+
+                    try {
+                        const newWallets = await api.get(API_ENDPOINTS.WALLETS);
+
+                        localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
+                            data: newWallets,
+                            timestamp: Date.now()
+                        }));
+
+                        setCurrentWallets(newWallets);
+                    } catch (error) {
+                        console.error('Error updating wallets:', error);
+                        activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+                    } finally {
+                        setLoadingStates(prev => ({ ...prev, wallets: false }));
+                        activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+                    }
+                }
             }
-          };
+        };
         updateWalletData();
         const intervalId = setInterval(updateWalletData, 60000);
         return () => clearInterval(intervalId);
@@ -229,35 +237,32 @@ const SingleAssetView: React.FC = () => {
         let totalAmount = 0;
         let positions: Position[] = [];
         let processedTokenIds = new Set<string>();
-    
+
         const zerion24hChange = zerionTokenData?.data.attributes.market_data.changes.percent_1d || 0;
-    
+
         // Process all wallets
         currentWallets.forEach(wallet => {
             if (!wallet.tokens) return;
-    
+
             // For fungible tokens
             if (isFungible) {
                 wallet.tokens.forEach(token => {
-                    // Skip if we've already processed this token
-                    if (processedTokenIds.has(token.zerion_data.fungible_id)) return;
-    
                     // Check if this token matches our criteria
                     const matchesFungibleId = token.zerion_data.fungible_id === assetId;
-                    const matchesName = token.zerion_data.name === assetName || 
-                                      token.token_data?.name === assetName;
-    
+                    const matchesName = token.zerion_data.name === assetName ||
+                        token.token_data?.name === assetName;
+
                     if (matchesFungibleId || matchesName) {
                         processedTokenIds.add(token.zerion_data.fungible_id);
-                        
+
                         const value = getValue(token);
                         const amount = token.token_data?.amount || token.zerion_data.quantity.float;
                         const change24h = zerion24hChange;
                         const absoluteChange = (value * change24h) / 100;
-    
+
                         totalValue += value;
                         totalAmount += amount;
-    
+
                         positions.push({
                             walletName: wallet.name,
                             walletAddress: wallet.address,
@@ -280,10 +285,10 @@ const SingleAssetView: React.FC = () => {
                         const amount = token.token_data?.amount || token.zerion_data.quantity.float;
                         const change24h = zerion24hChange;
                         const absoluteChange = (value * change24h) / 100;
-            
+
                         totalValue += value;
                         totalAmount += amount;
-            
+
                         positions.push({
                             walletName: wallet.name,
                             walletAddress: wallet.address,
@@ -301,13 +306,13 @@ const SingleAssetView: React.FC = () => {
                 });
             }
         });
-    
+
         // Calculate percentages
         positions = positions.map(position => ({
             ...position,
             percentage: (position.value / totalValue) * 100
         }));
-    
+
         return {
             totalValue,
             totalAmount,
@@ -333,7 +338,7 @@ const SingleAssetView: React.FC = () => {
                         <ArrowLeft size={20} />
                     </button>
                     {zerionTokenData?.data.attributes.icon.url && (
-                        <img src={zerionTokenData.data.attributes.icon.url} alt={assetName} style={{'width': '40px', 'height': '40px' }} />
+                        <img src={zerionTokenData.data.attributes.icon.url} alt={assetName} style={{ 'width': '40px', 'height': '40px' }} />
                     )}
                     <h1>{assetName} ({zerionTokenData?.data.attributes.symbol})</h1>
                 </div>

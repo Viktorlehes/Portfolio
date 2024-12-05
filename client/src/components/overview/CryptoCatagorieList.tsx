@@ -7,7 +7,7 @@ type CategoryResponse = components['schemas']['CategoryResponse'];
 
 interface CryptoCategoriesListProps {
   categories: CategoryResponse | null;
-  isLoading: boolean;
+  isNull: boolean;
 }
 
 interface CategoryRowProps {
@@ -41,16 +41,13 @@ const CategoryRow: React.FC<CategoryRowProps> = ({ category, onClick }) => {
       <td className="market-cap-cell">
         {formatCurrencySuffix(category.market_cap)}
       </td>
-      <td className="volume-cell">
-        {formatCurrencySuffix(category.volume_24h)}
-      </td>
     </tr>
   );
 };
 
 export const CryptoCategoriesList: React.FC<CryptoCategoriesListProps> = ({ 
   categories, 
-  isLoading 
+  isNull 
 }) => {
   const handleRedirect = (id: string) => {
     window.open(`https://www.coingecko.com/en/categories/${id}`, '_blank');
@@ -70,11 +67,10 @@ export const CryptoCategoriesList: React.FC<CryptoCategoriesListProps> = ({
               <th>Category</th>
               <th>24h%</th>
               <th>Mc</th>
-              <th>Vol</th>
             </tr>
           </thead>
           <tbody>
-            {!isLoading && categories && sortedCategories.map((category, index) => (
+            {!isNull && sortedCategories.map((category, index) => (
               <CategoryRow 
                 key={index} 
                 category={category} 

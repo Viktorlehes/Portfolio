@@ -52,6 +52,7 @@
 }
 
 .overview-token-table {
+  width: 100%;
   display: flex;
   flex-direction: row;
   gap: 10px;

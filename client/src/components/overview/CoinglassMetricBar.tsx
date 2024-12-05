@@ -6,7 +6,7 @@ type CGLSApiResponse = components['schemas']['APIResponse'];
 
 interface CoinglassMetricsBarProps {
   data: CGLSApiResponse | null;
-  isLoading: boolean;
+  isNull: boolean;
 }
 
 interface MetricItem {
@@ -37,18 +37,18 @@ const DEFAULT_METRICS: Record<string, MetricItem> = {
 const SafeMetricDisplay = ({ 
   data,
   metricKey,
-  loading = false,
+  isNull,
 }: {
   data: CGLSApiResponse | null;
   metricKey: keyof typeof DEFAULT_METRICS;
-  loading: boolean;
+  isNull: boolean;
 }) => {
   const metricData = React.useMemo(() => {
-    if (loading) {
+    if (isNull) {
       return DEFAULT_METRICS[metricKey];
     }
     return data && data.data ? (data.data as Record<keyof typeof DEFAULT_METRICS, MetricItem>)[metricKey] : DEFAULT_METRICS[metricKey];
-  }, [data, metricKey, loading]);
+  }, [data, metricKey, isNull]);
 
   return <MetricItem item={metricData} />;
 };
@@ -84,7 +84,7 @@ const METRIC_KEYS = [
 
 const CoinglassMetricsBar: React.FC<CoinglassMetricsBarProps> = ({ 
   data, 
-  isLoading = false 
+  isNull 
 }) => {
   return (
     <div className="cgm-container">
@@ -94,7 +94,7 @@ const CoinglassMetricsBar: React.FC<CoinglassMetricsBarProps> = ({
             key={metricKey}
             data={data}
             metricKey={metricKey}
-            loading={isLoading}
+            isNull={isNull}
           />
         ))}
       </div>
