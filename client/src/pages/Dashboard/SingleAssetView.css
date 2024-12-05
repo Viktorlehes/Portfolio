@@ -25,7 +25,7 @@
 
 .dashboard-head {
   display: flex;
-  justify-content: space-evenly;
+
   align-items: center;
   background: white;
   border-radius: 2px;
