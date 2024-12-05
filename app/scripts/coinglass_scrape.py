@@ -41,16 +41,16 @@ def setup_driver():
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.binary_location = "/usr/bin/google-chrome"  # Add this line
     
-    # Add ProxyMesh proxy to avoid detection
+    # Add ProxyMesh proxy
     PROXY = f"http://{PROXY_USERNAME}:{PROXY_PASSWORD}@us-ca.proxymesh.com:31280"
-    
     chrome_options.add_argument(f'--proxy-server={PROXY}')
     
-    # Add random user agent to help avoid detection
+    # Add random user agent
     chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
     
-    service = Service(ChromeDriverManager().install())
+    service = Service('/usr/local/bin/chromedriver')  # Use explicit path
     return webdriver.Chrome(service=service, options=chrome_options)
 
 def scrape_metric(driver, wait, selector: str, include_subtext: bool = False) -> Optional[MetricItem]:
