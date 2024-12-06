@@ -225,7 +225,6 @@ input:checked + .toggle-slider:before {
   display: flex;
   justify-content: space-evenly;
   gap: 16px;
-  margin: 20px 0;
 }
 
 .overview-edit {

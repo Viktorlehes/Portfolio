@@ -3,7 +3,7 @@
   background-color: white;
   border-radius: 2px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -15,9 +15,9 @@
 .overview-values {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-around;
+  justify-content: space-evenly;
   gap: 24px;
-  width: 100%;
+  width: 60%;
 }
 
 .overview-edit {
@@ -67,7 +67,7 @@
 }
 
 .value-card-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   color: #8b5cf6;
   margin-bottom: 8px;
@@ -75,7 +75,7 @@
 }
 
 .value-card-value {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   color: #111827;
   text-align: center;

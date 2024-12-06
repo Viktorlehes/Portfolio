@@ -2,7 +2,7 @@
 # Standard library imports
 import json
 from typing import List
-import os
+from datetime import datetime, timedelta
 
 # Third-party imports
 from fastapi import APIRouter, HTTPException
@@ -293,44 +293,91 @@ async def get_overview_tokens_table_data():
     final_response = []
     try:
         for token in response_data:
-            # Get coinglass data
-            coinglass_token = await coinglass_collection.find_one({"symbol": token['symbol']})
-            if not coinglass_token:
-                coinglass_data = await get_coinglass_token(token['symbol'])
-                if coinglass_data['code'] == "0":
-                    coinglass_token = {
-                        "symbol": token['symbol'],
-                        "data": coinglass_data['data']
-                    }
-                    await coinglass_collection.insert_one(coinglass_token)
-                else:
-                    print(f"Error fetching coinglass data for {token['symbol']}")
-                    coinglass_token = None
-
-            # Calculate net inflow from coinglass data (if available)
-            net_inflow_24h = 0
-            if coinglass_token and 'data' in coinglass_token:
-                # Sum up flowsUsd24h from all exchanges
-                net_inflow_24h = sum(exchange['flowsUsd24h'] for exchange in coinglass_token['data'])
-
-            # Extract and format required fields
-            formatted_token = {
-                "name": token['name'],
-                "price": token['quote']['USD']['price'],
-                "change24h": token['quote']['USD']['percent_change_24h'],
-                "change7d": token['quote']['USD']['percent_change_7d'],
-                "volume": token['quote']['USD']['volume_24h'],
-                "volumeChange24h": token['quote']['USD']['volume_change_24h'],
-                "marketCap": token['quote']['USD']['market_cap'],
-                "netInflow24h": net_inflow_24h
-            }
-            
-            final_response.append(formatted_token)
-            
+            try:
+                # Get coinglass data
+                coinglass_token = await coinglass_collection.find_one({"symbol": token['symbol']})
+                
+                # Handle coinglass data fetching and updates
+                coinglass_token = await update_coinglass_data(token['symbol'], coinglass_token)
+                
+                # Calculate net inflow
+                net_inflow_24h = 0
+                if coinglass_token and 'data' in coinglass_token:
+                    net_inflow_24h = sum(
+                        exchange['flowsUsd24h'] 
+                        for exchange in coinglass_token['data']
+                    )
+                
+                # Format response
+                formatted_token = {
+                    "name": token['name'],
+                    "price": token['quote']['USD']['price'],
+                    "change24h": token['quote']['USD']['percent_change_24h'],
+                    "change7d": token['quote']['USD']['percent_change_7d'],
+                    "volume": token['quote']['USD']['volume_24h'],
+                    "volumeChange24h": token['quote']['USD']['volume_change_24h'],
+                    "marketCap": token['quote']['USD']['market_cap'],
+                    "netInflow24h": net_inflow_24h
+                }
+                final_response.append(formatted_token)
+                
+            except Exception as e:
+                print(f"Error processing token {token['symbol']}: {str(e)}")
+                continue
+                
         return list[TokenOverviewData](final_response)
-
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred while processing data: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"An error occurred while processing data: {str(e)}"
+        )
+        
+async def update_coinglass_data(symbol: str, coinglass_token: dict) -> dict:
+    """Helper function to handle coinglass data updates"""
+    try:
+        # Case 1: Token not in collection
+        if not coinglass_token:
+            coinglass_data = await get_coinglass_token(symbol)
+            if coinglass_data['code'] == "0":
+                coinglass_token = {
+                    "symbol": symbol,
+                    "data": coinglass_data['data'],
+                    'last_updated': datetime.now()
+                }
+                await coinglass_collection.insert_one(coinglass_token)
+            else:
+                print(f"Error fetching coinglass data for {symbol}")
+                return None
+                
+        # Case 2: Token exists but needs update (>5 min old)
+        elif ('last_updated' in coinglass_token and 
+              datetime.now() - coinglass_token['last_updated'] > timedelta(minutes=5)):
+            coinglass_data = await get_coinglass_token(symbol)
+            if coinglass_data['code'] == "0":
+                coinglass_token['data'] = coinglass_data['data']
+                coinglass_token['last_updated'] = datetime.now()
+                await coinglass_collection.update_one(
+                    {"symbol": symbol}, 
+                    {"$set": coinglass_token}
+                )
+                
+        # Case 3: Token exists but has no timestamp
+        elif 'last_updated' not in coinglass_token:
+            coinglass_data = await get_coinglass_token(symbol)
+            if coinglass_data['code'] == "0":
+                coinglass_token['data'] = coinglass_data['data']
+                coinglass_token['last_updated'] = datetime.now()
+                await coinglass_collection.update_one(
+                    {"symbol": symbol}, 
+                    {"$set": coinglass_token}
+                )
+                
+        return coinglass_token
+        
+    except Exception as e:
+        print(f"Error updating coinglass data for {symbol}: {str(e)}")
+        return None
     
 @router.get("/get-crypto-catagories", response_model=CategoryResponse)
 async def get_crypto_catagories():

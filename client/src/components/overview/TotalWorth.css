@@ -1,10 +1,9 @@
 .tw-container {
     background: white;
     border-radius: 2px;
-    padding: 24px;
+    padding: 14px;
     box-shadow: 0 3px 5px rgba(0, 0, 0, 0.046);
     margin-bottom: 10px;
-    height: 130px;
   }
   
   .tw-content {
@@ -15,6 +14,7 @@
   
   .tw-main-worth {
     flex: 1;
+    padding-right: 18px;
   }
   
   .tw-title {
@@ -22,11 +22,12 @@
     font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.5px;
+    text-wrap: nowrap;
   }
   
   .tw-total-amount {
     padding-right: 5px;
-    font-size: 28px;
+    font-size: 20px;
     font-weight: 600;
     color: #333;
     margin: 3px 3px;
@@ -52,7 +53,7 @@
   
   .tw-breakdown {
     display: flex;
-    gap: 32px;
+    gap: 18px;
     padding-left: 32px;
     border-left: 1px solid #eee;
   }
@@ -69,7 +70,7 @@
   }
   
   .tw-breakdown-value {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 500;
     color: #333;
   }
