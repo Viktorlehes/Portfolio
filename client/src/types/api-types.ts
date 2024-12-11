@@ -140,15 +140,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/overview/get-crypto-catagories": {
+    "/overview/get-user-catagories": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Crypto Catagories */
-        get: operations["get_crypto_catagories_overview_get_crypto_catagories_get"];
+        /** Get Cmc Catagories */
+        get: operations["get_cmc_catagories_overview_get_user_catagories_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -157,17 +157,156 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/overview/get-crypto-catagorie/{catagory}": {
+    "/overview/update-categories": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Crypto Catagories */
-        get: operations["get_crypto_catagories_overview_get_crypto_catagorie__catagory__get"];
+        /**
+         * Update Categories
+         * @description Update existing categories with latest data from CMC
+         */
+        get: operations["update_categories_overview_update_categories_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/get-default-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Default Categories */
+        get: operations["get_default_categories_overview_get_default_categories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/add-CMC-category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Cmc Category */
+        post: operations["add_cmc_category_overview_add_CMC_category_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/remove-CMC-category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove Cmc Category */
+        post: operations["remove_cmc_category_overview_remove_CMC_category_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/get-custom-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Custom Categories */
+        get: operations["get_custom_categories_overview_get_custom_categories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/remove-custom-category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove Custom Category */
+        post: operations["remove_custom_category_overview_remove_custom_category_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/get-default-tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Default Tokens */
+        get: operations["get_default_tokens_overview_get_default_tokens_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/find-tokens-by-name": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Get Tokens By Name */
+        post: operations["get_tokens_by_name_overview_find_tokens_by_name_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/add-custom-category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Custom Category */
+        post: operations["add_custom_category_overview_add_custom_category_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -393,7 +532,7 @@ export interface paths {
         post?: never;
         /**
          * Delete Wallet
-         * @description Delete a wallet by its ID.
+         * @description Delete a wallet by its address.
          */
         delete: operations["delete_wallet_wallets_manage_delete_wallet__wallet_address__delete"];
         options?: never;
@@ -491,50 +630,33 @@ export interface components {
             /** Symbol */
             symbol: string;
         };
-        /**
-         * CategoryData
-         * @example {
-         *       "content": "Smart contract platforms are usually blockchains that host smart contracts...",
-         *       "id": "smart-contract-platform",
-         *       "market_cap": 2969444385499.122,
-         *       "market_cap_change_24h": -0.1959823588030821,
-         *       "name": "Smart Contract Platform",
-         *       "top_3_coins": [
-         *         "https://coin-images.coingecko.com/coins/images/1/small/bitcoin.png",
-         *         "https://coin-images.coingecko.com/coins/images/279/small/ethereum.png",
-         *         "https://coin-images.coingecko.com/coins/images/4128/small/solana.png"
-         *       ],
-         *       "top_3_coins_id": [
-         *         "bitcoin",
-         *         "ethereum",
-         *         "solana"
-         *       ],
-         *       "updated_at": "2024-12-02T08:15:42.078Z",
-         *       "volume_24h": 171473330258.68356
-         *     }
-         */
+        /** CategoryData */
         CategoryData: {
             /** Id */
             id: string;
             /** Name */
             name: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Num Tokens */
+            num_tokens: number;
+            /** Avg Price Change */
+            avg_price_change: number;
             /** Market Cap */
             market_cap: number;
-            /** Market Cap Change 24H */
-            market_cap_change_24h: number;
-            /** Content */
-            content: string;
-            /** Top 3 Coins Id */
-            top_3_coins_id: string[];
-            /** Top 3 Coins */
-            top_3_coins: string[];
-            /** Volume 24H */
-            volume_24h: number;
+            /** Market Cap Change */
+            market_cap_change: number;
+            /** Volume */
+            volume: number;
+            /** Volume Change */
+            volume_change: number;
             /**
-             * Updated At
+             * Last Updated
              * Format: date-time
              */
-            updated_at: string;
+            last_updated: string;
         };
         /**
          * CategoryResponse
@@ -629,6 +751,37 @@ export interface components {
              * Format: date-time
              */
             last_updated: string;
+        };
+        /** CustomCategory */
+        CustomCategory: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Num Tokens */
+            num_tokens: number;
+            /** Market Cap */
+            market_cap: number;
+            /** Market Cap Change */
+            market_cap_change: number;
+            /** Volume */
+            volume: number;
+            /** Volume Change */
+            volume_change: number;
+            /** Tokens Ids */
+            tokens_ids: components["schemas"]["CustomCategoryTokens"][];
+            /**
+             * Last Updated
+             * Format: date-time
+             */
+            last_updated: string;
+        };
+        /** CustomCategoryTokens */
+        CustomCategoryTokens: {
+            /** Id */
+            id: number;
+            /** Symbol */
+            symbol: string;
         };
         /** DefiPosition */
         DefiPosition: {
@@ -1060,6 +1213,11 @@ export interface components {
              * @description Net inflow over 24 hours across all exchanges
              */
             netInflow24h: number;
+            /**
+             * Lastupdated
+             * @description Last updated timestamp
+             */
+            lastUpdated: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -1425,7 +1583,7 @@ export interface operations {
             };
         };
     };
-    get_crypto_catagories_overview_get_crypto_catagories_get: {
+    get_cmc_catagories_overview_get_user_catagories_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1445,16 +1603,243 @@ export interface operations {
             };
         };
     };
-    get_crypto_catagories_overview_get_crypto_catagorie__catagory__get: {
+    update_categories_overview_update_categories_get: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                catagory: string;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": string[];
             };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_default_categories_overview_get_default_categories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryResponse"];
+                };
+            };
+        };
+    };
+    add_cmc_category_overview_add_CMC_category_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_cmc_category_overview_remove_CMC_category_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_custom_categories_overview_get_custom_categories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomCategory"][];
+                };
+            };
+        };
+    };
+    remove_custom_category_overview_remove_custom_category_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_default_tokens_overview_get_default_tokens_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FullCMCToken"][];
+                };
+            };
+        };
+    };
+    get_tokens_by_name_overview_find_tokens_by_name_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FullCMCToken"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_custom_category_overview_add_custom_category_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

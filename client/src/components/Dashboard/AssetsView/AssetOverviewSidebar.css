@@ -23,7 +23,7 @@
 
 .overview-header {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 2fr 2fr 1fr;
   padding: 12px 0;
   border-bottom: 1px solid #eee;
   font-size: 12px;
@@ -36,15 +36,15 @@
 }
 
 .overview-header span:not(:first-child) {
-  text-align: right;
+  text-align: left;
 }
 
 .overview-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 2fr 2fr 1fr;
   padding: 16px 0;
   border-bottom: 1px solid #eee;
-  align-items: center;
+  align-items:center;
   color: #333;
 }
 
@@ -53,7 +53,7 @@
 }
 
 .overview-row span:not(:first-child) {
-  text-align: right;
+  text-align: left;
 }
 
 .overview-row .asset-name {

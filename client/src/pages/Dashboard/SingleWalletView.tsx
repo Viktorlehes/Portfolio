@@ -237,7 +237,7 @@ const SingleWalletView: React.FC = () => {
 
     return (
         <div className="single-wallet-container">
-            <section className="dashboard-head"
+            <section className="wallet-dashboard-head"
                 style={{ background: `linear-gradient(to bottom, ${cachedWallet?.color}80 1%, white 10px)` }}
             >
                 <div className="wallet-header">
@@ -249,7 +249,7 @@ const SingleWalletView: React.FC = () => {
                         <h1 style={{ color: "black" }}>{cachedWallet?.name}</h1>
                     </div> */}
                 </div>
-                <div className="overview-values">
+                <div className="wallet-overview-values">
                     <ValueCard
                         label={shortenAddress(cachedWallet ? cachedWallet.address : '')}
                         value={cachedWallet?.name || ''}

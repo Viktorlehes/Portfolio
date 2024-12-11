@@ -5,6 +5,7 @@ import { AuthProvider } from "./auth/authContext";
 import App from "./App";
 import Login from "./pages/misc/Login";
 import Overview, { overviewLoader } from "./pages/Overview/Overview";
+import Managecategories, {manageLoader} from "./pages/Overview/ManageCategories"; 
 import Dashboard, { dashboardLoader } from "./pages/Dashboard/Dashboard";
 import SingleWalletView, { walletLoader } from "./pages/Dashboard/SingleWalletView";
 import SingleAssetView from "./pages/Dashboard/SingleAssetView";
@@ -29,6 +30,15 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         loader: overviewLoader,
+      },
+      {
+        path: "ManageCatagories",
+        element: (
+          <ProtectedRoute>
+            <Managecategories />
+          </ProtectedRoute>
+        ),
+        loader: manageLoader,
       },
       {
         path: "Dashboard",

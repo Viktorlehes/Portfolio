@@ -11,6 +11,7 @@ interface TokenTableRowProps {
 }
 
 export const TokenTableRow: React.FC<TokenTableRowProps> = ({ data, rank }) => {
+
     const formatPercentage = (value: number) => {
         return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
     };

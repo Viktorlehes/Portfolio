@@ -6,13 +6,32 @@ import { components } from '../../types/api-types';
 type TokenOverviewResponse = components['schemas']['TokenOverviewData'];
 
 interface OverviewTokensTableProps {
-  tokens: TokenOverviewResponse[] | null;
+  tokens: TokenOverviewResponse[];
   isNull: boolean;
 }
 
-export const OverviewTokensTable: React.FC<OverviewTokensTableProps> = ({ tokens , isNull }) => {
+export const OverviewTokensTable: React.FC<OverviewTokensTableProps> = ({ tokens, isNull }) => {  
+
+  const latestUpdate =() => {
+    if (!isNull ? tokens[0].lastUpdated : null) {    
+      const date = new Date(tokens[0].lastUpdated);
+      const options: Intl.DateTimeFormatOptions = {
+        timeZone: "Europe/Stockholm",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      };
+      const swedishLocalTime = new Intl.DateTimeFormat("sv-SE", options).format(date);
+      return swedishLocalTime;
+    }
+  };
+
   return (
     <div className="table-container">
+      <div className='catagories-container-edit'>
+        <div className='catagories-container-title'>Tokens by Market Cap</div>
+        <div className='catagories-container-update'>Last updated: {latestUpdate()}</div>
+      </div>
       <div className="table-scroll">
         <table className="tokens-table">
           <thead>
@@ -30,7 +49,7 @@ export const OverviewTokensTable: React.FC<OverviewTokensTableProps> = ({ tokens
           </thead>
           <tbody>
             {!isNull && tokens?.map((token, index) => (
-              <TokenTableRow key={index} data={token} rank={index+1} />
+              <TokenTableRow key={index} data={token} rank={index + 1} />
             ))}
           </tbody>
         </table>

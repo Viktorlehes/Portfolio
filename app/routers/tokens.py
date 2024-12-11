@@ -177,8 +177,8 @@ async def get_token_by_symbol(token_symbol: str):
                 return default
                 
         def safe_get(obj, key, default=None):
-            return obj.get(key, default)
-            
+            return obj.get(key, default) 
+        
         # Map the response to the FullCMCToken model with safe value handling
         full_token = FullCMCToken(
             _id={'$oid': str(token_data['id'])},

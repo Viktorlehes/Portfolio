@@ -104,7 +104,7 @@ async def process_wallet_positions(wallet_positions: list) -> Tuple[List[FullTok
         try:
             token_data, token_type = await get_or_create_token(position)
 
-            token: FullToken = format_token(position, token_data, token_type)
+            token = format_token(position, token_data, token_type)
             tokens.append(token)
             
         except Exception as e:
@@ -238,14 +238,14 @@ async def get_or_create_token(position: dict) -> Tuple[Optional[Dict], str]:
         token_type = 'CG' if token_data.get('coingecko_id') else 'CMC'
         return token_data, token_type
     
-    cmc_token_data: FullCMCToken = await get_token_by_symbol(symbol)
+    cmc_token_data = await get_token_by_symbol(symbol)
     
-    if cmc_token_data and 'detail' not in cmc_token_data:
+    if cmc_token_data:
         try:
-            # Ensure we use the name from the position data
-            cmc_token_data['name'] = name
-            await tokens_collection.insert_one(cmc_token_data)
-            return cmc_token_data, 'CMC'
+            token_dict = cmc_token_data.model_dump()  
+            token_dict['name'] = name
+            await tokens_collection.insert_one(token_dict)
+            return token_dict, 'CMC'
         except Exception as e:
             error_msg = f"Failed to insert CMC token {symbol} into DB: {str(e)}"
             print(error_msg)
@@ -259,7 +259,7 @@ async def get_or_create_token(position: dict) -> Tuple[Optional[Dict], str]:
             'symbol': symbol,
             'name': name
         }
-        cg_token_data: Token = await get_token_via_CG(wallet_data)
+        cg_token_data = await get_token_via_CG(wallet_data)
         
         if cg_token_data and 'detail' not in cg_token_data:
             try:

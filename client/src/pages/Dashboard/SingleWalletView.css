@@ -2,6 +2,13 @@
   padding: 24px;
 }
 
+.wallet-dashboard-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+}
+
 .wallet-header {
   display: flex;
   align-items: center;
@@ -221,10 +228,11 @@ input:checked + .toggle-slider:before {
 }
 
 /* Overview values section */
-.overview-values {
+.wallet-overview-values {
   display: flex;
   justify-content: space-evenly;
   gap: 16px;
+  width: 100%;
 }
 
 .overview-edit {

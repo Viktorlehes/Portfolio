@@ -70,7 +70,7 @@ const Dashboard: React.FC = () => {
     const updates: Promise<void>[] = [];
     const newData = { ...dashboardData };
 
-    if (nullStates.wallets || isDataExpired(dashboardData.wallets.timestamp || 0)) {
+    if (nullStates.wallets || isDataExpired(dashboardData.wallets.timestamp ?? 0)) {
       if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.WALLETS)) {
         activeFetches.current.add(API_ENDPOINTS.WALLETS);
         updates.push(

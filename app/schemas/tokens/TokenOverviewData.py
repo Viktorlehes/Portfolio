@@ -10,4 +10,5 @@ class TokenOverviewData(BaseModel):
     volumeChange24h: float = Field(description="24-hour volume change percentage")
     marketCap: float = Field(description="Market capitalization in USD")
     netInflow24h: float = Field(description="Net inflow over 24 hours across all exchanges")
+    lastUpdated: str = Field(description="Last updated timestamp")
 

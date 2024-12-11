@@ -1,9 +1,12 @@
 #overview.py
 # Standard library imports
+from asyncio import sleep
 import json
-from typing import List
+from typing import List, Dict
 from datetime import datetime, timedelta
-
+import dateutil.parser
+import logging
+from pydantic import BaseModel
 # Third-party imports
 from fastapi import APIRouter, HTTPException
 import httpx
@@ -11,6 +14,10 @@ from requests import Request, Session
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 from dotenv import load_dotenv
 from bson import ObjectId
+from pymongo import UpdateOne
+import asyncio
+from aiohttp import ClientSession, ClientTimeout
+import uuid
 
 # Local imports (absolute imports)
 from app.schemas.market.market_data import MarketDataResponse
@@ -20,14 +27,17 @@ from app.schemas.market.CMCLatestTokens import CMCLatestTokens
 from app.schemas.tokens.full_token import FullCMCToken
 from app.schemas.tokens.coinglass_token_response import ExchangeResponse
 from app.schemas.tokens.TokenOverviewData import TokenOverviewData
-from app.schemas.market.Catagory_data import CategoryResponse
+from app.schemas.market.Catagory_data import CategoryResponse, CategoryData
+from app.scripts.coinglass_scrape import APIResponse
+from app.utils.helpers import MongoJSONEncoder
+from app.schemas.market.CustomCategory import CustomCategory
 #from app.scripts.coinglass_scrape import APIResponse as CGLS_APIResponse, scrape_coinglass
 
 # Environment variables
-from app.core.config import CM_API_KEY, CG_DEMO_API_KEY, CGLS_API_KEY
+from app.core.config import CM_API_KEY, CGLS_API_KEY
 
 # MongoDB setup
-from app.core.db import tokens_collection, coinglass_collection
+from app.core.db import tokens_collection, coinglass_collection, categories_collection, tracked_categories, custom_categories_collection
 
 # Router setup
 router = APIRouter()
@@ -167,7 +177,7 @@ async def get_currencies():
     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map'
     parameters = {
         'sort': 'cmc_rank',
-        'limit': 50,
+        'limit': 100,
     }
     
     headers = {
@@ -203,7 +213,7 @@ async def get_coinglass_market_data():
         else:     
             raise HTTPException(status_code=500, detail="Error fetching data from Coinglass API")
         
-@router.get("/get-scraped-CGLS-data")
+@router.get("/get-scraped-CGLS-data", response_model=APIResponse)
 async def get_scraped_coinglass_data():
     return Exception("This endpoint is disabled")
     data = await scrape_coinglass()
@@ -257,6 +267,12 @@ async def get_overview_tokens_table_data():
             
             if token_exists:
                 token_exists['_id'] = str(token_exists['_id'])
+                #update token from DB
+                await tokens_collection.update_one(
+                    {"id": token['id']},
+                    {"$set": token}
+                )
+
                 response_data.append(token_exists)
             else:
                 tokens_to_fetch.append(token_id)
@@ -286,13 +302,22 @@ async def get_overview_tokens_table_data():
         # Filter out any None values
         response_data = [token for token in response_data if token is not None]
         
+        #filter duplicate tokens
+        unique_tokens = []
+        seen_tokens = set()
+        for token in response_data:
+            if token['id'] not in seen_tokens:
+                unique_tokens.append(token)
+                seen_tokens.add(token['id'])
+    
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error with CMC data: {str(e)}")
 
     # Process and combine data
     final_response = []
     try:
-        for token in response_data:
+        for token in unique_tokens:
             try:
                 # Get coinglass data
                 coinglass_token = await coinglass_collection.find_one({"symbol": token['symbol']})
@@ -317,7 +342,8 @@ async def get_overview_tokens_table_data():
                     "volume": token['quote']['USD']['volume_24h'],
                     "volumeChange24h": token['quote']['USD']['volume_change_24h'],
                     "marketCap": token['quote']['USD']['market_cap'],
-                    "netInflow24h": net_inflow_24h
+                    "netInflow24h": net_inflow_24h,
+                    "lastUpdated": token['last_updated'],
                 }
                 final_response.append(formatted_token)
                 
@@ -379,39 +405,502 @@ async def update_coinglass_data(symbol: str, coinglass_token: dict) -> dict:
         print(f"Error updating coinglass data for {symbol}: {str(e)}")
         return None
     
-@router.get("/get-crypto-catagories", response_model=CategoryResponse)
-async def get_crypto_catagories():
-    async with httpx.AsyncClient() as client:
-        url = 'https://api.coingecko.com/api/v3/coins/categories'
+@router.get("/get-user-catagories", response_model=CategoryResponse)
+async def get_cmc_catagories():
+    try: 
+        current_tracked_categories = await tracked_categories.find().to_list()
+        tracked_categories_id_list = [str(cat['id']) for cat in current_tracked_categories]
         
-        headers = {
-            'Accepts': 'application/json',
-            'x-cg-demo-api-key': CG_DEMO_API_KEY
-        }
+        if not tracked_categories_id_list:
+            raise HTTPException(status_code=404, detail="No tracked categories found")
         
-        response = await client.get(url, headers=headers)
+        cmc_categories = await categories_collection.find({"id": {"$in": tracked_categories_id_list}}).to_list()
+        needs_update = False
         
-        if response.status_code == 200:
-            catagories = response.json()
-            return catagories[:20]
+        if not cmc_categories:
+            #Categories not found in database, fetch from CMC API
+            return Exception("Implement fetching from CMC API") 
         else:
-            raise HTTPException(status_code=500, detail="Error fetching data from CoinMarketCap API")
+            for category in cmc_categories:
+                try:
+                    # Handle potential missing or invalid timestamp
+                    last_updated = category.get('last_updated')
+                    if not last_updated:
+                        needs_update = True
+                        break
+                    
+                    try:
+                        if last_updated < datetime.now() - timedelta(minutes=5):
+                            needs_update = True
+                            break
+                    except TypeError:
+                        print("Error parsing timestamp")
+                        needs_update = True
+                        break
+                except (ValueError, TypeError):
+                    needs_update = True
+                    break
+        
+        if needs_update:
+            updated_categories = await update_categories(tracked_categories_id_list)
+            return updated_categories
+            
+        return cmc_categories
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-@router.get("/get-crypto-catagorie/{catagory}")
-async def get_crypto_catagories(catagory: str):
-    async with httpx.AsyncClient() as client:
-        url = f'https://api.coingecko.com/api/v3/coins/categories/{catagory}'
+async def fetch_single_category(session: ClientSession, cat_id: str, api_key: str) -> Dict:
+    """Fetch a single category from CMC API"""
+    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/category'
+    headers = {
+        'Accepts': 'application/json',
+        'X-CMC_PRO_API_KEY': api_key
+    }
+    params = {'id': cat_id}
+    
+    try:
+        async with session.get(url, params=params, headers=headers) as response:
+            if response.status == 200:
+                data = await response.json()
+                if 'data' in data:
+                    category_data = data['data']
+                    return CategoryData(
+                        id=str(category_data['id']),
+                        name=category_data['name'],
+                        title=category_data['title'],
+                        description=category_data.get('description', ''),
+                        num_tokens=category_data.get('num_tokens', 0),
+                        avg_price_change=category_data.get('avg_price_change', 0.0),
+                        market_cap=category_data.get('market_cap', 0.0),
+                        market_cap_change=category_data.get('market_cap_change', 0.0),
+                        volume=category_data.get('volume', 0.0),
+                        volume_change=category_data.get('volume_change', 0.0),
+                        last_updated=datetime.now()
+                    ).model_dump()
+    except Exception as e:
+        logging.error(f"Error fetching category {cat_id}: {str(e)}")
+    return None
+
+async def process_batch(session: ClientSession, batch: List[str], api_key: str, semaphore: asyncio.Semaphore) -> List[Dict]:
+    """Process a batch of category IDs with rate limiting"""
+    tasks = []
+    for cat_id in batch:
+        async with semaphore:  # Control concurrent requests
+            task = asyncio.create_task(fetch_single_category(session, cat_id, api_key))
+            tasks.append(task)
+            await asyncio.sleep(0.1)  # Small delay between requests within batch
+            
+    results = await asyncio.gather(*tasks)
+    return [r for r in results if r is not None]
+
+async def fetch_cmc_category_data(category_ids: List[str], api_key: str) -> List[Dict]:
+    """Fetch category data from CMC API with concurrent processing"""
+    timeout = ClientTimeout(total=300)  # 5 minutes total timeout
+    all_category_data = []
+    batch_size = 10
+    max_concurrent_requests = 5
+    
+    # Create semaphore to limit concurrent requests
+    semaphore = asyncio.Semaphore(max_concurrent_requests)
+    
+    async with ClientSession(timeout=timeout) as session:
+        tasks = []
+        for i in range(0, len(category_ids), batch_size):
+            batch = category_ids[i:i + batch_size]
+            task = asyncio.create_task(process_batch(session, batch, api_key, semaphore))
+            tasks.append(task)
+            await asyncio.sleep(1)  # Delay between batches
+            
+        # Process all batches
+        batch_results = await asyncio.gather(*tasks)
+        for batch_data in batch_results:
+            all_category_data.extend(batch_data)
+    
+    return all_category_data
+
+@router.get("/update-categories")
+async def update_categories(tracked_categories_id_list: List[str]):
+    """Update existing categories with latest data from CMC"""
+    try:
+        # Find existing categories
+        existing_categories = await categories_collection.find(
+            {"id": {"$in": tracked_categories_id_list}}
+        ).to_list(length=None)
         
-        headers = {
-            'Accepts': 'application/json',
-            'x-cg-demo-api-key': CG_DEMO_API_KEY
-        }
+        mongo_encoder = MongoJSONEncoder()
         
-        response = await client.get(url, headers=headers)
+        for cat in existing_categories:
+            cat['_id'] = mongo_encoder.default(cat['_id'])
         
-        if response.status_code == 200:
-            catagory = response.json()
-            return catagory
-        else:
-            raise HTTPException(status_code=500, detail="Error fetching data from CoinMarketCap API")
+        if not existing_categories:
+            raise HTTPException(status_code=404, detail="No categories found in database")
+        elif len(existing_categories) != len(tracked_categories_id_list):
+            print("Not all categories found in database")
+            
+        # Fetch updated data from CMC
+        updated_categories = await fetch_cmc_category_data(tracked_categories_id_list, CM_API_KEY)
         
+        if not updated_categories:
+            return existing_categories
+            
+        # Prepare update operations
+        update_operations = []
+        for category in updated_categories:
+            # Ensure category is a dict and has required fields
+            if isinstance(category, CategoryData):
+                category = category.model_dump()
+                
+            update_operations.append(
+                UpdateOne(
+                    {"id": category['id']},
+                    {"$set": {
+                        **category,
+                    }},
+                    upsert=True
+                )
+            )
+            
+        # Perform bulk update if we have operations
+        if update_operations:
+            await categories_collection.bulk_write(update_operations)
+            
+            # Fetch the updated documents
+            updated_docs = await categories_collection.find(
+                {"id": {"$in": tracked_categories_id_list}}
+            ).to_list(length=None)
+            
+            for doc in updated_docs:
+                doc['_id'] = str(doc['_id'])
+            # Convert to serializable format
+            return updated_docs
+            
+        return existing_categories
+        
+    except Exception as e:
+        print(f"Error in update_categories: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating categories: {str(e)}")
+    
+@router.get('/get-default-categories', response_model=CategoryResponse)
+async def get_default_categories():
+    try:
+        some_categories = await categories_collection.find().limit(10).to_list()
+        some_categories_ids = [str(cat['id']) for cat in some_categories]
+        needs_update = False
+        
+        for category in some_categories:
+            try:
+                last_updated = category.get('last_updated')
+                if not last_updated:
+                    needs_update = True
+                    break
+                
+                try:
+                    if last_updated < datetime.now() - timedelta(minutes=5):
+                        needs_update = True
+                        break
+                except TypeError:
+                    print("Error parsing timestamp")
+                    needs_update = True
+                    break
+            except (ValueError, TypeError):
+                needs_update = True
+                break
+        
+        if needs_update:
+            updated_categories = await update_categories(some_categories_ids)
+            return updated_categories
+        
+        return some_categories
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+async def handle_category_update(category_id: str, category_data: CategoryData) -> CategoryData:
+    """
+    Handle category update with fallback logic
+    Returns either updated category data or original data with encoded _id
+    """
+    mongo_encoder = MongoJSONEncoder()
+    try:
+        # First attempt: Check timestamp and update if needed
+        should_update = False
+        try:
+            last_updated = category_data.get('last_updated')
+            if not last_updated or last_updated < datetime.now() - timedelta(minutes=5):
+                should_update = True
+        except TypeError:
+            # If there's a type error in timestamp checking, force an update
+            print(f"Error parsing timestamp for category {category_id}, forcing update")
+            should_update = True
+        
+        # Attempt update if needed
+        if should_update:
+            try:
+                updated_categories = await update_categories([category_id])
+                if updated_categories and len(updated_categories) > 0:
+                    json_category = updated_categories[0]
+                    json_category['_id'] = mongo_encoder.default(json_category['_id'])
+                    return json_category
+            except Exception as update_error:
+                print(f"Error during category update: {str(update_error)}")
+                # Fall through to return original data
+        
+        # If no update needed or update failed, return original data
+        category_data['_id'] = mongo_encoder.default(category_data['_id'])
+        return category_data
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+@router.post("/add-CMC-category")
+async def add_cmc_category(category_id: dict):
+    category_id = category_id['categoryId']
+    try:
+        category_data = await categories_collection.find_one({"id": category_id})
+        if not category_data:
+            raise HTTPException(status_code=404, detail="Category doesnt exist")
+        
+        category_tracked = await tracked_categories.find_one({"id": category_id})
+        
+        if category_tracked:
+            raise HTTPException(status_code=400, detail="Category already tracked")
+        
+        try:
+            await tracked_categories.insert_one({"id": category_id})
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"failed to insert category into DB: {str(e)}")
+    
+        print("Category added")
+
+        return await handle_category_update(category_id, category_data)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+@router.post("/remove-CMC-category")
+async def remove_cmc_category(category_id: dict):
+    category_id = category_id['categoryId']
+    try:
+        category_tracked = await tracked_categories.find_one({"id": category_id})
+        if not category_tracked:
+            raise HTTPException(status_code=404, detail="Category not tracked")
+        print("Category tracked")
+        try:
+            await tracked_categories.delete_one({"id": category_id})
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"failed to remove category from DB: {str(e)}")
+        print("Category removed")
+        return {"message": "Category removed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+def get_marketcap_data(token_data):
+    total_market_cap = sum(token['quote']['USD']['market_cap'] for token in token_data)
+    # Calculate average market cap change
+    market_cap_change = sum(token['quote']['USD']['percent_change_24h'] for token in token_data) / len(token_data)
+    return total_market_cap, market_cap_change
+
+def get_volume_data(token_data):
+    total_volume = sum(token['quote']['USD']['volume_24h'] for token in token_data)
+    # Calculate average volume change
+    volume_change = sum(token['quote']['USD']['volume_change_24h'] for token in token_data) / len(token_data)
+    return total_volume, volume_change
+    
+async def update_custom_categories(custom_categories):
+    update_categories = []
+    for category in custom_categories:
+        token_ids = [token['id'] for token in category['tokens_ids']]
+        token_data = []
+        
+        try:
+            for token_id in token_ids:
+                token_exists = await tokens_collection.find_one({"id": token_id})
+                token_data.append(token_exists)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to get token data: {str(e)}")
+        
+        if len(token_data) != len(token_ids):
+            raise HTTPException(status_code=404, detail="Some token was not found")
+        
+        for token in token_data:
+            token['_id'] = str(token['_id'])
+            
+        try:
+            total_market_cap, market_cap_change = get_marketcap_data(token_data)
+            total_volume, volume_change = get_volume_data(token_data)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to calculate market cap or volume: {str(e)}")
+        
+        try:
+            updated_category = {
+                'id': category['id'],
+                'name': category['name'],
+                'num_tokens': len(token_data),
+                'market_cap': total_market_cap,
+                'market_cap_change': market_cap_change,
+                'volume': total_volume,
+                'volume_change': volume_change,
+                'tokens_ids': [
+                    {
+                        'id': token['id'],
+                        'symbol': token['symbol']
+                    }
+                    for token in token_data
+                ],
+                'last_updated': datetime.now()
+            }
+            await custom_categories_collection.update_one(
+                {"id": category['id']},
+                {"$set": updated_category}
+            )
+            update_categories.append(updated_category)
+            print("Category updated")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to update category: {str(e)}")
+        
+    return update_categories
+    
+@router.get("/get-custom-categories", response_model=List[CustomCategory])
+async def get_custom_categories():
+    try:
+        custom_categories = await custom_categories_collection.find().to_list()
+        needs_update = False
+        
+        for category in custom_categories:
+            last_updated = category.get('last_updated')
+            if last_updated < datetime.now() - timedelta(minutes=5):
+                needs_update = True
+                break
+        
+        if needs_update:
+            try:
+                updated_categories = await update_custom_categories(custom_categories)
+                return updated_categories
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Failed to update custom categories: {str(e)}")
+            
+        return custom_categories
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+@router.post("/remove-custom-category")
+async def remove_custom_category(category_id: dict):
+    category_id = category_id['categoryId']
+    try:
+        category_tracked = await custom_categories_collection.find_one({"id": category_id})
+        if not category_tracked:
+            raise HTTPException(status_code=404, detail="Category not tracked")
+        print("Category tracked")
+        try:
+            await custom_categories_collection.delete_one({"id": category_id})
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"failed to remove category from DB: {str(e)}")
+        print("Category removed")
+        return {"message": "Category removed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+    
+@router.get("/get-default-tokens", response_model=List[FullCMCToken])
+async def get_default_tokens():
+    try:
+        default_tokens = await tokens_collection.find().limit(50).to_list()
+        return default_tokens
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+@router.post("/find-tokens-by-name", response_model=List[FullCMCToken])
+async def get_tokens_by_name(token_name: dict):
+    try:
+        token_name = token_name['name']
+        print(f"Searching for: {token_name}")
+        
+        # Validate and clean search input
+        token_name = token_name.strip()
+        if not token_name:
+            raise HTTPException(status_code=400, detail="Search term cannot be empty")
+            
+        # Escape special regex characters to prevent injection
+        escaped_name = "".join([char if char.isalnum() else f"\\{char}" for char in token_name])
+        
+        # Use $or operator to match either name OR symbol
+        tokens = await tokens_collection.find(
+            {
+                "$or": [
+                    {"name": {"$regex": escaped_name, "$options": "i"}},
+                    {"symbol": {"$regex": escaped_name, "$options": "i"}}
+                ]
+            }
+        ).to_list(length=None)
+        
+        # Serialize ObjectId for JSON response
+        response_tokens = []
+        for token in tokens:
+            token['_id'] = str(token['_id'])
+            response_tokens.append(token)
+            
+        print(f"Found {len(response_tokens)} tokens")
+        return response_tokens if response_tokens else []
+        
+    except Exception as e:
+        print(f"Error in token search: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@router.post("/add-custom-category") 
+async def add_custom_category(category_data: dict):
+    unique_id = str(uuid.uuid4())
+    name = category_data['name']
+    token_ids = category_data['token_ids']
+    num_tokens = len(token_ids)
+    
+    token_data = []
+    try:
+        for token_id in token_ids:
+            token_exists = await tokens_collection.find_one({"id": token_id})
+            token_data.append(token_exists)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get token data: {str(e)}")
+    
+    if len(token_data) != num_tokens:
+        raise HTTPException(status_code=404, detail="Some token was not found") 
+    
+    for token in token_data:
+        token['_id'] = str(token['_id'])
+    
+    try:
+        total_market_cap, market_cap_change = get_marketcap_data(token_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to calculate market cap: {str(e)}")
+    
+    try:
+        total_volume, volume_change = get_volume_data(token_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to calculate volume: {str(e)}")
+    
+    try:
+        custom_category = {
+            'id': unique_id,
+            'name': name,
+            'num_tokens': num_tokens,
+            'market_cap': total_market_cap,
+            'market_cap_change': market_cap_change,
+            'volume': total_volume,
+            'volume_change': volume_change,
+            'tokens_ids': [
+                {
+                    'id': token['id'],
+                    'symbol': token['symbol']
+                }
+                for token in token_data
+            ],
+            'last_updated': datetime.now()
+            }
+        await custom_categories_collection.insert_one(custom_category)
+        print("Category added")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to insert category: {str(e)}")
+    
+    custom_category['_id'] = str(custom_category['_id'])
+    
+    return custom_category

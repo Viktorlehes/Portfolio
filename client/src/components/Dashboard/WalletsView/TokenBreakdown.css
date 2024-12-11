@@ -32,7 +32,7 @@
 .dashboard-title {
   margin: 0;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 500;
   color: #333;
   align-self: flex-start;
 }
@@ -55,7 +55,7 @@
 }
 
 .dashboard-total-value {
-  font-weight: 600;
+  font-weight: 500;
   color: #333;
 }
 

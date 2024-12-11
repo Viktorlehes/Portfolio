@@ -30,6 +30,11 @@
   background: white;
 }
 
+.catagories-container-update {
+  font-size: 14px;
+  color: #666;
+}
+
 .tokens-table th {
   padding: 8px 18px;
   text-align: right;
@@ -69,7 +74,7 @@
 }
 
 .price-cell, .volume-cell, .market-cap-cell {
-  font-weight: 600;
+  font-weight: 500;
   color: #333;
 }
 
@@ -99,6 +104,12 @@
   .token-row:hover {
     background-color: rgba(0, 0, 0, 0.02);
   }
+}
+
+.last-updated-cell {
+  font-size: 12px;
+  color: #666;
+  text-align: right;
 }
 
 /* Add these classes to your existing CSS */

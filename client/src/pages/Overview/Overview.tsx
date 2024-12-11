@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { LoaderFunction, useLoaderData } from "react-router-dom";
 import "./Overview.css";
 import CustomNavbar from "../../components/Default/CustomNavBar";
-import CryptoCategoriesSidebar from "../../components/overview/CryptoCatagorieList";
+import CryptoCategoriesSidebar from "../../components/overview/Categories/CryptoCategorieList";
 import CryptoStatsBar from '../../components/overview/CryptoStatsBar';
 import { components } from "../../types/api-types";
 import CoinglassMetricsBar from "../../components/overview/CoinglassMetricBar";
@@ -17,7 +17,8 @@ type FearGreedResponse = components["schemas"]["FearGreedResponse"];
 type Wallet = components["schemas"]["Wallet"];
 type CGLSApiResponse = components["schemas"]["APIResponse"];
 type TokenOverviewResponse = components['schemas']['TokenOverviewData'];
-type CategoryResponse = components['schemas']['CategoryResponse'];
+type CategoryResponse = components['schemas']['CategoryData'];
+type CustomCategory = components['schemas']['CustomCategory'];
 
 interface ComponentLoadingState {
   market: boolean;
@@ -25,7 +26,8 @@ interface ComponentLoadingState {
   wallets: boolean;
   cglsScrapeData: boolean;
   TokenOverviewData: boolean;
-  cgCategories: boolean;
+  cmcCategories: boolean;
+  customCategories: boolean;
 }
 
 interface CachedData<T> {
@@ -39,7 +41,8 @@ interface LoaderData {
   wallets: CachedData<Wallet[]>;
   cglsScrapeData: CachedData<CGLSApiResponse>;
   TokenOverviewData: CachedData<TokenOverviewResponse[]>;
-  cgCategories: CachedData<CategoryResponse>;
+  cmcCategories: CachedData<CategoryResponse[]>;
+  customCategories: CachedData<CustomCategory[]>;
 }
 
 const CACHE_KEYS = {
@@ -48,7 +51,8 @@ const CACHE_KEYS = {
   WALLETS: 'wallets',
   CGLS: 'cglsScrapeData',
   TOKENS: 'TokenOverviewData',
-  CG_CATAGORIES: 'cgCategories'
+  CMC_CATAGORIES: 'userCategories',
+  CUSTOM_CATAGORIES: 'customCategories'
 } as const;
 
 const API_ENDPOINTS = {
@@ -57,7 +61,8 @@ const API_ENDPOINTS = {
   WALLETS: '/wallets/get_wallets',
   CGLS: '/overview/get-scraped-CGLS-data',
   TOKEN_OVERVIEW: '/overview/overview-tokens-table-data',
-  CG_CATAGORIES: '/overview/get-crypto-catagories',
+  CMC_CATAGORIES: '/overview/get-user-catagories',
+  CUSTOM_CATAGORIES: '/overview/get-custom-categories'
 } as const;
 
 export const overviewLoader: LoaderFunction = () => {
@@ -66,7 +71,8 @@ export const overviewLoader: LoaderFunction = () => {
   const cachedWallets = getCachedData(CACHE_KEYS.WALLETS);
   const cachedCglsScrapeData = getCachedData(CACHE_KEYS.CGLS);
   const cachedTokenOverviewData = getCachedData(CACHE_KEYS.TOKENS);
-  const cachedCategories = getCachedData(CACHE_KEYS.CG_CATAGORIES);
+  const cachedCategories = getCachedData(CACHE_KEYS.CMC_CATAGORIES);
+  const cachedCustomCategories = getCachedData(CACHE_KEYS.CUSTOM_CATAGORIES);
 
   return {
     marketData: { data: cachedMarket?.data || null, timestamp: cachedMarket?.timestamp || null } as CachedData<MarketData>,
@@ -74,7 +80,8 @@ export const overviewLoader: LoaderFunction = () => {
     wallets: { data: cachedWallets?.data || [], timestamp: cachedWallets?.timestamp || null } as CachedData<Wallet[]>,
     cglsScrapeData: { data: cachedCglsScrapeData?.data || null, timestamp: cachedCglsScrapeData?.timestamp || null } as CachedData<CGLSApiResponse>,
     TokenOverviewData: { data: cachedTokenOverviewData?.data || [], timestamp: cachedTokenOverviewData?.timestamp || null } as CachedData<TokenOverviewResponse[]>,
-    cgCategories: { data: cachedCategories?.data || [], timestamp: cachedCategories?.timestamp || null } as CachedData<CategoryResponse>
+    cmcCategories: { data: cachedCategories?.data || [], timestamp: cachedCategories?.timestamp || null } as CachedData<CategoryResponse[]>,
+    customCategories: { data: cachedCustomCategories?.data || [], timestamp: cachedCustomCategories?.timestamp || null } as CachedData<CustomCategory[]>
   } as LoaderData;
 };
 
@@ -87,7 +94,8 @@ const Overview: React.FC = () => {
     wallets: !cachedData.wallets.data,
     cglsScrapeData: !cachedData.cglsScrapeData.data,
     TokenOverviewData: !cachedData.TokenOverviewData.data,
-    cgCategories: !cachedData.cgCategories.data
+    cmcCategories: !cachedData.cmcCategories.data,
+    customCategories: !cachedData.customCategories.data
   });
 
   const activeFetches = useActiveFetches();
@@ -184,34 +192,34 @@ const Overview: React.FC = () => {
       }
     }
 
-    if (nullStates.cglsScrapeData || isDataExpired(overviewData.cglsScrapeData.timestamp || 0)) {
-      if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.CGLS)) {
-        activeFetches.current.add(API_ENDPOINTS.CGLS);
-        updates.push(
-          api.get(API_ENDPOINTS.CGLS)
-            .then(cglsData => {
-              newData.cglsScrapeData = {
-                data: cglsData,
-                timestamp: Date.now()
-              };
-              localStorage.setItem(CACHE_KEYS.CGLS, JSON.stringify(newData.cglsScrapeData));
-              setNullStates(prev => ({ ...prev, cglsScrapeData: false }));
-            })
-            .catch(error => {
-              console.error('Error fetching CGLS data:', error);
-              if (nullStates.cglsScrapeData) {
-                setNullStates(prev => ({ ...prev, cglsScrapeData: true }));
-              }
-              setNullStates(prev => ({ ...prev, cglsScrapeData: false }));
-              activeFetches.current.delete(API_ENDPOINTS.WALLETS);
-            })
-            .finally(() => {
-              activeFetches.current.delete(API_ENDPOINTS.CGLS);
-            }
-            )
-        );
-      }
-    }
+    // if (nullStates.cglsScrapeData || isDataExpired(overviewData.cglsScrapeData.timestamp || 0)) {
+    //   if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.CGLS)) {
+    //     activeFetches.current.add(API_ENDPOINTS.CGLS);
+    //     updates.push(
+    //       api.get(API_ENDPOINTS.CGLS)
+    //         .then(cglsData => {
+    //           newData.cglsScrapeData = {
+    //             data: cglsData,
+    //             timestamp: Date.now()
+    //           };
+    //           localStorage.setItem(CACHE_KEYS.CGLS, JSON.stringify(newData.cglsScrapeData));
+    //           setNullStates(prev => ({ ...prev, cglsScrapeData: false }));
+    //         })
+    //         .catch(error => {
+    //           console.error('Error fetching CGLS data:', error);
+    //           if (nullStates.cglsScrapeData) {
+    //             setNullStates(prev => ({ ...prev, cglsScrapeData: true }));
+    //           }
+    //           setNullStates(prev => ({ ...prev, cglsScrapeData: false }));
+    //           activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+    //         })
+    //         .finally(() => {
+    //           activeFetches.current.delete(API_ENDPOINTS.CGLS);
+    //         }
+    //         )
+    //     );
+    //   }
+    // }
 
     if (nullStates.TokenOverviewData || isDataExpired(overviewData.TokenOverviewData.timestamp || 0)) {
       if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.TOKEN_OVERVIEW)) {
@@ -242,29 +250,58 @@ const Overview: React.FC = () => {
       }
     }
 
-    if (nullStates.cgCategories || isDataExpired(overviewData.cgCategories.timestamp || 0)) {
-      if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.CG_CATAGORIES)) {
-        activeFetches.current.add(API_ENDPOINTS.CG_CATAGORIES);
+    if (nullStates.cmcCategories || isDataExpired(overviewData.cmcCategories.timestamp || 0)) {
+      if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.CMC_CATAGORIES)) {
+        activeFetches.current.add(API_ENDPOINTS.CMC_CATAGORIES);
         updates.push(
-          api.get(API_ENDPOINTS.CG_CATAGORIES)
+          api.get(API_ENDPOINTS.CMC_CATAGORIES)
             .then(categories => {
-              newData.cgCategories = {
+              newData.cmcCategories = {
                 data: categories,
                 timestamp: Date.now()
               };
-              localStorage.setItem(CACHE_KEYS.CG_CATAGORIES, JSON.stringify(newData.cgCategories));
-              setNullStates(prev => ({ ...prev, cgCategories: false }));
+              localStorage.setItem(CACHE_KEYS.CMC_CATAGORIES, JSON.stringify(newData.cmcCategories));
+              setNullStates(prev => ({ ...prev, cmcCategories: false }));
             })
             .catch(error => {
-              console.error('Error fetching cg categories:', error);
-              if (nullStates.cgCategories) {
-                setNullStates(prev => ({ ...prev, cgCategories: true }));
+              console.error('Error fetching cmc categories:', error);
+              if (nullStates.cmcCategories) {
+                setNullStates(prev => ({ ...prev, cmcCategories: true }));
               }
-              setNullStates(prev => ({ ...prev, cgCategories: false }));
+              setNullStates(prev => ({ ...prev, cmcCategories: false }));
               activeFetches.current.delete(API_ENDPOINTS.WALLETS);
             })
             .finally(() => {
-              activeFetches.current.delete(API_ENDPOINTS.CG_CATAGORIES);
+              activeFetches.current.delete(API_ENDPOINTS.CMC_CATAGORIES);
+            }
+            )
+        );
+      }
+    }
+
+    if (nullStates.customCategories || isDataExpired(overviewData.customCategories.timestamp || 0)) {
+      if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.CUSTOM_CATAGORIES)) {
+        activeFetches.current.add(API_ENDPOINTS.CUSTOM_CATAGORIES);
+        updates.push(
+          api.get(API_ENDPOINTS.CUSTOM_CATAGORIES)
+            .then(customCategories => {
+              newData.customCategories = {
+                data: customCategories,
+                timestamp: Date.now()
+              };
+              localStorage.setItem(CACHE_KEYS.CUSTOM_CATAGORIES, JSON.stringify(newData.customCategories));
+              setNullStates(prev => ({ ...prev, customCategories: false }));
+            })
+            .catch(error => {
+              console.error('Error fetching custom categories:', error);
+              if (nullStates.customCategories) {
+                setNullStates(prev => ({ ...prev, customCategories: true }));
+              }
+              setNullStates(prev => ({ ...prev, customCategories: false }));
+              activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+            })
+            .finally(() => {
+              activeFetches.current.delete(API_ENDPOINTS.CUSTOM_CATAGORIES);
             }
             )
         );
@@ -320,7 +357,7 @@ const Overview: React.FC = () => {
             </section>
             <section className="overview-token-table">
               <OverviewTokensTable tokens={overviewData.TokenOverviewData.data} isNull={nullStates.TokenOverviewData} />
-              <CryptoCategoriesSidebar categories={overviewData.cgCategories.data} isNull={nullStates.cgCategories} />
+              <CryptoCategoriesSidebar categories={overviewData.cmcCategories.data} customCategories={overviewData.customCategories.data} isNull={nullStates.cmcCategories} />
             </section>
           </div>
         </div>

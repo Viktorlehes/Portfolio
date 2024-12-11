@@ -4,6 +4,26 @@
   min-width: 290px;
 }
 
+.catagories-container-edit {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.catagories-container-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+}
+
+.catagories-container-edit-button {
+  background-color: white;
+  border: none;
+  cursor: pointer;
+}
+
 .categories-table {
   font-size: 14px;
 }
@@ -18,6 +38,12 @@
   font-size: 12px;
   letter-spacing: 0.5px;
   background: white;
+}
+
+.categories-container-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .categories-table th:first-child {
