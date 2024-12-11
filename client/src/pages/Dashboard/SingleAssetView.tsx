@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useLoaderData, useNavigate } from 'react-router-dom';
+import { useLoaderData, useNavigate, LoaderFunction, LoaderFunctionArgs } from 'react-router-dom';
+import { getCachedData } from "../../utils/api";
 import { components } from "../../types/api-types";
 import { ArrowLeft, Flag } from 'lucide-react';
 import ValueCard from '../../components/Dashboard/WalletsView/ValueCard';
@@ -69,6 +70,43 @@ interface LoadingStates {
     zerionToken: boolean;
     chartData: boolean;
 }
+
+interface CachedData<T> {
+    data: T;
+    timestamp: number;
+}
+
+interface AssetLoaderData {
+    assetId: string;
+    assetName: string;
+    isFungible: boolean;
+    wallets: CachedData<Wallet[] | null>;
+}
+
+export const assetLoader: LoaderFunction = async ({
+    params,
+    request
+}: LoaderFunctionArgs): Promise<AssetLoaderData> => {
+    const url = new URL(request.url);
+    const assetName = url.searchParams.get('name') || '';
+    const isFungible = url.searchParams.get('fungible') === 'true';
+
+    if (!params.assetId) {
+        throw new Error('Asset ID is required');
+    }
+
+    const cachedWallets = getCachedData(CACHE_KEYS.WALLETS);
+
+    return {
+        assetId: params.assetId,
+        assetName,
+        isFungible,
+        wallets: {
+            data: cachedWallets ? cachedWallets.data : null,
+            timestamp: cachedWallets ? cachedWallets.timestamp : 0
+        }
+    };
+};
 
 async function fetchZerionToken(fungible_id: string): Promise<ZerionToken> {
     return api.post('/tokens/zerionToken', { fungible_id });
