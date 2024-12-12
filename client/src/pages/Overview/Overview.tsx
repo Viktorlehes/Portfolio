@@ -15,7 +15,7 @@ import { useActiveFetches, isEndpointFetching } from "../../context/ActiveFetche
 type MarketData = components["schemas"]["MarketDataResponse"];
 type FearGreedResponse = components["schemas"]["FearGreedResponse"];
 type Wallet = components["schemas"]["Wallet"];
-type CGLSApiResponse = components["schemas"]["APIResponse"];
+type CGLSApiResponse = components['schemas']['CoinglassMetrics'];
 type TokenOverviewResponse = components['schemas']['TokenOverviewData'];
 type CategoryResponse = components['schemas']['CategoryData'];
 type CustomCategory = components['schemas']['CustomCategory'];
@@ -192,34 +192,34 @@ const Overview: React.FC = () => {
       }
     }
 
-    // if (nullStates.cglsScrapeData || isDataExpired(overviewData.cglsScrapeData.timestamp || 0)) {
-    //   if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.CGLS)) {
-    //     activeFetches.current.add(API_ENDPOINTS.CGLS);
-    //     updates.push(
-    //       api.get(API_ENDPOINTS.CGLS)
-    //         .then(cglsData => {
-    //           newData.cglsScrapeData = {
-    //             data: cglsData,
-    //             timestamp: Date.now()
-    //           };
-    //           localStorage.setItem(CACHE_KEYS.CGLS, JSON.stringify(newData.cglsScrapeData));
-    //           setNullStates(prev => ({ ...prev, cglsScrapeData: false }));
-    //         })
-    //         .catch(error => {
-    //           console.error('Error fetching CGLS data:', error);
-    //           if (nullStates.cglsScrapeData) {
-    //             setNullStates(prev => ({ ...prev, cglsScrapeData: true }));
-    //           }
-    //           setNullStates(prev => ({ ...prev, cglsScrapeData: false }));
-    //           activeFetches.current.delete(API_ENDPOINTS.WALLETS);
-    //         })
-    //         .finally(() => {
-    //           activeFetches.current.delete(API_ENDPOINTS.CGLS);
-    //         }
-    //         )
-    //     );
-    //   }
-    // }
+    if (nullStates.cglsScrapeData || isDataExpired(overviewData.cglsScrapeData.timestamp || 0)) {
+      if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.CGLS)) {
+        activeFetches.current.add(API_ENDPOINTS.CGLS);
+        updates.push(
+          api.get(API_ENDPOINTS.CGLS)
+            .then(cglsData => {
+              newData.cglsScrapeData = {
+                data: cglsData.data.data,
+                timestamp: Date.now()
+              };
+              localStorage.setItem(CACHE_KEYS.CGLS, JSON.stringify(newData.cglsScrapeData));
+              setNullStates(prev => ({ ...prev, cglsScrapeData: false }));
+            })
+            .catch(error => {
+              console.error('Error fetching CGLS data:', error);
+              if (nullStates.cglsScrapeData) {
+                setNullStates(prev => ({ ...prev, cglsScrapeData: true }));
+              }
+              setNullStates(prev => ({ ...prev, cglsScrapeData: false }));
+              activeFetches.current.delete(API_ENDPOINTS.WALLETS);
+            })
+            .finally(() => {
+              activeFetches.current.delete(API_ENDPOINTS.CGLS);
+            }
+            )
+        );
+      }
+    }
 
     if (nullStates.TokenOverviewData || isDataExpired(overviewData.TokenOverviewData.timestamp || 0)) {
       if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.TOKEN_OVERVIEW)) {

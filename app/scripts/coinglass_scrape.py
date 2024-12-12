@@ -10,7 +10,7 @@ from selenium.webdriver.chrome.service import Service
 
 from app.core.config import PROXY_USERNAME, PROXY_PASSWORD
 
-# Pydantic Models
+# Pydantic Models remain unchanged
 class MetricItem(BaseModel):
     text: str
     change: str
@@ -35,7 +35,6 @@ class APIResponse(BaseModel):
     data: Optional[CoinglassMetrics] = None
     error: Optional[str] = None
 
-# Scraping Functions
 def setup_driver():
     chrome_options = Options()
     chrome_options.add_argument('--headless')
@@ -46,16 +45,15 @@ def setup_driver():
     chrome_options.add_argument('--disable-features=VizDisplayCompositor')
     chrome_options.add_argument('--window-size=1920,1080')
     
-    # Add ProxyMesh proxy
-    PROXY = f"http://{PROXY_USERNAME}:{PROXY_PASSWORD}@us-ca.proxymesh.com:31280"
-    chrome_options.add_argument(f'--proxy-server={PROXY}')
+    if PROXY_USERNAME and PROXY_PASSWORD:
+        PROXY = f"http://{PROXY_USERNAME}:{PROXY_PASSWORD}@us-ca.proxymesh.com:31280"
+        chrome_options.add_argument(f'--proxy-server={PROXY}')
     
-    # Add random user agent
     chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
     
-    service = Service('/usr/local/bin/chromedriver')
-    
     try:
+        # Use webdriver_manager to handle ChromeDriver installation
+        service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=chrome_options)
         return driver
     except Exception as e:
@@ -85,11 +83,17 @@ def scrape_metric(driver, wait, selector: str, include_subtext: bool = False) ->
         return None
 
 async def scrape_coinglass() -> APIResponse:
-    driver = setup_driver()
-    metrics = {}
-    
     try:
-        driver.get('https://ifconfig.me')  # This will show the proxy IP
+        driver = setup_driver()
+    except Exception as e:
+        return APIResponse(
+            status="error",
+            message="Failed to initialize Chrome driver",
+            error=str(e)
+        )
+
+    try:
+        driver.get('https://ifconfig.me')  # Verify proxy connection
         print(f"Current IP: {driver.find_element(By.TAG_NAME, 'body').text}")
         
         driver.get('https://www.coinglass.com/')
@@ -104,14 +108,13 @@ async def scrape_coinglass() -> APIResponse:
             'btc_dominance': "div.MuiGrid-grid-xs-3:nth-child(1) > div:nth-child(1) > a:nth-child(3) > div:nth-child(1)"
         }
         
-        # Scrape each metric
+        metrics = {}
         for key, selector in selectors.items():
             include_subtext = key == 'btc_long_short_ratio'
             metric = scrape_metric(driver, wait, selector, include_subtext)
             if metric:
                 metrics[key] = metric
             else:
-                # Provide default values if scraping fails
                 metrics[key] = MetricItem(
                     text="N/A",
                     change="0%",
@@ -135,8 +138,8 @@ async def scrape_coinglass() -> APIResponse:
             error=error_message
         )
     finally:
-        driver.quit()
-
+        if 'driver' in locals():
+            driver.quit()
 
 if __name__ == "__main__":
     import asyncio

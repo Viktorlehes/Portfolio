@@ -31,7 +31,7 @@ from app.schemas.market.Catagory_data import CategoryResponse, CategoryData
 from app.scripts.coinglass_scrape import APIResponse
 from app.utils.helpers import MongoJSONEncoder
 from app.schemas.market.CustomCategory import CustomCategory
-#from app.scripts.coinglass_scrape import APIResponse as CGLS_APIResponse, scrape_coinglass
+from app.scripts.coinglass_scrape import APIResponse as CGLS_APIResponse, scrape_coinglass
 
 # Environment variables
 from app.core.config import CM_API_KEY, CGLS_API_KEY
@@ -213,9 +213,8 @@ async def get_coinglass_market_data():
         else:     
             raise HTTPException(status_code=500, detail="Error fetching data from Coinglass API")
         
-@router.get("/get-scraped-CGLS-data", response_model=APIResponse)
+@router.get("/get-scraped-CGLS-data", response_model=CGLS_APIResponse)
 async def get_scraped_coinglass_data():
-    return Exception("This endpoint is disabled")
     data = await scrape_coinglass()
     return data
 
