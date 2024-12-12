@@ -11,6 +11,7 @@ import logging
 import subprocess
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from webdriver_manager.chrome import ChromeDriverManager
+import requests
 
 from app.core.config import PROXY_USERNAME, PROXY_PASSWORD
 
@@ -42,6 +43,28 @@ class APIResponse(BaseModel):
     message: str
     data: Optional[CoinglassMetrics] = None
     error: Optional[str] = None
+
+def verify_proxy_connection():
+    """Verify proxy connection using requests library"""
+    if not (PROXY_USERNAME and PROXY_PASSWORD):
+        return False
+
+    proxy_url = f"http://{PROXY_USERNAME}:{PROXY_PASSWORD}@us-ca.proxymesh.com:31280"
+    proxies = {
+        "http": proxy_url,
+        "https": proxy_url
+    }
+    
+    try:
+        response = requests.get('https://api.ipify.org?format=json', 
+                              proxies=proxies, 
+                              timeout=10)
+        if response.status_code == 200:
+            logger.info(f"Proxy connection verified. IP: {response.json().get('ip')}")
+            return True
+    except Exception as e:
+        logger.error(f"Proxy verification failed: {str(e)}")
+    return False
 
 def get_chrome_debug_info():
     """Get Chrome and ChromeDriver version information for debugging"""
@@ -81,23 +104,24 @@ def setup_driver():
     chrome_options.add_argument('--window-size=1920,1080')
     chrome_options.add_argument('--disable-extensions')
     
-    # Configure proxy if credentials are available
+    # Configure proxy if available and verified
     if PROXY_USERNAME and PROXY_PASSWORD:
-        PROXY = f"http://{PROXY_USERNAME}:{PROXY_PASSWORD}@us-ca.proxymesh.com:31280"
-        chrome_options.add_argument(f'--proxy-server={PROXY}')
-        logger.info("Proxy configuration added")
+        if verify_proxy_connection():
+            proxy_url = f"http://{PROXY_USERNAME}:{PROXY_PASSWORD}@us-ca.proxymesh.com:31280"
+            chrome_options.add_argument(f'--proxy-server={proxy_url}')
+            logger.info("Proxy configuration added")
+        else:
+            logger.warning("Proxy verification failed, continuing without proxy")
     
     # Set user agent
     chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
     
     try:
-        if is_production():
-            # Production environment (Railway)
+        if os.getenv('RAILWAY_ENVIRONMENT') == 'production':
             chrome_options.binary_location = "/usr/bin/google-chrome-stable"
             service = Service('/usr/local/bin/chromedriver')
             logger.info("Using production Chrome configuration")
         else:
-            # Local development environment
             service = Service(ChromeDriverManager().install())
             logger.info("Using local development Chrome configuration")
         
@@ -147,17 +171,15 @@ async def scrape_coinglass() -> APIResponse:
         logger.info("Starting Coinglass scraping...")
         driver = setup_driver()
         
-        # Verify proxy connection
-        try:
-            driver.get('https://ifconfig.me')
-            ip = driver.find_element(By.TAG_NAME, 'body').text
-            logger.info(f"Current IP: {ip}")
-        except Exception as e:
-            logger.warning(f"Failed to verify IP: {str(e)}")
-        
-        # Navigate to Coinglass
+        logger.info("Navigating to Coinglass...")
         driver.get('https://www.coinglass.com/')
         wait = WebDriverWait(driver, 15)
+        
+        WebDriverWait(driver, 15).until(
+            EC.presence_of_element_located((By.TAG_NAME, "body"))
+        )
+
+        driver.implicitly_wait(5)
         
         # Define selectors
         selectors = {
@@ -173,12 +195,18 @@ async def scrape_coinglass() -> APIResponse:
         metrics = {}
         for key, selector in selectors.items():
             include_subtext = key == 'btc_long_short_ratio'
-            metric = scrape_metric(driver, wait, selector, include_subtext)
-            if metric:
-                metrics[key] = metric
-                logger.info(f"Successfully scraped {key}")
-            else:
-                logger.warning(f"Failed to scrape {key}, using default values")
+            try:
+                # Try to find element first
+                element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+                # If found, scrape the metric
+                metric = scrape_metric(driver, wait, selector, include_subtext)
+                if metric:
+                    metrics[key] = metric
+                    logger.info(f"Successfully scraped {key}")
+                else:
+                    raise Exception("Failed to parse metric data")
+            except Exception as e:
+                logger.warning(f"Failed to scrape {key}: {str(e)}, using default values")
                 metrics[key] = MetricItem(
                     text="N/A",
                     change="0%",
