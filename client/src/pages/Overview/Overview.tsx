@@ -329,40 +329,50 @@ const Overview: React.FC = () => {
 
   return (
     <div className="default-page">
-      <div className="overview-page-header">
-        <div className="overview-main-header-content">
-          <h1>Market Overview</h1>
-          <CustomNavbar />
-        </div>
-        <div>
-          <CryptoStatsBar
-            cryptoStats={overviewData.marketData.data}
-            feargreeddata={overviewData.fearGreedData.data}
-            isNull={{
-              market: nullStates.market,
-              fearGreed: nullStates.fearGreed
-            }}
+  <div className="overview-page-header">
+    <div className="overview-main-header-content">
+      <h1>Market Overview</h1>
+      <CustomNavbar />
+    </div>
+    <div>
+      <CryptoStatsBar
+        cryptoStats={overviewData.marketData.data}
+        feargreeddata={overviewData.fearGreedData.data}
+        isNull={{
+          market: nullStates.market,
+          fearGreed: nullStates.fearGreed
+        }}
+      />
+    </div>
+  </div>
+  <div className="page-content">
+    <div className="overview-wrapper">
+      <div className="main-content">
+        <section className="coinglass-data-bar">
+          <CoinglassMetricsBar 
+            data={overviewData.cglsScrapeData.data} 
+            isNull={nullStates.cglsScrapeData} 
           />
-        </div>
-      </div>
-      <div className="page-content">
-        <div className="overview-wrapper">
-          <div className="main-content">
-            <section className="coinglass-data-bar">
-              <CoinglassMetricsBar data={overviewData.cglsScrapeData.data} isNull={nullStates.cglsScrapeData} />
-              <TotalWorth
-                wallets={overviewData.wallets.data}
-                isNull={nullStates.wallets}
-              />
-            </section>
-            <section className="overview-token-table">
-              <OverviewTokensTable tokens={overviewData.TokenOverviewData.data} isNull={nullStates.TokenOverviewData} />
-              <CryptoCategoriesSidebar categories={overviewData.cmcCategories.data} customCategories={overviewData.customCategories.data} isNull={nullStates.cmcCategories} />
-            </section>
-          </div>
-        </div>
+          <TotalWorth
+            wallets={overviewData.wallets.data}
+            isNull={nullStates.wallets}
+          />
+        </section>
+        <section className="overview-token-table">
+          <OverviewTokensTable 
+            tokens={overviewData.TokenOverviewData.data} 
+            isNull={nullStates.TokenOverviewData} 
+          />
+          <CryptoCategoriesSidebar 
+            categories={overviewData.cmcCategories.data} 
+            customCategories={overviewData.customCategories.data} 
+            isNull={nullStates.cmcCategories} 
+          />
+        </section>
       </div>
     </div>
+  </div>
+</div>
   );
 };
 

@@ -6,9 +6,9 @@ import { ActiveFetchesProvider } from './context/ActiveFetchesContext';
 
 const App: React.FC = () => {
   return (
-    <div className="root-wrapper">
+    <div className="app-container">
       <Sidebar />
-      <div className="outlet-wrapper">
+      <div className="main-container">
         <ActiveFetchesProvider>
           <Outlet />
         </ActiveFetchesProvider>

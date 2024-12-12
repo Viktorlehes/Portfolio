@@ -18,9 +18,11 @@
 
 .tokens-table {
   width: 100%;
-  border-collapse: separate;
   border-spacing: 0;
   font-size: 14px;
+  border-collapse: separate;
+  border-spacing: 0px 0.5px;
+  background-color: #f8f9fa;
 }
 
 .tokens-table thead {
@@ -40,7 +42,6 @@
   text-align: right;
   font-weight: 500;
   color: #666;
-  border-bottom: 1px solid #eee;
   white-space: nowrap;
   font-size: 12px;
   letter-spacing: 0.5px;
@@ -52,8 +53,8 @@
 }
 
 .token-row {
-  border-bottom: 1px solid #eee;
   height: 60px;
+  background-color: white;
 }
 
 .token-row:last-child {
@@ -64,6 +65,8 @@
   padding: 8px;
   text-align: right;
   max-width: 100px;
+  border-bottom: 1px solid #eee;
+  color: #666;
 }
 
 .token-row td:first-child {
