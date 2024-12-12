@@ -9,10 +9,9 @@ from datetime import datetime, timedelta
 from app.schemas.wallet.wallet import Wallet, WalletData
 from app.schemas.wallet.wallet import (
     Wallet, WalletMode, PositionType,
-    Token, DefiPosition, FullToken
+    DefiPosition, FullToken
 )
-from app.schemas.tokens.full_token import FullCMCToken
-from app.utils.formatters import format_token, format_defi_position, format_zerion_token
+from app.utils.formatters import format_token, format_defi_position 
 from app.routers.tokens import get_token_by_symbol, get_token_via_CG, get_token_price_chain
 from app.utils.token_updates import update_all_tokens
 

@@ -44,11 +44,11 @@ const CoinglassMetricsBar: React.FC<CoinglassMetricsBarProps> = ({
   return (
     <div className="cgm-container">
       <div className="cgm-content">
-      <MetricItem item={!isNull ? data.open_interest : {text: 'Open Interest', value: 'N/A', change: 'N/A'}} />
-      <MetricItem item={!isNull ? data.futures_volume : {text: 'Futures Volume', value: 'N/A', change: 'N/A'}} />
-      <MetricItem item={!isNull ? data.liquidations_24h : {text: 'Liquidations 24H', value: 'N/A', change: 'N/A'}} />
-      <MetricItem item={!isNull ? data.total_options_open_interest : {text: 'Options OI', value: 'N/A', change: 'N/A'}} />
-      <MetricItem item={!isNull ? data.btc_dominance : {text: 'Options Volume', value: 'N/A', change: 'N/A'}} />
+      <MetricItem item={!isNull ? data.open_interest && data.open_interest : {text: 'Open Interest', value: 'N/A', change: 'N/A'}} />
+      <MetricItem item={!isNull ? data.futures_volume && data.futures_volume : {text: 'Futures Volume', value: 'N/A', change: 'N/A'}} />
+      <MetricItem item={!isNull ? data.liquidations_24h && data.liquidations_24h : {text: 'Liquidations 24H', value: 'N/A', change: 'N/A'}} />
+      <MetricItem item={!isNull ? data.total_options_open_interest && data.total_options_open_interest : {text: 'Options OI', value: 'N/A', change: 'N/A'}} />
+      <MetricItem item={!isNull ? data.btc_dominance && data.btc_dominance : {text: 'Options Volume', value: 'N/A', change: 'N/A'}} />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 # app/routers/tokens.py
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Response, status
 from requests.exceptions import HTTPError
-from typing import Optional, Dict, List
+from typing import Dict, List
 from pydantic import BaseModel
 from app.schemas.tokens.full_token import FullCMCToken
 from app.schemas.tokens.token import Token
@@ -11,7 +11,6 @@ import httpx
 from datetime import datetime, timedelta
 
 # Local imports 
-from app.schemas.wallet.wallet import Wallet, WalletData
 from app.schemas.wallet.wallet import (Token)
 from app.schemas.tokens.full_token import FullCMCToken
 from app.schemas.tokens.zeriontoken import ZerionToken

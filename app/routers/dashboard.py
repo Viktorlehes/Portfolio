@@ -2,7 +2,6 @@
 # Third-party imports
 from fastapi import APIRouter, HTTPException
 import httpx
-from dotenv import load_dotenv
 
 # Environment variables
 from app.core.config import ZERION_API_KEY

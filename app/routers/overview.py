@@ -4,9 +4,7 @@ from asyncio import sleep
 import json
 from typing import List, Dict
 from datetime import datetime, timedelta
-import dateutil.parser
 import logging
-from pydantic import BaseModel
 # Third-party imports
 from fastapi import APIRouter, HTTPException
 import httpx

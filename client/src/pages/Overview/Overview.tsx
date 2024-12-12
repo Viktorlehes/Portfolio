@@ -197,9 +197,9 @@ const Overview: React.FC = () => {
         activeFetches.current.add(API_ENDPOINTS.CGLS);
         updates.push(
           api.get(API_ENDPOINTS.CGLS)
-            .then(cglsData => {
+            .then(cglsData => {              
               newData.cglsScrapeData = {
-                data: cglsData.data.data,
+                data: cglsData.data,
                 timestamp: Date.now()
               };
               localStorage.setItem(CACHE_KEYS.CGLS, JSON.stringify(newData.cglsScrapeData));
