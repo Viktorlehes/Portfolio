@@ -5,12 +5,20 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
+import os
+import logging
+import subprocess
+from selenium.common.exceptions import TimeoutException, WebDriverException
+from webdriver_manager.chrome import ChromeDriverManager
 
 from app.core.config import PROXY_USERNAME, PROXY_PASSWORD
 
-# Pydantic Models remain unchanged
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Pydantic Models
 class MetricItem(BaseModel):
     text: str
     change: str
@@ -35,33 +43,80 @@ class APIResponse(BaseModel):
     data: Optional[CoinglassMetrics] = None
     error: Optional[str] = None
 
+def get_chrome_debug_info():
+    """Get Chrome and ChromeDriver version information for debugging"""
+    debug_info = {}
+    try:
+        chrome_version = subprocess.check_output(['google-chrome', '--version']).decode()
+        chromedriver_version = subprocess.check_output(['chromedriver', '--version']).decode()
+        chrome_path = subprocess.check_output(['which', 'google-chrome']).decode()
+        chromedriver_path = subprocess.check_output(['which', 'chromedriver']).decode()
+        
+        debug_info.update({
+            "chrome_version": chrome_version.strip(),
+            "chromedriver_version": chromedriver_version.strip(),
+            "chrome_path": chrome_path.strip(),
+            "chromedriver_path": chromedriver_path.strip()
+        })
+    except Exception as e:
+        debug_info["error"] = str(e)
+    
+    return debug_info
+
+def is_production():
+    """Check if running in production environment"""
+    return os.getenv('SCRAPE_RAILWAY_ENVIRONMENT') == 'production'
+
 def setup_driver():
+    """Initialize and configure Chrome WebDriver based on environment"""
+    logger.info("Setting up Chrome driver...")
+    
     chrome_options = Options()
+    
+    # Basic Chrome options
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--disable-features=NetworkService')
-    chrome_options.add_argument('--disable-features=VizDisplayCompositor')
     chrome_options.add_argument('--window-size=1920,1080')
+    chrome_options.add_argument('--disable-extensions')
     
+    # Configure proxy if credentials are available
     if PROXY_USERNAME and PROXY_PASSWORD:
         PROXY = f"http://{PROXY_USERNAME}:{PROXY_PASSWORD}@us-ca.proxymesh.com:31280"
         chrome_options.add_argument(f'--proxy-server={PROXY}')
+        logger.info("Proxy configuration added")
     
+    # Set user agent
     chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
     
     try:
-        # Use webdriver_manager to handle ChromeDriver installation
-        service = Service(ChromeDriverManager().install())
+        if is_production():
+            # Production environment (Railway)
+            chrome_options.binary_location = "/usr/bin/google-chrome-stable"
+            service = Service('/usr/local/bin/chromedriver')
+            logger.info("Using production Chrome configuration")
+        else:
+            # Local development environment
+            service = Service(ChromeDriverManager().install())
+            logger.info("Using local development Chrome configuration")
+        
         driver = webdriver.Chrome(service=service, options=chrome_options)
+        driver.set_page_load_timeout(30)
+        logger.info("Chrome driver setup successful")
         return driver
+        
     except Exception as e:
-        print(f"Error creating Chrome driver: {str(e)}")
+        logger.error(f"Error creating Chrome driver: {str(e)}")
+        debug_info = get_chrome_debug_info()
+        logger.error(f"Chrome debug info: {debug_info}")
         raise
 
+
 def scrape_metric(driver, wait, selector: str, include_subtext: bool = False) -> Optional[MetricItem]:
+    """Scrape a single metric from the page"""
     try:
+        logger.info(f"Scraping metric with selector: {selector}")
         element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
         parts = element.text.split("\n")
         
@@ -78,27 +133,33 @@ def scrape_metric(driver, wait, selector: str, include_subtext: bool = False) ->
                 change=parts[1],
                 value=parts[2]
             )
+    except TimeoutException:
+        logger.error(f"Timeout waiting for element: {selector}")
+        return None
     except Exception as e:
-        print(f"Error scraping metric with selector {selector}: {str(e)}")
+        logger.error(f"Error scraping metric with selector {selector}: {str(e)}")
         return None
 
 async def scrape_coinglass() -> APIResponse:
+    """Main scraping function for Coinglass metrics"""
+    driver = None
     try:
+        logger.info("Starting Coinglass scraping...")
         driver = setup_driver()
-    except Exception as e:
-        return APIResponse(
-            status="error",
-            message="Failed to initialize Chrome driver",
-            error=str(e)
-        )
-
-    try:
-        driver.get('https://ifconfig.me')  # Verify proxy connection
-        print(f"Current IP: {driver.find_element(By.TAG_NAME, 'body').text}")
         
+        # Verify proxy connection
+        try:
+            driver.get('https://ifconfig.me')
+            ip = driver.find_element(By.TAG_NAME, 'body').text
+            logger.info(f"Current IP: {ip}")
+        except Exception as e:
+            logger.warning(f"Failed to verify IP: {str(e)}")
+        
+        # Navigate to Coinglass
         driver.get('https://www.coinglass.com/')
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 15)
         
+        # Define selectors
         selectors = {
             'open_interest': "div.MuiGrid-grid-xs-3:nth-child(2) > div:nth-child(1) > a:nth-child(1) > div:nth-child(1)",
             'futures_volume': "div.MuiGrid-grid-xs-3:nth-child(2) > div:nth-child(1) > a:nth-child(2) > div:nth-child(1)",
@@ -108,13 +169,16 @@ async def scrape_coinglass() -> APIResponse:
             'btc_dominance': "div.MuiGrid-grid-xs-3:nth-child(1) > div:nth-child(1) > a:nth-child(3) > div:nth-child(1)"
         }
         
+        # Scrape metrics
         metrics = {}
         for key, selector in selectors.items():
             include_subtext = key == 'btc_long_short_ratio'
             metric = scrape_metric(driver, wait, selector, include_subtext)
             if metric:
                 metrics[key] = metric
+                logger.info(f"Successfully scraped {key}")
             else:
+                logger.warning(f"Failed to scrape {key}, using default values")
                 metrics[key] = MetricItem(
                     text="N/A",
                     change="0%",
@@ -123,23 +187,37 @@ async def scrape_coinglass() -> APIResponse:
                 )
 
         coinglass_metrics = CoinglassMetrics(**metrics)
+        logger.info("Scraping completed successfully")
+        
         return APIResponse(
             status="success",
             message="Data scraped successfully",
             data=coinglass_metrics
         )
 
+    except WebDriverException as e:
+        error_message = f"WebDriver error: {str(e)}"
+        logger.error(error_message)
+        return APIResponse(
+            status="error",
+            message="Failed to scrape data due to WebDriver error",
+            error=error_message
+        )
     except Exception as e:
         error_message = str(e)
-        print(f"Error during scraping: {error_message}")
+        logger.error(f"Error during scraping: {error_message}")
         return APIResponse(
             status="error",
             message="Failed to scrape data",
             error=error_message
         )
     finally:
-        if 'driver' in locals():
-            driver.quit()
+        if driver:
+            try:
+                driver.quit()
+                logger.info("Chrome driver closed successfully")
+            except Exception as e:
+                logger.error(f"Error closing driver: {str(e)}")
 
 if __name__ == "__main__":
     import asyncio
