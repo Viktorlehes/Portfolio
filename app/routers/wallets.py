@@ -23,9 +23,6 @@ from app.core.config import ZERION_API_KEY
 from app.core.db import wallets_collection
 from app.core.db import tokens_collection
 
-# Utils
-from app.utils.helpers import safe_get, safe_float
-
 router = APIRouter()
 
 

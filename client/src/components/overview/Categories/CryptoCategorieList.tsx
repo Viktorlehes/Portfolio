@@ -57,7 +57,7 @@ export const CryptoCategoriesList: React.FC<CryptoCategoriesListProps> = ({
   const navigate = useNavigate();
 
   const latestUpdate =() => {
-    if (!isNull ? categories[0].last_updated : null) {    
+    if (!isNull && categories.length > 0 && categories[0].last_updated) {    
       const date = new Date(categories[0].last_updated);
       const options: Intl.DateTimeFormatOptions = {
         timeZone: "Europe/Stockholm",
