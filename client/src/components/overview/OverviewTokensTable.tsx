@@ -13,7 +13,7 @@ interface OverviewTokensTableProps {
 export const OverviewTokensTable: React.FC<OverviewTokensTableProps> = ({ tokens, isNull }) => {  
 
   const latestUpdate =() => {
-    if (!isNull ? tokens[0].lastUpdated : null) {    
+    if (!isNull && tokens[0] && tokens[0].lastUpdated) {    
       const date = new Date(tokens[0].lastUpdated);
       const options: Intl.DateTimeFormatOptions = {
         timeZone: "Europe/Stockholm",
