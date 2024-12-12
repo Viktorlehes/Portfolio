@@ -6,13 +6,13 @@
 .catagories-container-edit {
   display: flex;
   justify-content: space-between;
-  padding: 12px;
+  padding: 4px 12px;
   align-items: center;
   margin-bottom: 4px;
 }
 
 .catagories-container-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   color: #333;
 }
