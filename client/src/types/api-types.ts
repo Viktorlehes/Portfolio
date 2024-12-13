@@ -553,7 +553,7 @@ export interface components {
             status: "success" | "error";
             /** Message */
             message: string;
-            data?: components["schemas"]["CoinglassMetrics"] | null;
+            data: components["schemas"]["CoinglassMetrics"];
             /** Error */
             error?: string | null;
         };

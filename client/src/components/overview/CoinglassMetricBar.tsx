@@ -5,7 +5,7 @@ import { components } from '../../types/api-types';
 type CGLSApiResponse = components['schemas']['CoinglassMetrics'];
 
 interface CoinglassMetricsBarProps {
-  data: CGLSApiResponse;
+  data: CGLSApiResponse | null;
   isNull: boolean;
 }
 

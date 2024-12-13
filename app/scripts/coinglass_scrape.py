@@ -41,7 +41,7 @@ class CoinglassMetrics(BaseModel):
 class APIResponse(BaseModel):
     status: Literal["success", "error"]
     message: str
-    data: Optional[CoinglassMetrics] = None
+    data: CoinglassMetrics
     error: Optional[str] = None
 
 def verify_proxy_connection():

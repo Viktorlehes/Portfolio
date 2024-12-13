@@ -214,6 +214,7 @@ async def get_coinglass_market_data():
 @router.get("/get-scraped-CGLS-data", response_model=CGLS_APIResponse)
 async def get_scraped_coinglass_data():
     data = await scrape_coinglass()
+    print(data)
     return data
 
 @router.get("/get-latest-tokens")
