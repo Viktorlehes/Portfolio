@@ -140,12 +140,17 @@ const Overview: React.FC = () => {
         isDataExpired(currentData?.timestamp || 0, config.expiration);
     });
 
+    console.log('Expired data:', expiredConfigs);
+    
+
     if (expiredConfigs.length === 0) return;
 
     // Process in batches
     for (let i = 0; i < expiredConfigs.length; i += BATCH_SIZE) {
       const batch = expiredConfigs.slice(i, i + BATCH_SIZE);
       const results = await Promise.all(batch.map(config => fetchDataWithRetry(config)));
+
+      console.log('Updated data:', batch.map(config => config.key));
 
       const validResults = results.filter((result): result is { key: keyof typeof CACHE_KEYS, data: any, timestamp: number } => Boolean(result));
       
