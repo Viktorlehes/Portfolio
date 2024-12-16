@@ -62,7 +62,7 @@ interface EndpointConfig {
 }
 
 const ENDPOINT_CONFIGS: EndpointConfig[] = [
-  { key: 'MARKET', endpoint: '/overview/cryptostats', expiration: 1 },
+  { key: 'MARKET', endpoint: '/overview/cryptostats', expiration: 5 },
   { key: 'FEAR_GREED', endpoint: '/overview/feargreedindex', expiration: 5 }, 
   { key: 'WALLETS', endpoint: '/wallets/get_wallets', expiration: 5 },
   { key: 'CGLS', endpoint: '/overview/get-scraped-CGLS-data', expiration: 5 },
@@ -114,10 +114,21 @@ const Overview: React.FC = () => {
       activeFetches.current.add(config.endpoint);
       const response = await api.get(config.endpoint);
 
+      const timestamp = Date.now();
+      const cacheKey = CACHE_KEYS[config.key];
+
+
+      console.log('Updated data:', config.key);
+      
+      localStorage.setItem(cacheKey, JSON.stringify({
+        data: response,
+        timestamp
+      }));
+
       return {
         key: config.key,
         data: response,
-        timestamp: Date.now()
+        timestamp: timestamp
       };
     } catch (error) {
       console.error(`Error fetching ${config.key}:`, error);
@@ -163,7 +174,6 @@ const Overview: React.FC = () => {
               data: result.data,
               timestamp: result.timestamp
             };
-            localStorage.setItem(CACHE_KEYS[result.key], JSON.stringify(newData[key]));
           });
           return newData;
         });
