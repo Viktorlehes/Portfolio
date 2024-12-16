@@ -66,6 +66,8 @@ export const CryptoCategoriesList: React.FC<CryptoCategoriesListProps> = ({
         second: "2-digit",
       };
       const swedishLocalTime = new Intl.DateTimeFormat("sv-SE", options).format(date);
+      console.log(swedishLocalTime);
+      console.log(date);
       return swedishLocalTime;
     }
   };
