@@ -56,18 +56,22 @@ export const CryptoCategoriesList: React.FC<CryptoCategoriesListProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const latestUpdate =() => {
-    if (!isNull && categories.length > 0 && categories[0].last_updated) {    
-      const date = new Date(categories[0].last_updated);
+  const latestUpdate = () => {
+    if (!isNull && categories.length > 0 && categories[0].last_updated) {
+      const date = new Date(categories[0].last_updated); // Parse the UTC date
+      const utcDate = new Date(date.toISOString()); // Ensure it's in UTC
+  
       const options: Intl.DateTimeFormatOptions = {
-        timeZone: "Europe/Stockholm",
+        timeZone: "Europe/Stockholm", // Format for Swedish time
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
       };
-      const swedishLocalTime = new Intl.DateTimeFormat("sv-SE", options).format(date);
-      console.log(swedishLocalTime);
-      console.log(date);
+  
+      const swedishLocalTime = new Intl.DateTimeFormat("sv-SE", options).format(utcDate);
+  
+      console.log(swedishLocalTime); // Should now show CET time accurately
+      console.log(utcDate);
       return swedishLocalTime;
     }
   };
