@@ -16,8 +16,8 @@ import requests
 from app.core.config import PROXY_USERNAME, PROXY_PASSWORD
 
 # Set up logging
-# logging.basicConfig(level=logging.INFO)
-# logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Pydantic Models
 class MetricItem(BaseModel):
@@ -60,10 +60,10 @@ def verify_proxy_connection():
                               proxies=proxies, 
                               timeout=10)
         if response.status_code == 200:
-            #logger.info(f"Proxy connection verified. IP: {response.json().get('ip')}")
+            logger.info(f"Proxy connection verified. IP: {response.json().get('ip')}")
             return True
     except Exception as e:
-        #logger.error(f"Proxy verification failed: {str(e)}")
+        logger.error(f"Proxy verification failed: {str(e)}")
         print(f"Proxy verification failed: {str(e)}")    
     return False
 
@@ -93,7 +93,7 @@ def is_production():
 
 def setup_driver():
     """Initialize and configure Chrome WebDriver based on environment"""
-    #logger.info("Setting up Chrome driver...")
+    logger.info("Setting up Chrome driver...")
     
     chrome_options = Options()
     
@@ -110,8 +110,9 @@ def setup_driver():
         if verify_proxy_connection():
             proxy_url = f"http://{PROXY_USERNAME}:{PROXY_PASSWORD}@us-ca.proxymesh.com:31280"
             chrome_options.add_argument(f'--proxy-server={proxy_url}')
-            #logger.info("Proxy configuration added")
-        #ogger.warning("Proxy verification failed, continuing without proxy")
+            logger.info("Proxy configuration added")
+            print("Proxy configuration added")
+        logger.warning("Proxy verification failed, continuing without proxy")
     
     # Set user agent
     chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
@@ -120,20 +121,21 @@ def setup_driver():
         if os.getenv('RAILWAY_ENVIRONMENT') == 'production':
             chrome_options.binary_location = "/usr/bin/google-chrome-stable"
             service = Service('/usr/local/bin/chromedriver')
-           # logger.info("Using production Chrome configuration")
+            logger.info("Using production Chrome configuration")
         else:
             service = Service(ChromeDriverManager().install())
-            #logger.info("Using local development Chrome configuration")
+            logger.info("Using local development Chrome configuration")
         
         driver = webdriver.Chrome(service=service, options=chrome_options)
         driver.set_page_load_timeout(30)
-        #logger.info("Chrome driver setup successful")
+        logger.info("Chrome driver setup successful")
         return driver
         
     except Exception as e:
-       # logger.error(f"Error creating Chrome driver: {str(e)}")
+        logger.error(f"Error creating Chrome driver: {str(e)}")
         debug_info = get_chrome_debug_info()
-       # logger.error(f"Chrome debug info: {debug_info}")
+        print(f"Chrome debug info: {debug_info}")
+        logger.error(f"Chrome debug info: {debug_info}")
         raise
 
 
@@ -158,20 +160,20 @@ def scrape_metric(driver, wait, selector: str, include_subtext: bool = False) ->
                 value=parts[2]
             )
     except TimeoutException:
-        #logger.error(f"Timeout waiting for element: {selector}")
+        logger.error(f"Timeout waiting for element: {selector}")
         return None
     except Exception as e:
-        #logger.error(f"Error scraping metric with selector {selector}: {str(e)}")
+        logger.error(f"Error scraping metric with selector {selector}: {str(e)}")
         return None
 
 async def scrape_coinglass() -> APIResponse:
     """Main scraping function for Coinglass metrics"""
     driver = None
     try:
-        #logger.info("Starting Coinglass scraping...")
+        logger.info("Starting Coinglass scraping...")
         driver = setup_driver()
         
-        #logger.info("Navigating to Coinglass...")
+        logger.info("Navigating to Coinglass...")
         driver.get('https://www.coinglass.com/')
         wait = WebDriverWait(driver, 15)
         
@@ -202,11 +204,11 @@ async def scrape_coinglass() -> APIResponse:
                 metric = scrape_metric(driver, wait, selector, include_subtext)
                 if metric:
                     metrics[key] = metric
-                    #logger.info(f"Successfully scraped {key}")
+                    logger.info(f"Successfully scraped {key}")
                 else:
                     raise Exception("Failed to parse metric data")
             except Exception as e:
-                #logger.warning(f"Failed to scrape {key}: {str(e)}, using default values")
+                logger.warning(f"Failed to scrape {key}: {str(e)}, using default values")
                 metrics[key] = MetricItem(
                     text="N/A",
                     change="0%",
@@ -215,7 +217,7 @@ async def scrape_coinglass() -> APIResponse:
                 )
 
         coinglass_metrics = CoinglassMetrics(**metrics)
-        #logger.info("Scraping completed successfully")
+        logger.info("Scraping completed successfully")
         
         return APIResponse(
             status="success",
@@ -225,7 +227,7 @@ async def scrape_coinglass() -> APIResponse:
 
     except WebDriverException as e:
         error_message = f"WebDriver error: {str(e)}"
-        #logger.error(error_message)
+        logger.error(error_message)
         return APIResponse(
             status="error",
             message="Failed to scrape data due to WebDriver error",
@@ -233,7 +235,7 @@ async def scrape_coinglass() -> APIResponse:
         )
     except Exception as e:
         error_message = str(e)
-        #logger.error(f"Error during scraping: {error_message}")
+        logger.error(f"Error during scraping: {error_message}")
         return APIResponse(
             status="error",
             message="Failed to scrape data",
@@ -243,9 +245,9 @@ async def scrape_coinglass() -> APIResponse:
         if driver:
             try:
                 driver.quit()
-               # logger.info("Chrome driver closed successfully")
+                logger.info("Chrome driver closed successfully")
             except Exception as e:
-               # logger.error(f"Error closing driver: {str(e)}")
+               logger.error(f"Error closing driver: {str(e)}")
                print(f"Error closing driver: {str(e)}")
 
 if __name__ == "__main__":
