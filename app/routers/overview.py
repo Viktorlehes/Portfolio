@@ -4,6 +4,7 @@ from asyncio import sleep
 import json
 from typing import List, Dict
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import logging
 # Third-party imports
 from fastapi import APIRouter, HTTPException
@@ -403,6 +404,28 @@ async def update_coinglass_data(symbol: str, coinglass_token: dict) -> dict:
         print(f"Error updating coinglass data for {symbol}: {str(e)}")
         return None
     
+def compare_timestamps(last_updated_str: str, local_timezone="CET"):
+    """
+    Compare timestamps across different timezones
+    
+    Args:
+        last_updated_str: ISO format timestamp string with UTC (Z)
+        local_timezone: String representing local timezone (default: "CET")
+    """
+    # Parse the UTC timestamp from API
+    last_updated = datetime.fromisoformat(last_updated_str.replace('Z', '+00:00'))
+    
+    # Get current time in your local timezone
+    local_time = datetime.now(ZoneInfo(local_timezone))
+    
+    # Convert local time to UTC for comparison
+    current_time_utc = local_time.astimezone(ZoneInfo("UTC"))
+    
+    # Compare times (both in UTC)
+    if last_updated < current_time_utc - timedelta(minutes=5):
+        return True
+    return False
+    
 @router.get("/get-user-catagories", response_model=CategoryResponse)
 async def get_cmc_catagories():
     try: 
@@ -428,9 +451,8 @@ async def get_cmc_catagories():
                         break
                     
                     try:
-                        if last_updated < datetime.now() - timedelta(minutes=5):
-                            needs_update = True
-                            break
+                        needs_update = compare_timestamps(last_updated)
+                        break
                     except TypeError:
                         print("Error parsing timestamp")
                         needs_update = True
@@ -474,7 +496,7 @@ async def fetch_single_category(session: ClientSession, cat_id: str, api_key: st
                         market_cap_change=category_data.get('market_cap_change', 0.0),
                         volume=category_data.get('volume', 0.0),
                         volume_change=category_data.get('volume_change', 0.0),
-                        last_updated=datetime.now()
+                        last_updated=category_data.get('last_updated', '')
                     ).model_dump()
     except Exception as e:
         logging.error(f"Error fetching category {cat_id}: {str(e)}")
