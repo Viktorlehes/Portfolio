@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useLoaderData, useNavigate, LoaderFunction, LoaderFunctionArgs } from "react-router-dom";
 import { components } from "../../types/api-types";
 import { ArrowLeft } from "lucide-react"; 4
@@ -6,47 +6,30 @@ import ValueCard from "../../components/Dashboard/WalletsView/ValueCard";
 import DefiPositions from "../../components/Dashboard/WalletView/DefiPositions";
 import "./SingleWalletView.css";
 import { formatCurrency, formatPercent, formatNumber } from "../../utils/calc";
-import { getCachedData, isDataExpired } from "../../utils/api";
 import LoadingOverlay from "../../components/Default/LoadingOverlay";
 import { ExtendedDefiPosition } from "../Defi/Defi";
-import { api } from "../../utils/api";
-import { useActiveFetches, isEndpointFetching } from "../../context/ActiveFetchesContext";
+import { ENDPOINTS, useDataFetching } from "../../utils/api";
 
 type Wallet = components["schemas"]["Wallet"];
 type FullToken = components["schemas"]["FullToken"];
 type DefiPosition = components["schemas"]["DefiPosition"];
 
-interface CachedData<T> {
-    data: T;
-    timestamp: number;
-}
-
-const CACHE_KEYS = {
-    WALLETS: 'wallets'
-} as const;
-
-const API_ENDPOINTS = {
-    WALLETS: '/wallet/get_wallets',
-} as const;
 
 interface LoaderData {
-    wallets: CachedData<Wallet[] | null>;
+    wallets: {
+        data: Wallet[] | null;
+        timestamp: number;
+    };
     walletAddress: string;
 }
 
 export const walletLoader: LoaderFunction = async ({ params }: LoaderFunctionArgs): Promise<LoaderData> => {
     const walletAddress = params.walletAddress;
-
-    const cachedWallets = getCachedData(CACHE_KEYS.WALLETS) as CachedData<Wallet[]>;
-
-    if (!cachedWallets) {
-        return { wallets: { data: null, timestamp: 0 }, walletAddress: walletAddress ? walletAddress : '' };
-    }
-
+    const cachedWallets = localStorage.getItem(ENDPOINTS.WALLETS.endpoint);
     return {
-        wallets: {
-            data: cachedWallets ? cachedWallets.data : null,
-            timestamp: cachedWallets ? cachedWallets.timestamp : 0
+        wallets: cachedWallets ? JSON.parse(cachedWallets) : {
+            data: null,
+            timestamp: 0
         }
         , walletAddress: walletAddress ? walletAddress : ''
     };
@@ -130,48 +113,21 @@ const AssetTableRow: React.FC<{
     };
 
 const SingleWalletView: React.FC = () => {
-    const { wallets, walletAddress } = useLoaderData() as LoaderData;
-    const [cachedWallet, setcachedWalletWallet] = useState<Wallet | null>(wallets.data ? wallets.data.find(wallet => wallet.address === walletAddress) || null : null);
+    const { walletAddress, wallets } = useLoaderData() as LoaderData;
+    const walletState = useDataFetching<Wallet[]>({
+        ...ENDPOINTS.WALLETS,
+        initialData: wallets
+      });
+    const [cachedWallet, setcachedWalletWallet] = React.useState<Wallet | null>(walletState.data?.find(wallet => wallet.address === walletAddress) || null);
     const navigate = useNavigate();
     const [showSmallValues, setShowSmallValues] = React.useState(false);
-    const [loadingStates, setLoadingStates] = useState({
-        wallets: !wallets.data
-    });
-    const activeFetches = useActiveFetches();
 
     useEffect(() => {
-        const updateWalletData = async () => {
-            if (isDataExpired(wallets.timestamp || 0)) {
-                if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.WALLETS)) {
-                    activeFetches.current.add(API_ENDPOINTS.WALLETS);
-                    setLoadingStates(prev => ({ ...prev, wallets: true }));
-                    console.log('Wallets Loading:', loadingStates.wallets);
-
-                    try {
-                        const newWallets: Wallet[] = await api.get(API_ENDPOINTS.WALLETS);
-
-                        localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
-                            data: newWallets,
-                            timestamp: Date.now()
-                        }));
-
-                        setcachedWalletWallet(newWallets.find(wallet => wallet.address === walletAddress) || null);
-                    } catch (error) {
-                        console.error('Error updating wallets:', error);
-                        activeFetches.current.delete(API_ENDPOINTS.WALLETS);
-                    } finally {
-                        setLoadingStates(prev => ({ ...prev, wallets: false }));
-                        console.log('Wallets Loading:', loadingStates.wallets);
-                        activeFetches.current.delete(API_ENDPOINTS.WALLETS);
-                    }
-                }
-            }
-        };
-        updateWalletData();
-        const intervalId = setInterval(updateWalletData, 60000);
-        return () => clearInterval(intervalId);
-    }, [wallets.timestamp]);
-
+        if (walletState.data) {
+            setcachedWalletWallet(walletState.data.find(wallet => wallet.address === walletAddress) || null);
+        }
+    }, [walletState.data, walletAddress]);
+    
     const getValue = (token: FullToken): number => {
         try {
             return token.token_data?.value || token.zerion_data.value || 0;

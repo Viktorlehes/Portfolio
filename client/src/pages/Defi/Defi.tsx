@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useDataFetching, ENDPOINTS } from "../../utils/api";
 import CustomNavbar from "../../components/Default/CustomNavBar";
 import { components } from "../../types/api-types";
-import { useLoaderData, LoaderFunction } from "react-router-dom";
 import ValueCard from "../../components/Dashboard/WalletsView/ValueCard";
 import "./Defi.css";
 import DefiPositions from "../../components/Dashboard/WalletView/DefiPositions";
-import { getCachedData, isDataExpired } from "../../utils/api";
 import LoadingOverlay from "../../components/Default/LoadingOverlay";
-import { api } from "../../utils/api";
 
 type Wallet = components["schemas"]["Wallet"];
 type DefiPosition = components["schemas"]["DefiPosition"];
@@ -17,67 +15,12 @@ export interface ExtendedDefiPosition extends DefiPosition {
     walletName: string;
 }
 
-interface CachedData<T> {
-    data: T;
-    timestamp: number;
-}
-
-const CACHE_KEYS = {
-    WALLETS: 'wallets',
-} as const;
-
-const API_ENDPOINTS = {
-    WALLETS: '/wallets/get_wallets',
-} as const;
-
-interface LoaderData {
-    wallets: CachedData<Wallet[]>;
-}
-
-export const defiLoader: LoaderFunction = async () => {
-    const cachedWallets = getCachedData(CACHE_KEYS.WALLETS) as CachedData<Wallet[]>;
-
-    return {
-        wallets: cachedWallets || { data: [], timestamp: null },
-    }
-};
-
 const DefiView: React.FC = () => {
-    const { wallets } = useLoaderData() as LoaderData
-    const [localWallets, setLocalWallets] = useState<CachedData<Wallet[]> | null>(wallets ? wallets : null);
-    const [loadingStates, setLoadingStates] = useState({
-        wallets: !wallets.data
-    });
+    const walletState = useDataFetching<Wallet[]>(ENDPOINTS.WALLETS);
     const [showSmallValues, setShowSmallValues] = React.useState(false);
 
     //TODO: Add routing to wallet view
     //const location = useLocation();
-
-    useEffect(() => {
-        const updateWalletData = async () => {
-            if (isDataExpired(localWallets ? localWallets.timestamp : 0)) {
-                if (!localWallets) {
-                    setLoadingStates(prev => ({ ...prev, wallets: true }));
-                }
-                try {
-                    const data = await api.get(API_ENDPOINTS.WALLETS);
-                    const newWallets: Wallet[] = await data.json();
-                    localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
-                        data: newWallets,
-                        timestamp: Date.now()
-                    }));
-                    setLocalWallets({data: newWallets, timestamp: Date.now()});
-                } catch (error) {
-                    console.error('Error updating wallets:', error);
-                } finally {
-                    setLoadingStates(prev => ({ ...prev, wallets: false }));
-                }
-            }
-        };
-        updateWalletData();
-        const intervalId = setInterval(updateWalletData, 60000);
-        return () => clearInterval(intervalId);
-    }, [localWallets]);
 
     const calculate24hChange = (wallets: Wallet[]) => {
         const allPositions = wallets.reduce((acc, wallet) => {
@@ -101,13 +44,13 @@ const DefiView: React.FC = () => {
     };
 
 
-    const total24hChange = localWallets ? calculate24hChange(localWallets.data) : 0; 
-    const totalDefiValue = localWallets ? localWallets.data.reduce(
+    const total24hChange = walletState.data ? calculate24hChange(walletState.data) : 0; 
+    const totalDefiValue = walletState.data ? walletState.data.reduce(
         (sum, wallet) => sum + wallet.defi_total,
         0
     ) : 0;
 
-    const defiPositions: ExtendedDefiPosition[] = localWallets ? localWallets.data.reduce((acc, wallet) => {
+    const defiPositions: ExtendedDefiPosition[] = walletState.data ? walletState.data.reduce((acc, wallet) => {
         const defiPositions = (wallet.defi_positions || []).map(position => ({
             ...position,
             walletAddress: wallet.address,
@@ -173,7 +116,7 @@ const DefiView: React.FC = () => {
                 </section>
             </div>
 
-            {loadingStates.wallets && (
+            {walletState.isLoading && (
                 <LoadingOverlay message="Loading wallets..." />
             )}
         </div>

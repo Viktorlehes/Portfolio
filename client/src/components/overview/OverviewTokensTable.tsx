@@ -2,18 +2,20 @@ import React from 'react';
 import { TokenTableRow } from './TokenTableRow';
 import './OverviewTokensTable.css';
 import { components } from '../../types/api-types';
+import { RefreshCcw } from 'lucide-react';
 
 type TokenOverviewResponse = components['schemas']['TokenOverviewData'];
 
 interface OverviewTokensTableProps {
-  tokens: TokenOverviewResponse[];
+  tokens: TokenOverviewResponse[] | null;
   isNull: boolean;
+  reFetch: () => void;
 }
 
-export const OverviewTokensTable: React.FC<OverviewTokensTableProps> = ({ tokens, isNull }) => {  
+export const OverviewTokensTable: React.FC<OverviewTokensTableProps> = ({ tokens, isNull, reFetch }) => {  
 
   const latestUpdate =() => {
-    if (!isNull && tokens[0] && tokens[0].lastUpdated) {    
+    if (!isNull && tokens && tokens[0] && tokens[0].lastUpdated) {    
       const date = new Date(tokens[0].lastUpdated);
       const options: Intl.DateTimeFormatOptions = {
         timeZone: "Europe/Stockholm",
@@ -30,7 +32,10 @@ export const OverviewTokensTable: React.FC<OverviewTokensTableProps> = ({ tokens
     <div className="table-container">
       <div className='catagories-container-edit'>
         <div className='catagories-container-title'>Tokens by Market Cap</div>
-        <div className='catagories-container-update'>Last updated: {latestUpdate()}</div>
+        <div className='categories-container-options'>
+          <div className='catagories-container-update'>Last updated: {latestUpdate()}</div>
+          <RefreshCcw className={!isNull ? 'refresh-icon': 'refresh-icon refreshing'} onClick={() => reFetch()} />
+        </div>
       </div>
       <div className="table-scroll">
         <table className="tokens-table">

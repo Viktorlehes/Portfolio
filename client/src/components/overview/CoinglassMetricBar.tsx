@@ -40,8 +40,6 @@ const CoinglassMetricsBar: React.FC<CoinglassMetricsBarProps> = ({
   data,
   isNull,
 }) => {
-console.log(isNull);
-
   return (
     <div className="cgm-container">
       <div className="cgm-content">

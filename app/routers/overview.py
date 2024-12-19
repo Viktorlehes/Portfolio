@@ -1,22 +1,22 @@
 #overview.py
 # Standard library imports
-from asyncio import sleep
 import json
-from typing import List, Dict
+from typing import List, Generic, TypeVar, Dict
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
+import pytz
 import logging
+from pydantic import BaseModel
 # Third-party imports
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 import httpx
-from requests import Request, Session
+from requests import Session
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
-from dotenv import load_dotenv
 from bson import ObjectId
 from pymongo import UpdateOne
 import asyncio
 from aiohttp import ClientSession, ClientTimeout
 import uuid
+
 
 # Local imports (absolute imports)
 from app.schemas.market.market_data import MarketDataResponse
@@ -27,10 +27,10 @@ from app.schemas.tokens.full_token import FullCMCToken
 from app.schemas.tokens.coinglass_token_response import ExchangeResponse
 from app.schemas.tokens.TokenOverviewData import TokenOverviewData
 from app.schemas.market.Catagory_data import CategoryResponse, CategoryData
-from app.scripts.coinglass_scrape import APIResponse
 from app.utils.helpers import MongoJSONEncoder
 from app.schemas.market.CustomCategory import CustomCategory
-from app.scripts.coinglass_scrape import APIResponse as CGLS_APIResponse, scrape_coinglass
+from app.scripts.coinglass_scrape import CoinglassMetrics, scrape_coinglass
+from app.utils.cache_manager import cached_endpoint
 
 # Environment variables
 from app.core.config import CM_API_KEY, CGLS_API_KEY
@@ -40,6 +40,13 @@ from app.core.db import tokens_collection, coinglass_collection, categories_coll
 
 # Router setup
 router = APIRouter()
+
+T = TypeVar('T')
+
+class CachedResponse(BaseModel, Generic[T]):
+    data: T
+    is_updating: bool
+    last_updated: str
 
 async def get_tokens_via_ids(token_ids: list[str]) -> list[FullCMCToken]:
     url = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest'
@@ -212,11 +219,14 @@ async def get_coinglass_market_data():
         else:     
             raise HTTPException(status_code=500, detail="Error fetching data from Coinglass API")
         
-@router.get("/get-scraped-CGLS-data", response_model=CGLS_APIResponse)
+@router.get("/get-scraped-CGLS-data", response_model=CachedResponse[CoinglassMetrics])
+@cached_endpoint("get-scraped-CGLS-data", expiry_minutes=10)
 async def get_scraped_coinglass_data():
     data = await scrape_coinglass()
-    print(data)
-    return data
+    if data:
+        return data
+    else:
+        raise HTTPException(status_code=500, detail="Error fetching data from Coinglass API")
 
 @router.get("/get-latest-tokens")
 async def get_latest_tokens():
@@ -247,9 +257,11 @@ async def get_coinglass_token(symbol: str):
         else:     
             raise HTTPException(status_code=500, detail="Error fetching data from Coinglass API")
 
-@router.get("/overview-tokens-table-data", response_model=List[TokenOverviewData])
-async def get_overview_tokens_table_data():
+@router.get("/overview-tokens-table-data", response_model=CachedResponse[List[TokenOverviewData]])
+@cached_endpoint("tokens_table", expiry_minutes=10)
+async def get_overview_tokens_table_data(request: Request):
     response_data = []
+    print("Fetching Token Table Data")
     try:
         latest_tokens: CMCLatestTokens = await get_currencies()
         if latest_tokens['status']['error_message']:
@@ -258,105 +270,107 @@ async def get_overview_tokens_table_data():
         tokens = latest_tokens['data']
         tokens_to_fetch = []
         tokens_map = {}
+        current_time = datetime.now(pytz.UTC)
         
-        # First pass: check existing tokens
+        # First pass: check existing tokens and their timestamps
         for token in tokens:
             token_id = str(token['id'])
             token_exists = await tokens_collection.find_one({"id": token['id']})
             
-            if token_exists:
-                token_exists['_id'] = str(token_exists['_id'])
-                #update token from DB
-                await tokens_collection.update_one(
-                    {"id": token['id']},
-                    {"$set": token}
-                )
-
-                response_data.append(token_exists)
-            else:
+            # Check if token needs update (doesn't exist or old timestamp)
+            needs_update = True
+            if token_exists and 'last_updated' in token_exists:
+                try:
+                    # Convert string timestamp to timezone-aware datetime
+                    last_updated = datetime.fromisoformat(token_exists["last_updated"].replace('Z', '+00:00'))
+                    needs_update = (current_time - last_updated).total_seconds() > 300
+                except (ValueError, TypeError) as e:
+                    print(f"Error parsing timestamp for token {token_id}: {e}")
+                    needs_update = True
+            
+            if needs_update:
                 tokens_to_fetch.append(token_id)
                 tokens_map[token_id] = len(response_data)
                 response_data.append(None)
+            else:
+                token_exists['_id'] = str(token_exists['_id'])
+                response_data.append(token_exists)
         
-        # Fetch missing tokens
+        # Fetch all tokens that need updating
         if tokens_to_fetch:
             fetched_tokens = await get_tokens_via_ids(tokens_to_fetch)
-            tokens_to_insert = []
+            tokens_to_update = []
             
             for token in fetched_tokens:
                 if 'message' in token:
                     print(f"Error fetching token: {token['message']}")
                     continue
+                    
                 token_id = str(token.id)
                 position = tokens_map[token_id]
                 token_dict = token.model_dump()
+                
                 if '_id' in token_dict and isinstance(token_dict['_id'], dict):
                     token_dict['_id'] = ObjectId()
+                
+                # Add last_updated timestamp
+                token_dict['last_updated'] = current_time.isoformat()
+                
                 response_data[position] = token_dict
-                tokens_to_insert.append(token_dict)
+                tokens_to_update.append(
+                    UpdateOne(
+                        {"id": token.id},
+                        {"$set": token_dict},
+                        upsert=True
+                    )
+                )
             
-            if tokens_to_insert:
-                await tokens_collection.insert_many(tokens_to_insert)
+            # Bulk update/insert all fetched tokens
+            if tokens_to_update:
+                await tokens_collection.bulk_write(tokens_to_update)
         
-        # Filter out any None values
-        response_data = [token for token in response_data if token is not None]
-        
-        #filter duplicate tokens
-        unique_tokens = []
+        # Filter out any None values and duplicates
+        filtered_response = []
         seen_tokens = set()
         for token in response_data:
-            if token['id'] not in seen_tokens:
-                unique_tokens.append(token)
+            if token and token['id'] not in seen_tokens:
+                filtered_response.append(token)
                 seen_tokens.add(token['id'])
-    
-        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error with CMC data: {str(e)}")
 
+    print("Fetching CGLS token data")
     # Process and combine data
     final_response = []
-    try:
-        for token in unique_tokens:
-            try:
-                # Get coinglass data
-                coinglass_token = await coinglass_collection.find_one({"symbol": token['symbol']})
+    
+    async def process_token(token):
+        try:
+            coinglass_token = await coinglass_collection.find_one({"symbol": token['symbol']})
+            coinglass_token = await update_coinglass_data(token['symbol'], coinglass_token)
+            
+            net_inflow_24h = 0
+            if coinglass_token and 'data' in coinglass_token:
+                net_inflow_24h = sum(exchange['flowsUsd24h'] for exchange in coinglass_token['data'])
                 
-                # Handle coinglass data fetching and updates
-                coinglass_token = await update_coinglass_data(token['symbol'], coinglass_token)
-                
-                # Calculate net inflow
-                net_inflow_24h = 0
-                if coinglass_token and 'data' in coinglass_token:
-                    net_inflow_24h = sum(
-                        exchange['flowsUsd24h'] 
-                        for exchange in coinglass_token['data']
-                    )
-                
-                # Format response
-                formatted_token = {
-                    "name": token['name'],
-                    "price": token['quote']['USD']['price'],
-                    "change24h": token['quote']['USD']['percent_change_24h'],
-                    "change7d": token['quote']['USD']['percent_change_7d'],
-                    "volume": token['quote']['USD']['volume_24h'],
-                    "volumeChange24h": token['quote']['USD']['volume_change_24h'],
-                    "marketCap": token['quote']['USD']['market_cap'],
-                    "netInflow24h": net_inflow_24h,
-                    "lastUpdated": token['last_updated'],
-                }
-                final_response.append(formatted_token)
-                
-            except Exception as e:
-                print(f"Error processing token {token['symbol']}: {str(e)}")
-                continue
-                
-        return list[TokenOverviewData](final_response)
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"An error occurred while processing data: {str(e)}"
-        )
+            return {
+                "name": token['name'],
+                "price": token['quote']['USD']['price'],
+                "change24h": token['quote']['USD']['percent_change_24h'],
+                "change7d": token['quote']['USD']['percent_change_7d'],
+                "volume": token['quote']['USD']['volume_24h'],
+                "volumeChange24h": token['quote']['USD']['volume_change_24h'],
+                "marketCap": token['quote']['USD']['market_cap'],
+                "netInflow24h": net_inflow_24h,
+                "lastUpdated": token['last_updated'],
+            }
+        except Exception as e:
+            print(f"Error processing token {token['symbol']}: {str(e)}")
+            return None
+            
+    final_response = await asyncio.gather(
+        *[process_token(token) for token in filtered_response]
+    )
+    return [token for token in final_response if token is not None]
         
 async def update_coinglass_data(symbol: str, coinglass_token: dict) -> dict:
     """Helper function to handle coinglass data updates"""
@@ -404,30 +418,9 @@ async def update_coinglass_data(symbol: str, coinglass_token: dict) -> dict:
         print(f"Error updating coinglass data for {symbol}: {str(e)}")
         return None
     
-def compare_timestamps(last_updated_str: str, local_timezone="CET"):
-    """
-    Compare timestamps across different timezones
-    
-    Args:
-        last_updated_str: ISO format timestamp string with UTC (Z)
-        local_timezone: String representing local timezone (default: "CET")
-    """
-    # Parse the UTC timestamp from API
-    last_updated = datetime.fromisoformat(last_updated_str.replace('Z', '+00:00'))
-    
-    # Get current time in your local timezone
-    local_time = datetime.now(ZoneInfo(local_timezone))
-    
-    # Convert local time to UTC for comparison
-    current_time_utc = local_time.astimezone(ZoneInfo("UTC"))
-    
-    # Compare times (both in UTC)
-    if last_updated < current_time_utc - timedelta(minutes=5):
-        return True
-    return False
-    
-@router.get("/get-user-catagories", response_model=CategoryResponse)
-async def get_cmc_catagories():
+@router.get("/get-user-catagories", response_model=CachedResponse[CategoryResponse])
+@cached_endpoint("get-user-catagories", expiry_minutes=5)
+async def get_cmc_catagories(request: Request):
     try: 
         current_tracked_categories = await tracked_categories.find().to_list()
         tracked_categories_id_list = [str(cat['id']) for cat in current_tracked_categories]
@@ -451,7 +444,10 @@ async def get_cmc_catagories():
                         break
                     
                     try:
-                        needs_update = compare_timestamps(last_updated)
+                        print(f"Last updated: {last_updated}")
+                        print(f"Current time: {datetime.now()}")
+                        if last_updated < datetime.now() - timedelta(minutes=5):
+                            needs_update = True
                         break
                     except TypeError:
                         print("Error parsing timestamp")
@@ -485,6 +481,7 @@ async def fetch_single_category(session: ClientSession, cat_id: str, api_key: st
                 data = await response.json()
                 if 'data' in data:
                     category_data = data['data']
+                    last_updated = datetime.now()
                     return CategoryData(
                         id=str(category_data['id']),
                         name=category_data['name'],
@@ -496,7 +493,7 @@ async def fetch_single_category(session: ClientSession, cat_id: str, api_key: st
                         market_cap_change=category_data.get('market_cap_change', 0.0),
                         volume=category_data.get('volume', 0.0),
                         volume_change=category_data.get('volume_change', 0.0),
-                        last_updated=category_data.get('last_updated', '')
+                        last_updated=last_updated
                     ).model_dump()
     except Exception as e:
         logging.error(f"Error fetching category {cat_id}: {str(e)}")
@@ -601,7 +598,8 @@ async def update_categories(tracked_categories_id_list: List[str]):
         print(f"Error in update_categories: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating categories: {str(e)}")
     
-@router.get('/get-default-categories', response_model=CategoryResponse)
+@router.get('/get-default-categories', response_model=CachedResponse[CategoryResponse])
+@cached_endpoint("get-default-categories", expiry_minutes=5)
 async def get_default_categories():
     try:
         some_categories = await categories_collection.find().limit(10).to_list()
@@ -778,11 +776,12 @@ async def update_custom_categories(custom_categories):
             print("Category updated")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to update category: {str(e)}")
-        
+         
     return update_categories
     
-@router.get("/get-custom-categories", response_model=List[CustomCategory])
-async def get_custom_categories():
+@router.get("/get-custom-categories", response_model=CachedResponse[List[CustomCategory]])
+@cached_endpoint("get-custom-categories", expiry_minutes=5)
+async def get_custom_categories(request: Request):
     try:
         custom_categories = await custom_categories_collection.find().to_list()
         needs_update = False
@@ -822,7 +821,8 @@ async def remove_custom_category(category_id: dict):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
     
     
-@router.get("/get-default-tokens", response_model=List[FullCMCToken])
+@router.get("/get-default-tokens", response_model=CachedResponse[List[FullCMCToken]])
+@cached_endpoint("get-default-tokens", expiry_minutes=5)
 async def get_default_tokens():
     try:
         default_tokens = await tokens_collection.find().limit(50).to_list()

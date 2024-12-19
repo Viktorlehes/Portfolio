@@ -25,6 +25,8 @@
 
 .categories-table {
   font-size: 14px;
+  background-color: white;
+  border-spacing: 0px 0.5px;
 }
 
 .categories-table th {
@@ -53,6 +55,7 @@
   cursor: pointer;
   border-bottom: 1px solid #eee;
   height: 48px;
+  background-color: white;
 }
 
 .category-row:last-child {
@@ -62,7 +65,7 @@
 .category-row td {
   padding: 8px 12px;
   text-align: right;
-  
+  border-bottom: 1px solid #eee;
 }
 
 .category-row td:first-child {

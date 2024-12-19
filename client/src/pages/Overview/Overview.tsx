@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React from "react";
 import { LoaderFunction, useLoaderData } from "react-router-dom";
 import "./Overview.css";
 import CustomNavbar from "../../components/Default/CustomNavBar";
@@ -7,193 +7,58 @@ import CryptoStatsBar from '../../components/overview/CryptoStatsBar';
 import { components } from "../../types/api-types";
 import CoinglassMetricsBar from "../../components/overview/CoinglassMetricBar";
 import TotalWorth from "../../components/overview/TotalWorth";
-import { getCachedData, isDataExpired } from "../../utils/api";
 import { OverviewTokensTable } from "../../components/overview/OverviewTokensTable";
-import { api } from "../../utils/api";
-import { useActiveFetches, isEndpointFetching } from "../../context/ActiveFetchesContext";
+import { useDataFetching, FetchState, ENDPOINTS } from "../../utils/api";
 
 type MarketData = components["schemas"]["MarketDataResponse"];
 type FearGreedResponse = components["schemas"]["FearGreedResponse"];
 type Wallet = components["schemas"]["Wallet"];
-type CGLSApiResponse = components['schemas']['APIResponse'];
+type CoinglassMetrics = components['schemas']['CoinglassMetrics'];
 type TokenOverviewResponse = components['schemas']['TokenOverviewData'];
-type CategoryResponse = components['schemas']['CategoryData'];
+type CategoryData = components['schemas']['CategoryData'];
 type CustomCategory = components['schemas']['CustomCategory'];
 
-interface ComponentLoadingState {
-  market: boolean;
-  fearGreed: boolean;
-  wallets: boolean;
-  cglsScrapeData: boolean;
-  TokenOverviewData: boolean;
-  userCategories: boolean;
-  customCategories: boolean;
-}
-
-interface CachedData<T> {
-  data: T;
-  timestamp: number;
-}
+type TokenTableResponse = FetchState<TokenOverviewResponse[]>;
+type CoinglassMetricsResponse = FetchState<CoinglassMetrics>;
+type CategoryResponse = FetchState<CategoryData[]>;
+type CustomCategoryResponse = FetchState<CustomCategory[]>;
 
 interface LoaderData {
-  marketData: CachedData<MarketData>;
-  fearGreedData: CachedData<FearGreedResponse>;
-  wallets: CachedData<Wallet[]>;
-  cglsScrapeData: CachedData<CGLSApiResponse>;
-  TokenOverviewData: CachedData<TokenOverviewResponse[]>;
-  userCategories: CachedData<CategoryResponse[]>;
-  customCategories: CachedData<CustomCategory[]>;
+  wallets: {
+    data: Wallet[] | null;
+    timestamp: number;
+  }
 }
-
-const CACHE_KEYS = {
-  MARKET: 'marketData',
-  FEAR_GREED: 'fearGreedData',
-  WALLETS: 'wallets',
-  CGLS: 'cglsScrapeData',
-  TOKENS: 'TokenOverviewData',
-  CMC_CATAGORIES: 'userCategories',
-  CUSTOM_CATAGORIES: 'customCategories'
-} as const;
-
-interface EndpointConfig {
-  key: keyof typeof CACHE_KEYS;
-  endpoint: string;
-  expiration: number; // milliseconds
-}
-
-const ENDPOINT_CONFIGS: EndpointConfig[] = [
-  { key: 'MARKET', endpoint: '/overview/cryptostats', expiration: 5 },
-  { key: 'FEAR_GREED', endpoint: '/overview/feargreedindex', expiration: 5 }, 
-  { key: 'WALLETS', endpoint: '/wallets/get_wallets', expiration: 5 },
-  { key: 'CGLS', endpoint: '/overview/get-scraped-CGLS-data', expiration: 5 },
-  { key: 'TOKENS', endpoint: '/overview/overview-tokens-table-data', expiration: 5 },
-  { key: 'CMC_CATAGORIES', endpoint: '/overview/get-user-catagories', expiration: 5 },
-  { key: 'CUSTOM_CATAGORIES', endpoint: '/overview/get-custom-categories', expiration: 5 }
-];
-
-const BATCH_SIZE = 3; // Number of concurrent requests
-const RETRY_DELAY = 5000; // 5 seconds
-const MAX_RETRIES = 3;
-
 
 export const overviewLoader: LoaderFunction = () => {
-  const initialData: Partial<LoaderData> = {};
+  const cachedWallets = localStorage.getItem('/wallets/get_wallets');
+  
+  const initialData: LoaderData = {
+    wallets: {
+      data: cachedWallets ? JSON.parse(cachedWallets).data : null,
+      timestamp: cachedWallets ? JSON.parse(cachedWallets).timestamp : 0
+    }
+  };
 
-  ENDPOINT_CONFIGS.forEach(config => {
-    const cachedData = getCachedData(CACHE_KEYS[config.key]);
-    initialData[CACHE_KEYS[config.key] as keyof LoaderData] = {
-      data: cachedData?.data || null,
-      timestamp: cachedData?.timestamp || 0
-    };
-  });
-
-  return initialData as LoaderData;
+  return initialData;
 };
 
 const Overview: React.FC = () => {
-  const cachedData = useLoaderData() as LoaderData;
-  const [overviewData, setOverviewData] = useState<LoaderData>(cachedData);  
-  const [nullStates, setNullStates] = useState<ComponentLoadingState>(
-    Object.values(CACHE_KEYS).reduce((acc, key) => ({
-      ...acc,
-      [key]: !cachedData[key as keyof LoaderData]?.data
-    }), {} as ComponentLoadingState)
-  );  
+  const { wallets: cachedWallets } = useLoaderData() as LoaderData;
+  const tokenState = useDataFetching<TokenTableResponse>(ENDPOINTS.TOKENS);
+  const walletState = useDataFetching<Wallet[]>({
+    ...ENDPOINTS.WALLETS,
+    initialData: cachedWallets
+  });
+  const marketState = useDataFetching<MarketData>(ENDPOINTS.MARKET);
+  const fearGreedState = useDataFetching<FearGreedResponse>(ENDPOINTS.FEAR_GREED);
+  const categoriesState = useDataFetching<CategoryResponse>(ENDPOINTS.CATEGORIES);
+  const customCategoriesState = useDataFetching<CustomCategoryResponse>(ENDPOINTS.CUSTOM_CATEGORIES);  
+  const cglsScrapeDataState = useDataFetching<CoinglassMetricsResponse>(ENDPOINTS.CGLS_SCRAPE);
 
-  const activeFetches = useActiveFetches();
-
-  const fetchDataWithRetry = useCallback(async (
-    config: EndpointConfig,
-    retryCount = 0
-  ): Promise<any> => {
-    try {
-      if (isEndpointFetching(activeFetches.current, config.endpoint)) {
-        return null;
-      }
-
-      activeFetches.current.add(config.endpoint);
-      const response = await api.get(config.endpoint);
-
-      const timestamp = Date.now();
-      const cacheKey = CACHE_KEYS[config.key];
-
-
-      console.log('Updated data:', config.key);
-      
-      localStorage.setItem(cacheKey, JSON.stringify({
-        data: response,
-        timestamp
-      }));
-
-      return {
-        key: config.key,
-        data: response,
-        timestamp: timestamp
-      };
-    } catch (error) {
-      console.error(`Error fetching ${config.key}:`, error);
-
-      if (retryCount < MAX_RETRIES) {
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-        return fetchDataWithRetry(config, retryCount + 1);
-      }
-
-      return null;
-    } finally {
-      activeFetches.current.delete(config.endpoint);
-    }
-  }, [activeFetches]);
-
-  const updateExpiredData = useCallback(async () => {
-    const expiredConfigs = ENDPOINT_CONFIGS.filter(config => {
-      const currentData = overviewData[CACHE_KEYS[config.key] as keyof LoaderData];
-      return nullStates[CACHE_KEYS[config.key] as keyof ComponentLoadingState] ||
-        isDataExpired(currentData?.timestamp || 0, config.expiration);
-    });
-
-    console.log('Expired data:', expiredConfigs);
-    
-
-    if (expiredConfigs.length === 0) return;
-
-    // Process in batches
-    for (let i = 0; i < expiredConfigs.length; i += BATCH_SIZE) {
-      const batch = expiredConfigs.slice(i, i + BATCH_SIZE);
-      const results = await Promise.all(batch.map(config => fetchDataWithRetry(config)));
-
-      console.log('Updated data:', batch.map(config => config.key));
-
-      const validResults = results.filter((result): result is { key: keyof typeof CACHE_KEYS, data: any, timestamp: number } => Boolean(result));
-      
-      if (validResults.length > 0) {
-        setOverviewData(prev => {
-          const newData = { ...prev };
-          validResults.forEach(result => {
-            const key = CACHE_KEYS[result.key];
-            newData[key] = {
-              data: result.data,
-              timestamp: result.timestamp
-            };
-          });
-          return newData;
-        });
-      
-        setNullStates(prev => {
-          const newStates = { ...prev };
-          validResults.forEach(result => {
-            newStates[CACHE_KEYS[result.key] as keyof ComponentLoadingState] = false;
-          });
-          return newStates;
-        });
-      }
-    }
-  }, [overviewData, nullStates, fetchDataWithRetry]);
-
-  useEffect(() => {
-    updateExpiredData();
-    const intervalId = setInterval(updateExpiredData, 60000);
-    return () => clearInterval(intervalId);
-  }, [updateExpiredData]);
+  const handleTokenTableRefetch = async () => {
+    await tokenState.refetch();
+  }
 
   return (
     <div className="default-page">
@@ -204,11 +69,11 @@ const Overview: React.FC = () => {
         </div>
         <div>
           <CryptoStatsBar
-            cryptoStats={overviewData.marketData.data}
-            feargreeddata={overviewData.fearGreedData.data}
+            cryptoStats={marketState.data}
+            feargreeddata={fearGreedState.data}
             isNull={{
-              market: nullStates.market,
-              fearGreed: nullStates.fearGreed
+              market: marketState.isLoading,
+              fearGreed: fearGreedState.isLoading
             }}
           />
         </div>
@@ -218,23 +83,24 @@ const Overview: React.FC = () => {
           <div className="main-content">
             <section className="coinglass-data-bar">
               <CoinglassMetricsBar
-                data={overviewData.cglsScrapeData.data?.data}
-                isNull={nullStates.cglsScrapeData}
+                data={cglsScrapeDataState.data && cglsScrapeDataState.data.data || null}
+                isNull={cglsScrapeDataState.isLoading}
               />
               <TotalWorth
-                wallets={overviewData.wallets.data}
-                isNull={nullStates.wallets}
+                wallets={walletState.data}
+                isNull={walletState.isLoading}
               />
             </section>
             <section className="overview-token-table">
               <OverviewTokensTable
-                tokens={overviewData.TokenOverviewData.data}
-                isNull={nullStates.TokenOverviewData}
+                tokens={tokenState.data && tokenState.data?.data || []}
+                isNull={tokenState.isLoading}
+                reFetch={handleTokenTableRefetch}
               />
               <CryptoCategoriesSidebar
-                categories={overviewData.userCategories.data}
-                customCategories={overviewData.customCategories.data}
-                isNull={nullStates.userCategories}
+                categories={categoriesState.data && categoriesState.data.data || []}
+                customCategories={customCategoriesState.data && customCategoriesState.data.data || []}
+                isNull={customCategoriesState.isLoading}
               />
             </section>
           </div>

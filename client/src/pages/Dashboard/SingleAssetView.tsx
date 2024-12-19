@@ -1,47 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLoaderData, useNavigate, LoaderFunction, LoaderFunctionArgs } from 'react-router-dom';
-import { getCachedData } from "../../utils/api";
 import { components } from "../../types/api-types";
 import { ArrowLeft, Flag } from 'lucide-react';
 import ValueCard from '../../components/Dashboard/WalletsView/ValueCard';
 import TokenPriceChart, { ChartData } from '../..//components/Dashboard/AssetsView/TokenPriceChart';
 import './SingleAssetView.css';
 import { formatCurrency, formatNumber, formatPercent } from '../../utils/calc';
-import { isDataExpired } from '../../utils/api';
 import { RefreshCcw } from 'lucide-react';
 import { formatCurrencySuffix } from '../../utils/calc';
-import { api } from '../../utils/api';
-import { useActiveFetches, isEndpointFetching } from '../../context/ActiveFetchesContext';
+import { api, ENDPOINTS, useDataFetching } from '../../utils/api';
 
 type Wallet = components["schemas"]["Wallet"];
 type FullToken = components["schemas"]["FullToken"];
 type ZerionToken = components["schemas"]["ZerionToken"];
 
-interface CachedData<T> {
-    data: T;
-    timestamp: number;
-}
-
-const API_ENDPOINTS = {
-    WALLETS: '/wallets/get_wallets',
-} as const;
-
-const CACHE_KEYS = {
-    WALLETS: 'wallets',
-    CHARTS: 'charts',
-} as const;
-
 interface allChartsData {
     day: ChartData;
     week: ChartData;
     month: ChartData;
-}
-
-interface AssetLoaderData {
-    assetId: string;
-    assetName: string;
-    isFungible: boolean;
-    wallets: CachedData<Wallet[] | null>;
 }
 
 interface Position {
@@ -65,22 +41,14 @@ interface AssetStats {
     positions: Position[];
 }
 
-interface LoadingStates {
-    wallets: boolean;
-    zerionToken: boolean;
-    chartData: boolean;
-}
-
-interface CachedData<T> {
-    data: T;
-    timestamp: number;
-}
-
 interface AssetLoaderData {
     assetId: string;
     assetName: string;
     isFungible: boolean;
-    wallets: CachedData<Wallet[] | null>;
+    wallets: {
+        data: Wallet[] | null;
+        timestamp: number;
+      }
 }
 
 export const assetLoader: LoaderFunction = async ({
@@ -95,15 +63,15 @@ export const assetLoader: LoaderFunction = async ({
         throw new Error('Asset ID is required');
     }
 
-    const cachedWallets = getCachedData(CACHE_KEYS.WALLETS);
+    const cachedWallets = localStorage.getItem(ENDPOINTS.WALLETS.endpoint);
 
     return {
         assetId: params.assetId,
         assetName,
         isFungible,
-        wallets: {
-            data: cachedWallets ? cachedWallets.data : null,
-            timestamp: cachedWallets ? cachedWallets.timestamp : 0
+        wallets: cachedWallets ? JSON.parse(cachedWallets) : {
+            data: null,
+            timestamp: 0
         }
     };
 };
@@ -114,40 +82,6 @@ async function fetchZerionToken(fungible_id: string): Promise<ZerionToken> {
 
 async function fetchChartData(fungible_id: string): Promise<allChartsData> {
     return api.post('/dashboard/allCharts', { fungible_id });
-}
-
-function getCachedChartData(fungible_id: string): allChartsData | null {
-    try {
-        const charts = localStorage.getItem(CACHE_KEYS.CHARTS);
-        if (!charts) return null;
-
-        const parsedCharts = JSON.parse(charts);
-
-        if (!parsedCharts.last_updated || Date.now() - parsedCharts.last_updated > 1000 * 60 * 60) {
-            localStorage.removeItem('charts');
-            return null;
-        }
-
-        return fungible_id in parsedCharts ? parsedCharts[fungible_id] : null;
-    } catch (error) {
-        console.error('Error reading cached chart data:', error);
-        localStorage.removeItem('charts');
-        return null;
-    }
-}
-
-function updateChartCache(fungible_id: string, data: allChartsData): void {
-    try {
-        const charts = localStorage.getItem('charts');
-        const updatedCache = charts
-            ? { ...JSON.parse(charts), [fungible_id]: data }
-            : { [fungible_id]: data };
-
-        updatedCache.last_updated = Date.now();
-        localStorage.setItem('charts', JSON.stringify(updatedCache));
-    } catch (error) {
-        console.error('Error updating chart cache:', error);
-    }
 }
 
 function getFungibleId(wallets: Wallet[], assetId: string, assetName: string, isFungible: boolean): string {
@@ -177,81 +111,52 @@ function getFungibleId(wallets: Wallet[], assetId: string, assetName: string, is
 
 const SingleAssetView: React.FC = () => {
     const { assetId, assetName, isFungible, wallets } = useLoaderData() as AssetLoaderData;
-    const [currentWallets, setCurrentWallets] = useState(wallets.data ? wallets.data : []);
+    const walletState = useDataFetching<Wallet[]>({
+        ...ENDPOINTS.WALLETS,
+        initialData: wallets
+      });
     const navigate = useNavigate();
     const [showSmallValues, setShowSmallValues] = useState<boolean>(true);
+    const [assetStats, setAssetStats] = useState<AssetStats | null>(null);
     const [chartData, setChartData] = useState<allChartsData | null>(null);
     const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>('day');
     const [zerionTokenData, setZerionTokenData] = useState<ZerionToken | null>(null);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-    const [loadingStates, setLoadingStates] = useState<LoadingStates>({
-        wallets: !currentWallets,
-        zerionToken: true,
-        chartData: true
+    const [loadingStates, setLoadingStates] = useState({
+        zerionToken: false,
+        chartData: false
     });
-    const activeFetches = useActiveFetches();
-
-
-    useEffect(() => {
-        const updateWalletData = async () => {
-            if (isDataExpired(wallets.timestamp || 0)) {
-                if (!isEndpointFetching(activeFetches.current, API_ENDPOINTS.WALLETS)) {
-                    activeFetches.current.add(API_ENDPOINTS.WALLETS);
-                    setLoadingStates(prev => ({ ...prev, wallets: true }));
-
-                    try {
-                        const newWallets = await api.get(API_ENDPOINTS.WALLETS);
-
-                        localStorage.setItem(CACHE_KEYS.WALLETS, JSON.stringify({
-                            data: newWallets,
-                            timestamp: Date.now()
-                        }));
-
-                        setCurrentWallets(newWallets);
-                    } catch (error) {
-                        console.error('Error updating wallets:', error);
-                        activeFetches.current.delete(API_ENDPOINTS.WALLETS);
-                    } finally {
-                        setLoadingStates(prev => ({ ...prev, wallets: false }));
-                        activeFetches.current.delete(API_ENDPOINTS.WALLETS);
-                    }
-                }
-            }
-        };
-        updateWalletData();
-        const intervalId = setInterval(updateWalletData, 60000);
-        return () => clearInterval(intervalId);
-    }, [wallets.timestamp]);
 
     useEffect(() => {
         const fetchData = async () => {
-            const fungible_id = getFungibleId(currentWallets, assetId, assetName, isFungible);
+            if (!walletState.data) {
+                setLoadingStates(prev => ({ ...prev, zerionToken: true, chartData: true }));
+                return;
+            };
+            const fungible_id = walletState.data && getFungibleId(walletState.data, assetId, assetName, isFungible) || '';
 
             try {
                 // Fetch Zerion token data
                 setLoadingStates(prev => ({ ...prev, zerionToken: true }));
                 const tokenData = await fetchZerionToken(fungible_id);
                 setZerionTokenData(tokenData);
+
                 setLoadingStates(prev => ({ ...prev, zerionToken: false }));
 
                 // Check cache for chart data
                 setLoadingStates(prev => ({ ...prev, chartData: true }));
-                const cachedCharts = getCachedChartData(fungible_id);
-                if (cachedCharts) {
-                    setChartData(cachedCharts);
-                } else {
-                    const newChartData = await fetchChartData(fungible_id);
-                    setChartData(newChartData);
-                    updateChartCache(fungible_id, newChartData);
-                }
+                const newChartData = await fetchChartData(fungible_id);
+                setChartData(newChartData);
+
                 setLoadingStates(prev => ({ ...prev, chartData: false }));
             } catch (error) {
                 console.error('Error fetching data:', error);
+                setLoadingStates(prev => ({ ...prev, zerionToken: true, chartData: true }));
             }
         };
 
         fetchData();
-    }, [currentWallets, assetId, assetName, isFungible]);
+    }, [walletState.data]);
 
     const shortenAddress = (address: string, startLength: number = 8, endLength: number = 8): string => {
         return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
@@ -276,10 +181,20 @@ const SingleAssetView: React.FC = () => {
         let positions: Position[] = [];
         let processedTokenIds = new Set<string>();
 
+        if (!walletState.data) {
+            return {
+                totalValue,
+                totalAmount,
+                totalChange: 0,
+                totalAbsoluteChange: 0,
+                positions: []
+            };
+        }
+
         const zerion24hChange = zerionTokenData?.data.attributes.market_data.changes.percent_1d || 0;
 
         // Process all wallets
-        currentWallets.forEach(wallet => {
+        walletState.data?.forEach(wallet => {
             if (!wallet.tokens) return;
 
             // For fungible tokens
@@ -362,7 +277,12 @@ const SingleAssetView: React.FC = () => {
         };
     };
 
-    const stats = calculateAssetStats();
+    useEffect(useMemo(() => () => {
+        if (walletState.data) {
+            setAssetStats(calculateAssetStats());
+        }
+    }
+    , [walletState.data, showSmallValues]), [walletState.data, showSmallValues]);
 
     return (
         <div className="single-wallet-container">
@@ -388,12 +308,12 @@ const SingleAssetView: React.FC = () => {
                     />
                     <ValueCard
                         label="Total Value"
-                        value={currentWallets ? stats.totalValue : 0}
+                        value={assetStats?.totalValue || 0}
                         color={'#666'}
                     />
                     <ValueCard
                         label="Total Amount"
-                        value={currentWallets ? Number(stats.totalAmount.toFixed(2)) : 0}
+                        value={Number(assetStats?.totalAmount.toFixed(2)) || 0}
                         color={'#666'}
                         isText={true}
                     />
@@ -490,7 +410,7 @@ const SingleAssetView: React.FC = () => {
                     <div className="section-header">
                         <div className="section-title">
                             <h2>Assets</h2>
-                            <div className="section-total">{formatCurrency(stats.totalValue, 2, 2)}</div>
+                            <div className="section-total">{formatCurrency(assetStats?.totalValue || 0, 2, 2)}</div>
                         </div>
                         <div className="toggle-container">
                             <span className="toggle-label">Show &lt;$1</span>
@@ -513,7 +433,7 @@ const SingleAssetView: React.FC = () => {
                             <div className="col-value">VALUE</div>
                             <div className="col-percent">%</div>
                         </div>
-                        {stats.positions.map((position, index) => (
+                        {assetStats ? assetStats.positions.map((position, index) => (
                             <div
                                 key={index}
                                 className="table-row clickable"
@@ -555,7 +475,11 @@ const SingleAssetView: React.FC = () => {
                                     {position.percentage.toFixed(1)}%
                                 </div>
                             </div>
-                        ))}
+                        )) :
+                            <div className="table-row">
+                                <div className="no-data">No data available</div>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>

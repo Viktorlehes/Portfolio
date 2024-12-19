@@ -9,8 +9,8 @@ type CategoryData = components['schemas']['CategoryData'];
 type CustomCategory = components['schemas']['CustomCategory'];
 
 interface CryptoCategoriesListProps {
-  categories: CategoryData[];
-  customCategories: CustomCategory[] ;
+  categories: CategoryData[] | null;
+  customCategories: CustomCategory[] | null;
   isNull: boolean;
 }
 
@@ -57,7 +57,7 @@ export const CryptoCategoriesList: React.FC<CryptoCategoriesListProps> = ({
   const navigate = useNavigate();
 
   const latestUpdate = () => {
-    if (!isNull && categories.length > 0 && categories[0].last_updated) {
+    if (!isNull && categories && categories.length > 0 && categories[0].last_updated) {
       const date = new Date(categories[0].last_updated); // Parse the UTC date
       const utcDate = new Date(date.toISOString()); // Ensure it's in UTC
   
@@ -69,9 +69,6 @@ export const CryptoCategoriesList: React.FC<CryptoCategoriesListProps> = ({
       };
   
       const swedishLocalTime = new Intl.DateTimeFormat("sv-SE", options).format(utcDate);
-  
-      console.log(swedishLocalTime); // Should now show CET time accurately
-      console.log(utcDate);
       return swedishLocalTime;
     }
   };

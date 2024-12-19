@@ -2,12 +2,24 @@
 # Third-party imports
 from fastapi import APIRouter, HTTPException
 import httpx
+from typing import Generic, TypeVar, List
+from pydantic import BaseModel
+
+#Local imports
+from app.utils.cache_manager import cached_endpoint
 
 # Environment variables
 from app.core.config import ZERION_API_KEY
 
 # Router setup
 router = APIRouter()
+
+T = TypeVar('T')
+
+class CachedResponse(BaseModel, Generic[T]):
+    data: T
+    is_updating: bool
+    last_updated: str
 
 @router.post("/charts")
 async def get_charts(fungible_id: dict):  # Change this to accept a JSON body

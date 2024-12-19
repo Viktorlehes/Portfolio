@@ -7,6 +7,24 @@
   width: 100%;
   position: relative;
   overflow: hidden;
+  min-height: 100%;
+}
+
+.categories-container-options {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.refresh-icon {
+  margin-left: auto;
+  cursor: pointer;
+  width: 20px;
+  color: #666;
+}
+
+.refresh-icon .refreshing {
+  animation: spin 1s linear infinite;
 }
 
 .table-scroll {

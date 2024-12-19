@@ -9,8 +9,8 @@ import Overview, {overviewLoader} from "./pages/Overview/Overview";
 import Dashboard, {dashboardLoader} from "./pages/Dashboard/Dashboard";
 import SingleWalletView, {walletLoader} from "./pages/Dashboard/SingleWalletView";
 import SingleAssetView, {assetLoader} from "./pages/Dashboard/SingleAssetView";
-import Managecategories, { manageLoader} from "./pages/Overview/ManageCategories";
-import Defi, { defiLoader } from "./pages/Defi/Defi";
+import Managecategories from "./pages/Overview/ManageCategories";
+import Defi from "./pages/Defi/Defi";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const router = createBrowserRouter([
@@ -38,7 +38,6 @@ const router = createBrowserRouter([
             <Managecategories />
           </ProtectedRoute>
         ),
-        loader: manageLoader,
       },
       {
         path: "Dashboard",
@@ -72,7 +71,6 @@ const router = createBrowserRouter([
             <Defi />
           </ProtectedRoute>
         ),
-        loader: defiLoader,
       },
     ],
   },
