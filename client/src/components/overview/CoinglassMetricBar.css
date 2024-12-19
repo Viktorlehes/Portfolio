@@ -8,10 +8,10 @@
 }
 
 .cgm-content {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  width: 100%;
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
 }
 
 .cgm-metric-item {
@@ -20,9 +20,14 @@
   align-items: center;
   padding: 0 12px;
   position: relative;
+  /* Set a minimum width but allow growth */
+  min-width: 150px;
+  flex: 1;
+  /* Add max-width to prevent items from getting too wide */
+  max-width: 200px;
 }
 
-/* Add separator line using pseudo-element */
+/* Update separator line to work with flex layout */
 .cgm-metric-item:not(:last-child)::after {
   content: '';
   position: absolute;
@@ -31,9 +36,53 @@
   height: 80%;
   width: 1px;
   background-color: #eee;
+  /* Hide separator for last item in each row */
+  display: none;
 }
 
-/* Rest of the styles remain the same */
+/* Add media queries for responsive behavior */
+@media screen and (min-width: 768px) {
+  .cgm-metric-item:not(:last-child)::after {
+    display: block;
+  }
+  
+  /* Hide separator for every 5th item (end of row) */
+  .cgm-metric-item:nth-child(5n)::after {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .cgm-metric-item {
+    min-width: 120px;
+    /* Allow 2-3 items per row on mobile */
+    flex: 1 1 calc(33.333% - 16px);
+  }
+  
+  /* Show separators between items except at row ends */
+  .cgm-metric-item:not(:last-child)::after {
+    display: block;
+  }
+  
+  /* Hide separator for every 3rd item on mobile */
+  .cgm-metric-item:nth-child(3n)::after {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .cgm-metric-item {
+    /* Allow 2 items per row on smaller screens */
+    flex: 1 1 calc(50% - 16px);
+  }
+  
+  /* Hide separator for every 2nd item on small screens */
+  .cgm-metric-item:nth-child(2n)::after {
+    display: none;
+  }
+}
+
+/* Keep existing styles */
 .cgm-title {
   display: flex;
   flex-direction: column;
@@ -48,12 +97,6 @@
   font-weight: 400;
   letter-spacing: 0.5px;
   text-align: center;
-}
-
-.cgm-subtitle {
-  color: #666;
-  font-size: 10px;
-  margin-top: 2px;
 }
 
 .cgm-value {
@@ -85,12 +128,9 @@
 }
 
 @keyframes pulse {
-
-  0%,
-  100% {
+  0%, 100% {
     opacity: 1;
   }
-
   50% {
     opacity: 0.5;
   }

@@ -14,7 +14,6 @@
 
 .overview-values {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-evenly;
   gap: 24px;
   width: 60%;
@@ -92,41 +91,71 @@
   margin-bottom: 10px;
 }
 
-@media (max-width: 1200px) {
-  .dashboard-sub-cat > * {
-    flex-basis: calc((100% - 20px) / 3);
-  }
-}
+/* Only add mobile-specific changes */
+/* Keep all desktop styles exactly the same, only update mobile media queries */
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .dashboard-head {
     flex-direction: column;
-    gap: 24px;
-  }
-
-  .overview-edit {
-    margin-left: 0;
-    width: 100%;
-    justify-content: center;
+    padding: 16px;
+    gap: 16px;
+    padding-bottom: 5px;
   }
 
   .overview-values {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
     gap: 16px;
+    justify-content: center;
+  }
+
+  /* Remove last overview value */
+
+  .overview-values .value-card:last-child {
+    display: none;
   }
 
   .value-card {
-    padding: 16px 0;
-    min-width: 150px;
+    flex: 1 1 auto;
+    min-width: 120px; /* Allow cards to fit side by side if space permits */
+    max-width: calc(50% - 16px); /* Maximum two cards per row */
+    padding: 12px;
     border-right: none;
-    border-bottom: 1px solid #eee;
   }
 
   .value-card:last-child {
     border-bottom: none;
   }
 
-  .dashboard-sub-cat > * {
-    flex-basis: 100%;
+  .overview-edit {
+    margin-left: 0;
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-evenly;
+    border-top: 1px solid #eee;
+    padding-top: 3px;
+  }
+  
+  .dashboard-sub-cat {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .overview-values {
+    gap: 8px;
+  }
+
+  .value-card {
+    padding: 8px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .value-card {
+    padding: 8px;
   }
 }
 

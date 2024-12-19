@@ -1,34 +1,68 @@
 .crypto-stats {
-    height: 40px;
-    display: flex;
-    align-items: center;
-    background-color: #f0f0f0;
-    padding: 10px;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    justify-content: space-evenly;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  background-color: #f0f0f0;
+  padding: 10px;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  justify-content: space-evenly;
+  /* Add these properties for horizontal scrolling */
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  /* Remove scrollbar margin space on Windows */
+  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.crypto-stats::-webkit-scrollbar {
+  display: none;
+}
+
+/* Modify the stat items to maintain spacing */
+.crypto-stat {
+  margin-right: 15px;
+  white-space: nowrap;
+  /* Add minimum width to prevent squishing */
+  min-width: max-content;
+  padding: 0 10px;
+}
+
+/* Last stat item doesn't need right margin */
+.crypto-stat:last-child {
+  margin-right: 0;
+}
+
+/* Keep your existing styles */
+.crypto-value {
+  font-weight: 500;
+  color: #333;
+}
+
+.change {
+  font-size: 12px;
+  margin-left: 5px;
+  font-weight: 400 !important;
+}
+
+.change.positive {
+  color: #22c55e;
+}
+
+.change.negative {
+  color: #ef4444;
+}
+
+/* Add media query for mobile adjustments */
+@media screen and (max-width: 768px) {
+  .crypto-stats {
+    justify-content: flex-start; /* Left align items on mobile */
+    padding: 10px 15px; /* Add more horizontal padding for edge items */
   }
-  
+
   .crypto-stat {
-    margin-right: 15px;
-    white-space: nowrap;
+    padding: 0 5px; /* Reduce padding on mobile */
   }
-  
-  .crypto-value {
-    font-weight: 500;
-    color: #333;
-  }
-  
-  .change {
-    font-size: 12px;
-    margin-left: 5px;
-    font-weight: 400 !important; 
-  }
-  
-  .change.positive {
-    color: #22c55e;
-  }
-  
-  .change.negative {
-    color: #ef4444;
-  }
+}

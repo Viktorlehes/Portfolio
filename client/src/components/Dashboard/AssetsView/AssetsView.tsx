@@ -4,7 +4,6 @@ import MetricCard from "../../overview/MetricCard";
 import AssetList from "./AssetList";
 import { components } from "../../../types/api-types";
 import AssetOverviewSidebar from "./AssetOverviewSidebar";
-import { Settings2, CirclePlus } from "lucide-react";
 import TokenPriceChart from "./TokenPriceChart";
 import { ChartData } from "./TokenPriceChart";
 import { formatCurrency, formatPercent } from "../../../utils/calc";
@@ -47,7 +46,8 @@ export interface Asset {
 }
 
 const AssetsView: React.FC<AssetViewProps> = ({ wallets, isNull }) => {
-  const [showZeroValues, setShowZeroValues] = useState(false);
+  //temporarily set to true, implement logic to show/hide zero values
+  const showZeroValues = true
   const fetchingRef = useRef<Set<string>>(new Set());
   const navigate = useNavigate();
 
@@ -212,24 +212,6 @@ const AssetsView: React.FC<AssetViewProps> = ({ wallets, isNull }) => {
   return (
     <div className="asset-overview-wrapper">
       <div>
-        <div className="asset-nav">
-          <h2>Liquid Assets</h2>
-          <div className="asset-nav-controls">
-            <div className="toggle-container">
-              <span className="toggle-label">Show 0</span>
-              <label className="toggle">
-                <input
-                  type="checkbox"
-                  checked={showZeroValues}
-                  onChange={() => setShowZeroValues(!showZeroValues)}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-            <CirclePlus className="nav-icon" />
-            <Settings2 className="nav-icon" />
-          </div>
-        </div>
         <div className="main-assets-dashboard-grid">
           {largest4Assets.map((asset) => (
             <MetricCard

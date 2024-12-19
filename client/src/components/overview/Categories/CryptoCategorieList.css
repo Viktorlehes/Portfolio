@@ -3,7 +3,7 @@
   min-width: 290px;
 }
 
-.catagories-container-edit {
+.categories-container .catagories-container-edit {
   display: flex;
   justify-content: space-between;
   padding: 4px 12px;
@@ -11,13 +11,13 @@
   margin-bottom: 4px;
 }
 
-.catagories-container-title {
+.categories-container .catagories-container-title {
   font-size: 16px;
   font-weight: 500;
   color: #333;
 }
 
-.catagories-container-edit-button {
+.categories-container .catagories-container-edit-button {
   background-color: white;
   border: none;
   cursor: pointer;
@@ -27,6 +27,7 @@
   font-size: 14px;
   background-color: white;
   border-spacing: 0px 0.5px;
+  width: 100%;
 }
 
 .categories-table th {
@@ -51,37 +52,85 @@
   text-align: left;
 }
 
-.category-row {
+.categories-table .category-row {
   cursor: pointer;
   border-bottom: 1px solid #eee;
   height: 48px;
   background-color: white;
 }
 
-.category-row:last-child {
+.categories-table .category-row:last-child {
   border-bottom: none;
 }
 
-.category-row td {
+.categories-table .category-row td {
   padding: 8px 12px;
   text-align: right;
   border-bottom: 1px solid #eee;
 }
 
-.category-row td:first-child {
+.categories-table .category-row td:first-child {
   text-align: left;
   font-weight: 500;
   color: #333;
 }
 
-.market-cap-cell,
-.volume-cell {
+.categories-table .market-cap-cell {
   font-weight: 500;
   color: #333;
 }
 
+/* Add change cell styles matching token table */
+.categories-table .change-cell {
+  font-weight: 400;
+  padding: 4px 8px;
+  color: #323232;
+}
+
+/* Positive changes */
+.categories-table .change-cell-positive.intensity-1 {
+  background-color: rgba(34, 197, 94, 0.1);
+}
+
+.categories-table .change-cell-positive.intensity-2 {
+  background-color: rgba(34, 197, 94, 0.2);
+}
+
+.categories-table .change-cell-positive.intensity-3 {
+  background-color: rgba(34, 197, 94, 0.3);
+}
+
+.categories-table .change-cell-positive.intensity-4 {
+  background-color: rgba(34, 197, 94, 0.4);
+}
+
+.categories-table .change-cell-positive.intensity-5 {
+  background-color: rgba(34, 197, 94, 0.5);
+}
+
+/* Negative changes */
+.categories-table .change-cell-negative.intensity-1 {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.categories-table .change-cell-negative.intensity-2 {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.categories-table .change-cell-negative.intensity-3 {
+  background-color: rgba(239, 68, 68, 0.3);
+}
+
+.categories-table .change-cell-negative.intensity-4 {
+  background-color: rgba(239, 68, 68, 0.4);
+}
+
+.categories-table .change-cell-negative.intensity-5 {
+  background-color: rgba(239, 68, 68, 0.5);
+}
+
 @media (hover: hover) {
-  .category-row:hover {
+  .categories-table .category-row:hover {
     background-color: rgba(0, 0, 0, 0.02);
   }
 }

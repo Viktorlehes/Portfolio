@@ -10,6 +10,13 @@
   min-height: 100%;
 }
 
+.catagories-container-edit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
 .categories-container-options {
   display: flex;
   align-items: center;
@@ -19,12 +26,13 @@
 .refresh-icon {
   margin-left: auto;
   cursor: pointer;
-  width: 20px;
-  color: #666;
+  width: 18px;
+  color: #000000;
 }
 
 .refresh-icon .refreshing {
   animation: spin 1s linear infinite;
+  color: #666;
 }
 
 .table-scroll {
@@ -179,4 +187,69 @@
 
 .change-cell-negative.intensity-5 {
   background-color: rgba(239, 68, 68, 0.5);
+}
+
+@media screen and (max-width: 768px) {
+  .table-scroll {
+    position: relative;
+    overflow-x: auto;
+  }
+
+  .tokens-table {
+    position: relative;
+  }
+
+  /* Fix the first two columns */
+  .tokens-table th:nth-child(-n+2),
+  .tokens-table td:nth-child(-n+2) {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-color: white;
+  }
+
+  /* Add shadow to indicate scrollable content */
+  .tokens-table td:nth-child(2)::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -5px;
+    height: 100%;
+    width: 5px;
+    background: linear-gradient(to right, rgba(0,0,0,0.05), rgba(0,0,0,0));
+  }
+
+  /* Adjust the second column's position */
+  .tokens-table th:nth-child(2),
+  .tokens-table td:nth-child(2) {
+    left: 50px; /* Adjust based on your first column width */
+  }
+
+  /* Ensure proper layering with sticky header */
+  .tokens-table thead th:nth-child(-n+2) {
+    z-index: 3;
+  }
+
+  /* Add proper spacing for scrollable columns */
+  .tokens-table th:nth-child(3),
+  .tokens-table td:nth-child(3) {
+    padding-left: 20px;
+  }
+
+  /* Maintain hover effect on mobile */
+  .token-row:hover td:nth-child(-n+2) {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
+  .catagories-container-edit {
+    flex-direction: column;
+  }
+}
+
+/* Additional styles for very small screens */
+@media screen and (max-width: 480px) {
+  .tokens-table th:nth-child(2),
+  .tokens-table td:nth-child(2) {
+    left: 40px; /* Slightly smaller offset for very small screens */
+  }
 }

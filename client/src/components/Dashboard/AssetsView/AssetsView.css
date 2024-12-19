@@ -36,7 +36,13 @@
     display: flex;
   flex-direction: column;
   position: relative;
-  min-width: 400px;
+}
+
+@media screen and (min-width: 1024px) {
+  .asset-overview-sidebar {
+    min-width: 370px;
+  }
+  
 }
 
 .asset-nav {
@@ -124,6 +130,8 @@ input:checked + .toggle-slider:before {
   cursor: pointer;
 }
 
+/* Make all children of redirectable change color on hover*/
+
 .redirectable-card:hover {
   background-color: rgba(59, 131, 246, 0.112);
 }
@@ -132,4 +140,41 @@ input:checked + .toggle-slider:before {
   outline: none;
   background-color: rgba(59, 131, 246, 0.264);
   box-shadow: 0 0 0 2px #3b82f6;
+}
+
+@media screen and (max-width: 768px) {
+  .asset-overview-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .main-assets-dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .assets-table {
+    padding: 8px;
+  }
+
+  .table-header-asset-list, 
+  .table-row-asset-list {
+    padding-right: 8px;
+  }
+
+  .asset-overview-container {
+    padding: 0;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .main-assets-dashboard-grid {
+    gap: 6px;
+  }
+
+  .asset-overview-container {
+    padding: 0;
+  }
 }

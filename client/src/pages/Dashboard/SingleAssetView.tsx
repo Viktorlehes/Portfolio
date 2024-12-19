@@ -406,7 +406,7 @@ const SingleAssetView: React.FC = () => {
             </div>
 
             <div>
-                <div className="assets-section">
+                <div className="sa-assets-section">
                     <div className="section-header">
                         <div className="section-title">
                             <h2>Assets</h2>
@@ -425,7 +425,7 @@ const SingleAssetView: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="assets-table">
+                    <div className="sa-assets-table">
                         <div className="table-header">
                             <div className="col-asset">WALLET</div>
                             <div className="col-chain">CHAIN</div>

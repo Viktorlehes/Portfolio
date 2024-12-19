@@ -463,3 +463,103 @@ button:disabled {
   flex-direction: column;
   
 }
+
+/* Keep all desktop styles the same, add mobile-specific styles */
+
+@media screen and (max-width: 768px) {
+  .single-wallet-container {
+    padding: 8px;
+  }
+
+  .wallet-dashboard-head {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .wallet-header {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .wallet-overview-values {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .assets-section {
+    padding: 0;
+  }
+
+  .section-header {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  /* Make table scrollable */
+  .assets-table {
+    overflow-x: auto;
+  }
+
+  .table-header,
+  .table-row {
+    min-width: 800px;
+  }
+
+  /* Fix first column */
+  .table-header .col-asset,
+  .table-row .col-asset {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 2;
+    box-shadow: 2px 0 4px -2px rgba(0, 0, 0, 0.1);
+    padding-left: 8px;
+  }
+
+  /* Ensure proper background on hover */
+  .table-row:hover .col-asset {
+    background-color: rgba(59, 131, 246, 0.293);
+  }
+
+  .token-details {
+    max-width: 120px;
+  }
+
+  .token-name {
+    word-break: break-all;
+  }
+
+  /* DeFi positions adjustments */
+  .defi-protocol-group {
+    overflow-x: auto;
+  }
+
+  .defi-protocol-group .table-header,
+  .defi-protocol-group .table-row {
+    min-width: 800px;
+  }
+
+  .defi-protocol-group .col-asset {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 2;
+    box-shadow: 2px 0 4px -2px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .wallet-overview-values {
+    gap: 8px;
+  }
+
+  .section-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}

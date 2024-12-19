@@ -1,17 +1,17 @@
-/* Sidebar */
+/* Base Sidebar */
 .sidebar {
   min-height: 100vh;
   height: 100%;
-  width: 64px; /* collapsed state */
+  width: 64px;
   background-color: white;
   display: flex;
   flex-direction: column;
   transition: width 0.3s ease;
-  overflow-x: hidden; /* prevents content overflow during transition */
+  overflow-x: hidden;
 }
 
 .sidebar:hover {
-  width: 200px; /* expanded state */
+  width: 200px;
 }
 
 /* Header */
@@ -24,7 +24,7 @@
 .sidebar-logo {
   width: 2rem;
   height: 2rem;
-  min-width: 2rem; /* prevents logo from shrinking */
+  min-width: 2rem;
   background-color: #8b5cf6;
   border-radius: 9999px;
   display: flex;
@@ -82,7 +82,7 @@
   width: 1.25rem;
   height: 1.25rem;
   color: #6b7280;
-  min-width: 1.25rem; /* prevents icon from shrinking */
+  min-width: 1.25rem;
 }
 
 .sidebar-icon.active {
@@ -103,4 +103,89 @@
 .sidebar-text.active {
   color: #8b5cf6;
   font-weight: 600;
+}
+
+/* Mobile Styles */
+@media screen and (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    min-height: auto;
+    height: auto;
+    z-index: 50;
+    border-top: 1px solid #e5e7eb;
+    border-right: none;
+  }
+
+  .sidebar:hover {
+    width: 100%;
+  }
+
+  .sidebar-header {
+    display: none;
+  }
+
+  .sidebar-nav {
+    flex: none;
+  }
+
+  .sidebar-nav ul {
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .sidebar-link {
+    flex-direction: column;
+    padding: 0.75rem 0.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  .sidebar-text {
+    opacity: 1;
+    margin-left: 0;
+    font-size: 0.75rem;
+  }
+
+  .sidebar-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  /* Remove hover effects on mobile */
+  .sidebar:hover .sidebar-text {
+    opacity: 1;
+  }
+
+  .sidebar-link:hover {
+    background-color: transparent;
+  }
+
+  /* Active states for mobile */
+  .sidebar-link.active {
+    background-color: transparent;
+  }
+
+  .sidebar-text.active {
+    color: #8b5cf6;
+  }
+}
+
+/* Handle very small screens */
+@media screen and (max-width: 360px) {
+  .sidebar-link {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .sidebar-text {
+    font-size: 0.7rem;
+  }
+
+  .sidebar-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
 }

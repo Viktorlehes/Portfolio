@@ -42,10 +42,9 @@
 .overview-values {
   display: flex;
   gap: 8px;
-  flex-wrap: nowrap;
 }
 
-.assets-section {
+.sa-assets-section {
   background: white;
   border-radius: 2px;
   padding: 24px;
@@ -127,7 +126,7 @@ input:checked + .toggle-slider:before {
   color: #666;
 }
 
-.assets-table {
+.sa-assets-table {
   width: 100%;
 }
 
@@ -542,5 +541,99 @@ input:checked + .toggle-slider:before {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+
+/* Keep all existing desktop styles unchanged, add mobile styles at the end */
+
+@media screen and (max-width: 768px) {
+  .single-wallet-container {
+    padding: 8px;
+  }
+
+  .dashboard-head {
+    flex-direction: column;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .wallet-header {
+    margin-right: 0;
+    width: 100%;
+  }
+
+  .overview-values {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .chart-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 12px;
+  }
+
+  .chart-periods {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    width: 100%;
+  }
+
+  .sa-assets-section {
+    padding: 0;
+    overflow-x: auto;
+  }
+
+  .section-header {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  /* Make table scrollable */
+  .sa-assets-table {
+    min-width: 800px;
+  }
+
+  .table-header,
+  .table-row {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  /* Fix the first column */
+  .table-header .col-asset,
+  .table-row .col-asset {
+    background: white;
+    z-index: 2;
+  }
+
+  .description-section,
+  .explorers-section {
+    padding: 16px;
+  }
+
+  .explorers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .description-text {
+    font-size: 14px;
+  }
+
+  .external-links {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .wallet-header h1 {
+    font-size: 18px;
   }
 }

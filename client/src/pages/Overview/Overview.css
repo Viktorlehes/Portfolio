@@ -6,9 +6,7 @@
 }
 
 .overview-page-header {
-  width: 100%;
-  display: grid;
-  grid-template-rows: 65px 40px;
+  grid-template-rows: auto auto; /* Allow content to determine height */
 }
 
 .overview-main-header-content {
@@ -24,11 +22,6 @@
   font-size: 1.5rem;
   font-weight: bold;
   margin: 0;
-}
-
-/* Main Content Layout */
-.page-content {
-  /* padding: 1.5rem; */
 }
 
 .overview-wrapper {
@@ -80,13 +73,47 @@
 
 @media (max-width: 768px) {
   .overview-main-header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    padding: 0.75rem 1rem;
   }
 
+  .overview-main-header-content h1 {
+    font-size: 1.25rem;
+  }
+
+  /* Adjust grid layouts for mobile */
+  .coinglass-data-bar {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .overview-token-table {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  /* Adjust content padding */
   .page-content {
-    padding: 1rem;
+    padding: 8px;
+  }
+
+  .overview-wrapper {
+    gap: 8px;
+  }
+
+  /* Market data adjustments */
+  .market-data {
+    gap: 8px;
+  }
+
+  .market-item {
+    min-width: 100%;
+    padding: 12px;
+  }
+
+  /* Dashboard grid adjustments */
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
 

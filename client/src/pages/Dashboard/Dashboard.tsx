@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useLocation, useLoaderData, Outlet, LoaderFunction } from "react-router-dom";
 import { ViewType } from "../../components/Dashboard/ViewSelector";
 import { components } from "../../types/api-types";
-import CustomNavbar from "../../components/Default/CustomNavBar";
 import Viewselector from "../../components/Dashboard/ViewSelector";
 import WalletsView from "../../components/Dashboard/WalletsView/WalletsView"
 import AssetsView from '../../components/Dashboard/AssetsView/AssetsView'
@@ -197,7 +196,6 @@ const Dashboard: React.FC = () => {
             />
           )}
         </div>
-        <CustomNavbar />
       </div>
       <div className="page-content">
         {renderView()}

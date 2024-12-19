@@ -1,7 +1,6 @@
 import React from "react";
 import { LoaderFunction, useLoaderData } from "react-router-dom";
 import "./Overview.css";
-import CustomNavbar from "../../components/Default/CustomNavBar";
 import CryptoCategoriesSidebar from "../../components/overview/Categories/CryptoCategorieList";
 import CryptoStatsBar from '../../components/overview/CryptoStatsBar';
 import { components } from "../../types/api-types";
@@ -65,7 +64,6 @@ const Overview: React.FC = () => {
       <div className="overview-page-header">
         <div className="overview-main-header-content">
           <h1>Market Overview</h1>
-          <CustomNavbar />
         </div>
         <div>
           <CryptoStatsBar
