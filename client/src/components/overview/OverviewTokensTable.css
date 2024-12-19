@@ -190,6 +190,9 @@
 }
 
 @media screen and (max-width: 768px) {
+  .table-container {
+    max-height: 800px;
+  }
   .table-scroll {
     position: relative;
     overflow-x: auto;
