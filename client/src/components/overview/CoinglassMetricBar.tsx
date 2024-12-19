@@ -38,7 +38,6 @@ const MetricItem: React.FC<{ item: MetricItem }> = ({ item }) => {
 
 const CoinglassMetricsBar: React.FC<CoinglassMetricsBarProps> = ({
   data,
-  isNull,
 }) => {
   return (
     <div className="cgm-container">
