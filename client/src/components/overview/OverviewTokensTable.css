@@ -240,8 +240,8 @@
   }
 
   /* Maintain hover effect on mobile */
-  .token-row:hover td:nth-child(-n+2) {
-    background-color: rgba(0, 0, 0, 0.02);
+  .token-row:hover {
+    background-color: white 
   }
 
   .catagories-container-edit {
