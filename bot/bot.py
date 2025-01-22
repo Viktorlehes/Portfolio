@@ -1,6 +1,7 @@
 import os
 import re
 import secrets
+import asyncio
 import aiohttp
 from bot.config import Config
 from bson import ObjectId
@@ -341,6 +342,7 @@ class CryptoBot:
             # Setup handlers and commands
             self.setup_handlers()
             self.app.post_init = self.setup_commands
+            self.app.post_init = self.start_price_monitoring
             bot_logger.info("Handlers and commands setup complete")
             
         except Exception as e:
@@ -367,17 +369,29 @@ class CryptoBot:
             self.app.add_handler(CommandHandler("menu", self.show_menu))
             
             # Add job for price checking
-            self.app.job_queue.run_repeating(
-                self.check_prices_job,
-                interval=60,  # Check every 60 seconds
-                first=10,  # Start after 10 seconds to allow bot to fully initialize
-                name='price_check',
-                job_kwargs={'misfire_grace_time': 30}  # Allow job to be delayed up to 30 seconds
-            )
+            # self.app.job_queue.run_repeating(
+            #     self.check_prices_job,
+            #     interval=60,  # Check every 60 seconds
+            #     first=10,  # Start after 10 seconds to allow bot to fully initialize
+            #     name='price_check',
+            #     job_kwargs={'misfire_grace_time': 30}  # Allow job to be delayed up to 30 seconds
+            # )
              
         except Exception as e:
             bot_logger.error(f"Error setting up handlers: {e}", exc_info=True)
             raise
+
+    async def start_price_monitoring(self, application: Application) -> None:
+        """Start the price monitoring in a background task"""
+        while True:
+            try:
+                await self.check_prices_job(None)
+                await asyncio.sleep(60)  # Wait for 60 seconds before next check
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                bot_logger.error(f"Error in price monitoring: {e}")
+                await asyncio.sleep(5)  # Short delay on error before retrying
 
     async def check_prices_job(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Job for checking prices and sending alerts"""
@@ -658,7 +672,7 @@ class CryptoBot:
         await update.message.reply_text("Registration cancelled. Use /start to begin again.")
         return ConversationHandler.END
 
-    def run(self):
+    def run(self) -> None:
         """Run the bot"""
         try:
             bot_logger.info("Starting bot...")
