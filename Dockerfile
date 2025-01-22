@@ -32,11 +32,19 @@ RUN wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/131.0.6
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire app directory
+# Copy the FastAPI app and bot directories
 COPY ./app ./app
+COPY ./bot ./bot
+
+# Copy the startup script
+COPY start-services.sh .
+RUN chmod +x start-services.sh
 
 # Set the Python path to include the app directory
-ENV PYTHONPATH=/app/app
+ENV PYTHONPATH=/app
 
-# Run the FastAPI application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Expose the FastAPI port
+EXPOSE 8000
+
+# Run both services using the startup script
+CMD ["./start-services.sh"]

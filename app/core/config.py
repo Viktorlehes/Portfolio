@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     VITE_API_URL: str
     PROXY_USERNAME: str
     PROXY_PASSWORD: str
+    TELEGRAM_BOT_TOKEN: str
     
     class Config:
         env_file = ".env"
@@ -32,3 +33,4 @@ API_KEY = settings.VITE_API_KEY
 VITE_API_URL = settings.VITE_API_URL
 PROXY_USERNAME = settings.PROXY_USERNAME
 PROXY_PASSWORD = settings.PROXY_PASSWORD
+TELEGRAM_BOT_TOKEN = settings.TELEGRAM_BOT_TOKEN
