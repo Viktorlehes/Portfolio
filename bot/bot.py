@@ -383,6 +383,7 @@ class CryptoBot:
 
     async def start_price_monitoring(self, application: Application) -> None:
         """Start the price monitoring in a background task"""
+        bot_logger.info("Starting price monitoring task")
         while True:
             try:
                 await self.check_prices_job(None)
