@@ -124,7 +124,7 @@ class DatabaseManager:
             result = self.db.alerts.delete_one({"_id": ObjectId(alert_id)})
             return result.deleted_count > 0
         except Exception as e:
-            print(f"Error deleting alert: {e}")
+            bot_logger.error(f"Error deleting alert: {e}")
             return False
         
     def get_alerts_by_email(self, email: str) -> List[Alert]:
@@ -161,8 +161,8 @@ class DatabaseManager:
                 created_at=alert_doc.get("created_at", datetime.now(timezone.utc)),
                 _id=str(alert_doc["_id"])
             ))
-            
-        print(f"Active alerts: {len(alerts)}")
+        
+        bot_logger.info(f"Active alerts: {len(alerts)}")    
         return alerts
 
 class PriceMonitor:
@@ -181,8 +181,6 @@ class PriceMonitor:
         symbol_string = ",".join(symbols)
         url = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest'
         
-        print(f"Fetching prices for: {symbol_string}")
-        
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.get(
@@ -194,10 +192,10 @@ class PriceMonitor:
                         data = await response.json()
                         return data.get('data', {})
                     else:
-                        print(f"Error fetching prices: {response.status}")
+                        bot_logger.error(f"Error fetching prices: {response.status}")
                         return {}
             except Exception as e:
-                print(f"Error in API request: {e}")
+                bot_logger.error(f"Error in API request: {e}")
                 return {}
 
 class AlertHandler:
@@ -302,17 +300,17 @@ class AlertHandler:
                             text=message
                         )
                         self.alert_cooldowns[alert_id] = datetime.now()
-                        print(f"Alert sent for {crypto} to {user.email}")
+                        bot_logger.info(f"Alert sent for {crypto} to {user.email}")
                     except Exception as e:
-                        print(f"Error sending alert: {e}")
+                        bot_logger.error(f"Error sending alert: {e}")
 
         # Remove alerts that have sent their final reminder
         for alert_id in alerts_to_remove:
             try:
                 self.db.delete_alert(alert_id)
-                print(f"Alert {alert_id} removed after final reminder")
+                bot_logger.info(f"Alert {alert_id} removed after final reminder")
             except Exception as e:
-                print(f"Error removing alert {alert_id}: {e}")
+                bot_logger.error(f"Error removing alert {alert_id}: {e}")
             
 class CryptoBot:
     def __init__(self):
@@ -686,7 +684,6 @@ class CryptoBot:
 if __name__ == "__main__":
     bot = CryptoBot()
     try:
-        print("Starting bot with price monitoring...")
         bot.run()
     except KeyboardInterrupt:
         print("Bot stopped by user")
