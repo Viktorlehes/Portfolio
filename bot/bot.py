@@ -312,33 +312,6 @@ class AlertHandler:
                 print(f"Alert {alert_id} removed after final reminder")
             except Exception as e:
                 print(f"Error removing alert {alert_id}: {e}")
-
-    async def monitor_prices(self):
-        """Main func for monitoring prices and triggering alerts"""
-        try:
-            # Get all active alerts
-            alerts = self.db.get_all_active_alerts()
-            if not alerts:
-                return
-            
-            # Get unique cryptocurrencies to check
-            cryptos = {alert.crypto.upper() for alert in alerts}
-            
-            # Fetch latest prices
-            price_data = await self.price_monitor.get_crypto_prices(cryptos)
-            
-            # Process each cryptocurrency
-            for crypto in cryptos:
-                if crypto not in price_data:
-                    continue
-                    
-                crypto_alerts = [alert for alert in alerts if alert.crypto.upper() == crypto]
-                crypto_price_data = price_data[crypto][0]  # Get first quote for the symbol
-                
-                await self.process_price_alerts(crypto, crypto_price_data, crypto_alerts)
-            
-        except Exception as e:
-            print(f"Error in price monitoring: {e}")
             
 class CryptoBot:
     def __init__(self):
@@ -396,20 +369,42 @@ class CryptoBot:
             # Add job for price checking
             self.app.job_queue.run_repeating(
                 self.check_prices_job,
-                interval=self.price_monitor.check_interval,
-                first=1  # Start after 1 second
+                interval=60,  # Check every 60 seconds
+                first=10,  # Start after 10 seconds to allow bot to fully initialize
+                name='price_check',
+                job_kwargs={'misfire_grace_time': 30}  # Allow job to be delayed up to 30 seconds
             )
-
-            
+             
         except Exception as e:
             bot_logger.error(f"Error setting up handlers: {e}", exc_info=True)
             raise
 
-    async def check_prices_job(self, context):
-        """Job to check prices periodically"""
+    async def check_prices_job(self, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Job for checking prices and sending alerts"""
         try:
             bot_logger.debug("Checking crypto prices")
-            await self.alert_handler.monitor_prices()
+            
+            # Get all active alerts
+            alerts = self.db.get_all_active_alerts()
+            if not alerts:
+                return
+            
+            # Get unique cryptocurrencies to check
+            cryptos = {alert.crypto.upper() for alert in alerts}
+            
+            # Fetch latest prices
+            price_data = await self.alert_handler.price_monitor.get_crypto_prices(cryptos)
+            
+            # Process each cryptocurrency
+            for crypto in cryptos:
+                if crypto not in price_data:
+                    continue
+                    
+                crypto_alerts = [alert for alert in alerts if alert.crypto.upper() == crypto]
+                crypto_price_data = price_data[crypto][0]  # Get first quote for the symbol
+                
+                await self.alert_handler.process_price_alerts(crypto, crypto_price_data, crypto_alerts)
+                
         except Exception as e:
             bot_logger.error(f"Error in price check job: {e}", exc_info=True)
 
@@ -662,10 +657,6 @@ class CryptoBot:
     async def cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text("Registration cancelled. Use /start to begin again.")
         return ConversationHandler.END
-
-    async def check_prices_job(self, context: ContextTypes.DEFAULT_TYPE) -> None:
-            """Job for checking prices and sending alerts"""
-            await self.alert_handler.monitor_prices()
 
     def run(self):
         """Run the bot"""
