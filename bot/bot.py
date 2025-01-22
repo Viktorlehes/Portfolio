@@ -1,7 +1,6 @@
 import os
 import re
 import secrets
-import asyncio
 import aiohttp
 from bot.config import Config
 from bson import ObjectId
@@ -315,36 +314,32 @@ class AlertHandler:
                 print(f"Error removing alert {alert_id}: {e}")
 
     async def monitor_prices(self):
-        """Main loop for monitoring prices and triggering alerts"""
-        while True:
-            try:
-                # Get all active alerts
-                alerts = self.db.get_all_active_alerts()
-                if not alerts:
-                    await asyncio.sleep(self.price_monitor.check_interval)
-                    continue
-                
-                # Get unique cryptocurrencies to check
-                cryptos = {alert.crypto.upper() for alert in alerts}
-                
-                # Fetch latest prices
-                price_data = await self.price_monitor.get_crypto_prices(cryptos)
-                
-                # Process each cryptocurrency
-                for crypto in cryptos:
-                    if crypto not in price_data:
-                        continue
-                        
-                    crypto_alerts = [alert for alert in alerts if alert.crypto.upper() == crypto]
-                    crypto_price_data = price_data[crypto][0]  # Get first quote for the symbol
-                    
-                    await self.process_price_alerts(crypto, crypto_price_data, crypto_alerts)
-                
-            except Exception as e:
-                print(f"Error in price monitoring: {e}")
+        """Main func for monitoring prices and triggering alerts"""
+        try:
+            # Get all active alerts
+            alerts = self.db.get_all_active_alerts()
+            if not alerts:
+                return
             
-            await asyncio.sleep(self.price_monitor.check_interval)
-
+            # Get unique cryptocurrencies to check
+            cryptos = {alert.crypto.upper() for alert in alerts}
+            
+            # Fetch latest prices
+            price_data = await self.price_monitor.get_crypto_prices(cryptos)
+            
+            # Process each cryptocurrency
+            for crypto in cryptos:
+                if crypto not in price_data:
+                    continue
+                    
+                crypto_alerts = [alert for alert in alerts if alert.crypto.upper() == crypto]
+                crypto_price_data = price_data[crypto][0]  # Get first quote for the symbol
+                
+                await self.process_price_alerts(crypto, crypto_price_data, crypto_alerts)
+            
+        except Exception as e:
+            print(f"Error in price monitoring: {e}")
+            
 class CryptoBot:
     def __init__(self):
         Config.validate()
@@ -399,10 +394,11 @@ class CryptoBot:
             self.app.add_handler(CommandHandler("menu", self.show_menu))
             
             # Add job for price checking
-            self.app.job_queue.run_once(
+            self.app.job_queue.run_repeating(
                 self.check_prices_job,
-                when=1  # Start after 1 second
-                )
+                interval=self.price_monitor.check_interval,
+                first=1  # Start after 1 second
+            )
 
             
         except Exception as e:
