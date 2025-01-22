@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY bot /app/bot
 
 # Run the bot
-CMD ["python3", "-m", "bot.run"]
+CMD ["python3", "-m", "bot.bot"]

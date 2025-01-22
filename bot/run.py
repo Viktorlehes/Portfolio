@@ -1,7 +1,7 @@
 import asyncio
 import sys
 from bot.bot import CryptoBot
-from bot.logger import bot_logger
+from logger import bot_logger
 from dotenv import load_dotenv
 
 # Load environment variables from root .env file
