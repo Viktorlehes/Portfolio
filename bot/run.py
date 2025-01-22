@@ -1,7 +1,7 @@
 import asyncio
 import sys
 from bot.bot import CryptoBot
-from logger import bot_logger
+from bot.logger import bot_logger
 from dotenv import load_dotenv
 
 # Load environment variables from root .env file
@@ -39,9 +39,14 @@ def run_bot_with_restart():
         finally:
             loop.close()
 
+def run_bot():
+    """Run the bot"""
+    bot = CryptoBot()
+    bot.run()
+
 if __name__ == "__main__":
     try:
-        run_bot_with_restart()
+        run_bot()
     except KeyboardInterrupt:
         bot_logger.info("Bot stopped by user")
         sys.exit(0)
