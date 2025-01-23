@@ -293,6 +293,8 @@ class AlertHandler:
         for alert in alerts:
             alert_id = alert._id
             
+            bot_logger.info(f"Processing alert {alert_id} for {alert.name}")
+            
             if not self.should_send_alert(alert_id):
                 continue
                 
@@ -403,7 +405,9 @@ class CryptoBot:
             
             # Setup handlers and commands
             self.setup_handlers()
+            bot_logger.info("Handlers setup complete")
             self.app.post_init = self.setup_commands
+            bot_logger.info("Commands setup complete")
             self.app.post_init = self.start_price_monitoring
             bot_logger.info("Handlers and commands setup complete")
             
@@ -459,8 +463,6 @@ class CryptoBot:
     async def check_prices_job(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Job for checking prices and sending alerts"""
         try:
-            bot_logger.debug("Checking crypto prices")
-            
             # Get all active alerts
             alerts = self.db.get_all_active_alerts()
             if not alerts:
@@ -471,6 +473,8 @@ class CryptoBot:
             
             # Fetch latest prices
             price_data = await self.alert_handler.price_monitor.get_crypto_prices(crypto_ids)
+            
+            bot_logger.info(f"Checking prices for {len(crypto_ids)} cryptocurrencies")
             
             # Process each cryptocurrency
             for id in crypto_ids:
