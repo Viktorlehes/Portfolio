@@ -188,17 +188,18 @@ class DatabaseManager:
             bot_logger.error(f"Error deleting alert: {e}")
             return False
         
-    def get_alerts_by_email(self, email: str) -> List[Alert]:
+    def get_alerts_by_telegram_chat_id(self, telegram_chat_id: str) -> List[Alert]:
         alerts = []
-        for alert_doc in self.db.alerts.find({"email": email}):
+        for alert_doc in self.db.alerts.find({"telegram_chat_id": telegram_chat_id}):
             alerts.append(Alert(
-                email=alert_doc["email"],
+                cmc_id=alert_doc["cmc_id"],
                 symbol=alert_doc["symbol"],
                 name=alert_doc["name"],
                 upper_target_price=alert_doc.get("upper_target_price"),
                 lower_target_price=alert_doc.get("lower_target_price"),
                 percent_change_threshold=alert_doc.get("percent_change_threshold"),
                 base_price=alert_doc.get("base_price"),
+                telegram_chat_id=alert_doc["telegram_chat_id"],
                 last_checked_price=alert_doc.get("last_checked_price"),
                 created_at=alert_doc.get("created_at", datetime.now(timezone.utc)),
                 _id=str(alert_doc["_id"])
@@ -293,8 +294,6 @@ class AlertHandler:
         for alert in alerts:
             alert_id = alert._id
             
-            bot_logger.info(f"Processing alert {alert_id} for {alert.name}")
-            
             if not self.should_send_alert(alert_id):
                 continue
                 
@@ -340,11 +339,18 @@ class AlertHandler:
                         )
                         should_notify = True
                         alerts_to_remove.append(alert._id)
-
+                        
             # Handle percent change alerts
             elif alert.percent_change_threshold:
                 percent_change = self.calculate_percent_change(current_price, alert.base_price)
-                if abs(percent_change) >= alert.percent_change_threshold:
+                
+                # Check if threshold is met based on direction
+                threshold_met = (
+                    (alert.percent_change_threshold > 0 and percent_change >= alert.percent_change_threshold) or
+                    (alert.percent_change_threshold < 0 and percent_change <= alert.percent_change_threshold)
+                )
+                
+                if threshold_met:
                     message = (
                         f"📊 Price Change Alert: {alert.name} has changed by {percent_change:.2f}% "
                         f"from ${alert.base_price:,.2f} to ${current_price:,.2f}, "
@@ -408,7 +414,7 @@ class CryptoBot:
             bot_logger.info("Handlers setup complete")
             self.app.post_init = self.setup_commands
             bot_logger.info("Commands setup complete")
-            self.app.post_init = self.start_price_monitoring
+            #self.app.post_init = self.start_price_monitoring
             bot_logger.info("Handlers and commands setup complete")
             
         except Exception as e:
@@ -434,31 +440,31 @@ class CryptoBot:
             self.app.add_handler(CommandHandler("status", self.status))
             self.app.add_handler(CommandHandler("menu", self.show_menu))
             
-            # Add job for price checking
-            # self.app.job_queue.run_repeating(
-            #     self.check_prices_job,
-            #     interval=60,  # Check every 60 seconds
-            #     first=10,  # Start after 10 seconds to allow bot to fully initialize
-            #     name='price_check',
-            #     job_kwargs={'misfire_grace_time': 30}  # Allow job to be delayed up to 30 seconds
-            # )
+            #Add job for price checking
+            self.app.job_queue.run_repeating(
+                self.check_prices_job,
+                interval=60,  # Check every 60 seconds
+                first=10,  # Start after 10 seconds to allow bot to fully initialize
+                name='price_check',
+                job_kwargs={'misfire_grace_time': 30}  # Allow job to be delayed up to 30 seconds
+            )
              
         except Exception as e:
             bot_logger.error(f"Error setting up handlers: {e}", exc_info=True)
             raise
 
-    async def start_price_monitoring(self, application: Application) -> None:
-        """Start the price monitoring in a background task"""
-        bot_logger.info("Starting price monitoring task")
-        while True:
-            try:
-                await self.check_prices_job(None)
-                await asyncio.sleep(60)  # Wait for 60 seconds before next check
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                bot_logger.error(f"Error in price monitoring: {e}")
-                await asyncio.sleep(5)  # Short delay on error before retrying
+    # async def start_price_monitoring(self, application: Application) -> None:
+    #     """Start the price monitoring in a background task"""
+    #     bot_logger.info("Starting price monitoring task")
+    #     while True:
+    #         try:
+    #             await self.check_prices_job(None)
+    #             await asyncio.sleep(60)  # Wait for 60 seconds before next check
+    #         except asyncio.CancelledError:
+    #             break
+    #         except Exception as e:
+    #             bot_logger.error(f"Error in price monitoring: {e}")
+    #             await asyncio.sleep(5)  # Short delay on error before retrying
 
     async def check_prices_job(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Job for checking prices and sending alerts"""
@@ -469,7 +475,10 @@ class CryptoBot:
                 return
             
             # Get unique cryptocurrencies to check
-            crypto_ids = {alert.cmc_id for alert in alerts}
+            crypto_ids = []
+            for alert in alerts:
+                if alert.cmc_id not in crypto_ids:
+                    crypto_ids.append(alert.cmc_id)
             
             # Fetch latest prices
             price_data = await self.alert_handler.price_monitor.get_crypto_prices(crypto_ids)
@@ -478,11 +487,12 @@ class CryptoBot:
             
             # Process each cryptocurrency
             for id in crypto_ids:
-                if id not in price_data:
+                if str(id) not in price_data:
+                    print(f"Price data not found for {id}")
                     continue
                     
                 crypto_alerts = [alert for alert in alerts if alert.cmc_id == id]
-                crypto_price_data = price_data[id]  # Get first quote for the symbol
+                crypto_price_data = price_data[str(id)]  # Get first quote for the symbol
                     
                 await self.alert_handler.process_price_alerts(id, crypto_price_data, crypto_alerts)
                 
@@ -710,7 +720,7 @@ class CryptoBot:
             )
             return
         
-        alerts = self.db.get_alerts_by_email(user.email)
+        alerts = self.db.get_alerts_by_telegram_chat_id(user.telegram_chat_id)
         if not alerts:
             await update.message.reply_text(
                 "You don't have any active alerts.\n"
@@ -720,7 +730,10 @@ class CryptoBot:
         
         alert_messages = []
         for alert in alerts:
-            msg = f"🔔 {alert.name} - {alert.symbol}:\n"
+            if alert.name == alert.symbol:
+                msg = f"🔔 {alert.name}:\n"
+            else:
+                msg = f"🔔 {alert.name} - {alert.symbol}:\n"
             if alert.upper_target_price:
                 msg += f"  • Target: ${alert.upper_target_price:,.2f}\n"
             if alert.lower_target_price:
@@ -743,7 +756,7 @@ class CryptoBot:
         """Run the bot"""
         try:
             bot_logger.info("Starting bot...")
-            self.app.run_polling(allowed_updates=Update.ALL_TYPES)
+            self.app.run_polling()
         except Exception as e:
             bot_logger.error(f"Error running bot: {e}", exc_info=True)
             raise
