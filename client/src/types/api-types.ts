@@ -540,22 +540,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/alerts/get-alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Alerts */
+        get: operations["get_alerts_alerts_get_alerts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/alerts/create-alert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Alert */
+        post: operations["create_alert_alerts_create_alert_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/alerts/delete-alert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete Alert */
+        post: operations["delete_alert_alerts_delete_alert_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** APIResponse */
-        APIResponse: {
+        /** Alert */
+        Alert: {
+            /** Cmc Id */
+            cmc_id: number;
+            /** Symbol */
+            symbol: string;
+            /** Name */
+            name: string;
+            /** Telegram Chat Id */
+            telegram_chat_id: string;
+            /** Upper Target Price */
+            upper_target_price?: number | null;
+            /** Lower Target Price */
+            lower_target_price?: number | null;
+            /** Percent Change Threshold */
+            percent_change_threshold?: number | null;
+            /** Base Price */
+            base_price?: number | null;
+            /** Last Checked Price */
+            last_checked_price?: number | null;
             /**
-             * Status
-             * @enum {string}
+             * Created At
+             * Format: date-time
              */
-            status: "success" | "error";
-            /** Message */
-            message: string;
-            data: components["schemas"]["CoinglassMetrics"];
-            /** Error */
-            error?: string | null;
+            created_at?: string;
+            /**  Id */
+            _id: string;
         };
         /** AssetAttributes */
         AssetAttributes: {
@@ -630,6 +696,49 @@ export interface components {
             /** Symbol */
             symbol: string;
         };
+        /** CachedResponse[CategoryResponse] */
+        CachedResponse_CategoryResponse_: {
+            data: components["schemas"]["CategoryResponse"];
+            /** Is Updating */
+            is_updating: boolean;
+            /** Last Updated */
+            last_updated: string;
+        };
+        /** CachedResponse[CoinglassMetrics] */
+        CachedResponse_CoinglassMetrics_: {
+            data: components["schemas"]["CoinglassMetrics"];
+            /** Is Updating */
+            is_updating: boolean;
+            /** Last Updated */
+            last_updated: string;
+        };
+        /** CachedResponse[List[CustomCategory]] */
+        CachedResponse_List_CustomCategory__: {
+            /** Data */
+            data: components["schemas"]["CustomCategory"][];
+            /** Is Updating */
+            is_updating: boolean;
+            /** Last Updated */
+            last_updated: string;
+        };
+        /** CachedResponse[List[FullCMCToken]] */
+        CachedResponse_List_FullCMCToken__: {
+            /** Data */
+            data: components["schemas"]["FullCMCToken"][];
+            /** Is Updating */
+            is_updating: boolean;
+            /** Last Updated */
+            last_updated: string;
+        };
+        /** CachedResponse[List[TokenOverviewData]] */
+        CachedResponse_List_TokenOverviewData__: {
+            /** Data */
+            data: components["schemas"]["TokenOverviewData"][];
+            /** Is Updating */
+            is_updating: boolean;
+            /** Last Updated */
+            last_updated: string;
+        };
         /** CategoryData */
         CategoryData: {
             /** Id */
@@ -695,6 +804,25 @@ export interface components {
             total_options_open_interest: components["schemas"]["MetricItem"];
             btc_long_short_ratio: components["schemas"]["MetricItem"];
             btc_dominance: components["schemas"]["MetricItem"];
+        };
+        /** CreateAlertRequest */
+        CreateAlertRequest: {
+            /** Id */
+            id: number;
+            /** Symbol */
+            symbol: string;
+            /** Name */
+            name: string;
+            /** Email */
+            email: string;
+            /** Upper Target Price */
+            upper_target_price?: number | null;
+            /** Lower Target Price */
+            lower_target_price?: number | null;
+            /** Percent Change Threshold */
+            percent_change_threshold?: number | null;
+            /** Base Price */
+            base_price?: number | null;
         };
         /** CryptoData */
         CryptoData: {
@@ -823,6 +951,13 @@ export interface components {
             position_name: string;
             /** Dapp */
             dapp: string;
+        };
+        /** DeleteAlertRequest */
+        DeleteAlertRequest: {
+            /** Email */
+            email: string;
+            /** Alert Id */
+            alert_id: string;
         };
         /** ExchangeMarketData */
         ExchangeMarketData: {
@@ -1507,7 +1642,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["APIResponse"];
+                    "application/json": components["schemas"]["CachedResponse_CoinglassMetrics_"];
                 };
             };
         };
@@ -1578,7 +1713,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TokenOverviewData"][];
+                    "application/json": components["schemas"]["CachedResponse_List_TokenOverviewData__"];
                 };
             };
         };
@@ -1598,7 +1733,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CategoryResponse"];
+                    "application/json": components["schemas"]["CachedResponse_CategoryResponse_"];
                 };
             };
         };
@@ -1651,7 +1786,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CategoryResponse"];
+                    "application/json": components["schemas"]["CachedResponse_CategoryResponse_"];
                 };
             };
         };
@@ -1737,7 +1872,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CustomCategory"][];
+                    "application/json": components["schemas"]["CachedResponse_List_CustomCategory__"];
                 };
             };
         };
@@ -1790,7 +1925,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FullCMCToken"][];
+                    "application/json": components["schemas"]["CachedResponse_List_FullCMCToken__"];
                 };
             };
         };
@@ -2227,6 +2362,103 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_alerts_alerts_get_alerts_get: {
+        parameters: {
+            query: {
+                email: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Alert"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_alert_alerts_create_alert_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAlertRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Alert"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_alert_alerts_delete_alert_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAlertRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

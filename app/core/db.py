@@ -3,6 +3,8 @@ from app.core.config import DB_URI
 
 client = motor.motor_asyncio.AsyncIOMotorClient(DB_URI)
 db = client['Main']  # Database name
+crypto_bot_db = client["crypto_bot_db"]
+
 tokens_collection = db["Tokens"]
 CG_id_map = db["CG_ID_MAP"]
 wallets_collection = db["Wallets"]
@@ -11,3 +13,6 @@ coinglass_collection = db["Coinglass_Tokens"]
 categories_collection = db["Categories"]
 custom_categories_collection = db["Custom_Categories"]
 tracked_categories = db["Tracked_Categories"]
+
+bot_users = crypto_bot_db["users"]
+alerts_collection = crypto_bot_db["alerts"]

@@ -1,0 +1,355 @@
+/* Alerts Page Layout */
+.alerts-page-wrapper {
+    display: flex;
+    justify-content: space-evenly;
+    gap: 24px;
+    padding: 16px;
+  }
+  
+  /* Active Alerts Component */
+  .aa-alerts-wrapper {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+  }
+  
+  .aa-alerts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .aa-alerts-header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .mode-selector {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .mode-button {
+    padding: 6px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  
+  .mode-button.active {
+    background: #8b5cf6;
+    color: white;
+    border-color: #8b5cf6;
+  }
+  
+  .coming-soon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    border: 2px dashed #e5e7eb;
+    border-radius: 4px;
+    color: #6b7280;
+    font-size: 16px;
+  }
+  
+  .alerts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 8px;
+  }
+  
+  .alert-card {
+    position: relative;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    transition: all 0.2s;
+  }
+  
+  .alert-card:hover {
+    border-color: #8b5cf6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .alert-card .delete-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ef4444;
+    padding: 4px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  
+  .ac-change-button {
+    padding: 4px 8px;
+    color: rgb(255, 17, 17);
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  .alert-card:hover .delete-button {
+    opacity: 1;
+  }
+  
+  .alert-card .delete-button:hover {
+    background: #fef2f2;
+  }
+  
+  .alert-header {
+    margin-bottom: 12px;
+  }
+  
+  .alert-asset {
+    font-weight: 600;
+    font-size: 18px;
+    color: #111827;
+    margin-right: 8px;
+  }
+  
+  .alert-name {
+    font-size: 14px;
+    color: #6b7280;
+  }
+  
+  .alert-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .alert-type {
+    font-size: 14px;
+    color: #8b5cf6;
+    font-weight: 500;
+  }
+  
+  .alert-target {
+    font-size: 14px;
+    color: #374151;
+  }
+  
+  .alert-current {
+    font-size: 14px;
+    color: #6b7280;
+  }
+  
+  .aa-alerts-container {
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  /* Alert Creation Component */
+  .ac-creation-wrapper {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 100%;
+    height: fit-content;
+  }
+  
+  .ac-creation-header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  
+  .ac-creation-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .form-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+  }
+  
+  .search-container {
+    position: relative;
+  }
+  
+  .search-icon {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+  }
+  
+  .search-input {
+    width: 100%;
+    padding: 8px 16px 8px 32px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+  }
+  
+  .alert-type-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  
+  .type-button {
+    padding: 8px 16px;
+    background: none;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .type-button.active {
+    background: #8b5cf6;
+    color: white;
+    border-color: #8b5cf6;
+  }
+  
+  .threshold-input {
+    padding: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    width: 100%;
+  }
+  
+  .create-alert-button {
+    padding: 8px 16px;
+    background: #8b5cf6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+  
+  .create-alert-button:hover {
+    background: #7c3aed;
+  }
+  
+  .create-alert-button:disabled {
+    background: #e5e7eb;
+    cursor: not-allowed;
+  }
+  
+  .search-results {
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .search-result-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .search-result-item:hover {
+    background: #f9fafb;
+  }
+  
+  .asset-symbol {
+    font-weight: 500;
+  }
+  
+  .asset-name {
+    color: #6b7280;
+    font-size: 14px;
+  }
+  
+  .loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .preset-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+  }
+  
+  .preset-button {
+    padding: 8px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  
+  .preset-button:hover {
+    background: #e5e7eb;
+  }
+  
+  .input-with-symbol {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .currency-symbol {
+    position: absolute;
+    left: 8px;
+    color: #6b7280;
+    font-size: 14px;
+  }
+  
+  .percent-symbol {
+    position: absolute;
+    left: 8px;
+    color: #6b7280;
+    font-size: 14px;
+  }
+  
+  .threshold-input.with-currency {
+    padding-left: 20px;
+  }
+  
+  .threshold-input.with-percent {
+    padding-left: 24px;
+  }

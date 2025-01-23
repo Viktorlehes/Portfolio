@@ -4,13 +4,13 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AuthProvider } from "./auth/authContext";
 import App from "./App";
 import Login from "./pages/misc/Login";
-
 import Overview, {overviewLoader} from "./pages/Overview/Overview";
 import Dashboard, {dashboardLoader} from "./pages/Dashboard/Dashboard";
 import SingleWalletView, {walletLoader} from "./pages/Dashboard/SingleWalletView";
 import SingleAssetView, {assetLoader} from "./pages/Dashboard/SingleAssetView";
 import Managecategories from "./pages/Overview/ManageCategories";
 import Defi from "./pages/Defi/Defi";
+import Alerts from "./pages/Alerts/Alerts";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const router = createBrowserRouter([
@@ -72,6 +72,14 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      {
+        path: "Alerts",
+        element: (
+          <ProtectedRoute>
+            <Alerts />
+          </ProtectedRoute>
+        ),
+      }
     ],
   },
 ]);

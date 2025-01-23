@@ -18,24 +18,83 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 WAITING_FOR_EMAIL = 1
 
 @dataclass
-class User:
+class AlertUser:
     email: str
     telegram_chat_id: str
     verification_code: Optional[str] = None
     is_verified: bool = False
-    _id: Optional[str] = None
+    _id: Optional[str] = field(default_factory=lambda: str(ObjectId()), repr=True)
 
+    def to_dict(self):
+        """Convert the dataclass to a MongoDB-compatible dictionary"""
+        return {
+            "_id": ObjectId(self._id) if self._id else ObjectId(),
+            "email": self.email,
+            "telegram_chat_id": self.telegram_chat_id,
+            "verification_code": self.verification_code,
+            "is_verified": self.is_verified
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create an AlertUser instance from a MongoDB document"""
+        if data is None:
+            return None
+            
+        if "_id" in data:
+            data["_id"] = str(data["_id"])
+            
+        return cls(**data)
+    
 @dataclass
 class Alert:
-    email: str
-    crypto: str
+    cmc_id: int
+    symbol: str
+    name: str
+    telegram_chat_id: str  # Changed from email to telegram_chat_id
     upper_target_price: Optional[float] = None
     lower_target_price: Optional[float] = None
     percent_change_threshold: Optional[float] = None
-    base_price: Optional[float] = None  # Price when alert was created
+    base_price: Optional[float] = None
     last_checked_price: Optional[float] = None
-    created_at: datetime = field(default_factory=datetime.now(timezone.utc))
-    _id: Optional[str] = None
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    _id: str = field(default_factory=lambda: str(ObjectId()), repr=True)
+
+    def to_dict(self):
+        """Convert the dataclass to a MongoDB-compatible dictionary"""
+        return {
+            "_id": ObjectId(self._id) if self._id else ObjectId(),
+            "cmc_id": self.cmc_id,
+            "telegram_chat_id": self.telegram_chat_id,
+            "symbol": self.symbol,
+            "name": self.name,
+            "upper_target_price": self.upper_target_price,
+            "lower_target_price": self.lower_target_price,
+            "percent_change_threshold": self.percent_change_threshold,
+            "base_price": self.base_price,
+            "last_checked_price": self.last_checked_price,
+            "created_at": self.created_at
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create an Alert instance from a MongoDB document"""
+        if data is None:
+            return None
+            
+        if "_id" in data:
+            data["_id"] = str(data["_id"])
+            
+        return cls(**data)
+
+    def validate(self) -> bool:
+        """Validate that the alert has valid price targets"""
+        has_price_target = (
+            self.upper_target_price is not None or 
+            self.lower_target_price is not None
+        )
+        has_percent_threshold = self.percent_change_threshold is not None
+        return has_price_target or has_percent_threshold
 
 class DatabaseManager:
     def __init__(self, connection_string: str):
@@ -50,7 +109,7 @@ class DatabaseManager:
         self.db.users.create_index("telegram_chat_id")
         self.db.alerts.create_index([("email", 1), ("crypto", 1)])
 
-    def save_user(self, user: User) -> str:
+    def save_user(self, user: AlertUser) -> str:
         user_dict = {
             "email": user.email,
             "telegram_chat_id": user.telegram_chat_id,
@@ -72,10 +131,10 @@ class DatabaseManager:
             )
             return str(result.upserted_id) if result.upserted_id else None
 
-    def get_user_by_chat_id(self, chat_id: str) -> Optional[User]:
+    def get_user_by_chat_id(self, chat_id: str) -> Optional[AlertUser]:
         user_doc = self.db.users.find_one({"telegram_chat_id": chat_id})
         if user_doc:
-            return User(
+            return AlertUser(
                 email=user_doc["email"],
                 telegram_chat_id=user_doc["telegram_chat_id"],
                 verification_code=user_doc.get("verification_code"),
@@ -84,10 +143,10 @@ class DatabaseManager:
             )
         return None
 
-    def get_user_by_email(self, email: str) -> Optional[User]:
+    def get_user_by_email(self, email: str) -> Optional[AlertUser]:
         user_doc = self.db.users.find_one({"email": email})
         if user_doc:
-            return User(
+            return AlertUser(
                 email=user_doc["email"],
                 telegram_chat_id=user_doc["telegram_chat_id"],
                 verification_code=user_doc.get("verification_code"),
@@ -98,8 +157,10 @@ class DatabaseManager:
 
     def save_alert(self, alert: Alert) -> str:
         alert_dict = {
-            "email": alert.email,
-            "crypto": alert.crypto,
+            "cmc_id": alert.cmc_id,
+            "telegram_chat_id": alert.telegram_chat_id,
+            "symbol": alert.symbol,
+            "name": alert.name,
             "upper_target_price": alert.upper_target_price,
             "lower_target_price": alert.lower_target_price,
             "percent_change_threshold": alert.percent_change_threshold,
@@ -132,7 +193,8 @@ class DatabaseManager:
         for alert_doc in self.db.alerts.find({"email": email}):
             alerts.append(Alert(
                 email=alert_doc["email"],
-                crypto=alert_doc["crypto"],
+                symbol=alert_doc["symbol"],
+                name=alert_doc["name"],
                 upper_target_price=alert_doc.get("upper_target_price"),
                 lower_target_price=alert_doc.get("lower_target_price"),
                 percent_change_threshold=alert_doc.get("percent_change_threshold"),
@@ -146,17 +208,19 @@ class DatabaseManager:
     def get_all_active_alerts(self) -> List[Alert]:
         """Get all alerts for verified users"""
         verified_users = self.db.users.find({"is_verified": True})
-        verified_emails = [user["email"] for user in verified_users]
+        verified_telegram_ids = [user["telegram_chat_id"] for user in verified_users]
         
         alerts = []
-        for alert_doc in self.db.alerts.find({"email": {"$in": verified_emails}}):
+        for alert_doc in self.db.alerts.find({"telegram_chat_id": {"$in": verified_telegram_ids}}):
             alerts.append(Alert(
-                email=alert_doc["email"],
-                crypto=alert_doc["crypto"],
+                cmc_id=alert_doc["cmc_id"],
+                symbol=alert_doc["symbol"],
+                name=alert_doc["name"],
                 upper_target_price=alert_doc.get("upper_target_price"),
                 lower_target_price=alert_doc.get("lower_target_price"),
                 percent_change_threshold=alert_doc.get("percent_change_threshold"),
                 base_price=alert_doc.get("base_price"),
+                telegram_chat_id=alert_doc["telegram_chat_id"],
                 last_checked_price=alert_doc.get("last_checked_price"),
                 created_at=alert_doc.get("created_at", datetime.now(timezone.utc)),
                 _id=str(alert_doc["_id"])
@@ -172,20 +236,21 @@ class PriceMonitor:
         self.price_cache: Dict[str, Dict] = {}  # Store latest prices
         self.last_check: Dict[str, float] = {}  # Store last check time
         
-    async def get_crypto_prices(self, symbols: Set[str]) -> Dict[str, Dict]:
+    async def get_crypto_prices(self, cmc_ids: Set[int]) -> Dict[str, Dict]:
         """Fetch prices from CoinMarketCap API"""
         
-        if not symbols:
+        if not cmc_ids:
             return {}
-            
-        symbol_string = ",".join(symbols)
+        str_cmc_ids = [str(id) for id in cmc_ids]
+        
+        id_string = ",".join(str_cmc_ids)
         url = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest'
         
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.get(
                     url,
-                    params={'symbol': symbol_string},
+                    params={'id': id_string},
                     headers={'X-CMC_PRO_API_KEY': self.api_key}
                 ) as response:
                     if response.status == 200:
@@ -219,14 +284,14 @@ class AlertHandler:
             return 0
         return ((current_price - base_price) / base_price) * 100
         
-    async def process_price_alerts(self, crypto: str, price_data: Dict, alerts: List[Alert]) -> None:
+    async def process_price_alerts(self, id: int, price_data: Dict, alerts: List[Alert]) -> None:
         """Process alerts for a specific cryptocurrency"""
         current_price = price_data["quote"]["USD"]["price"]
         
         alerts_to_remove = []  # Track alerts that need to be removed
         
         for alert in alerts:
-            alert_id = f"{alert._id}_{crypto}"
+            alert_id = alert._id
             
             if not self.should_send_alert(alert_id):
                 continue
@@ -237,6 +302,7 @@ class AlertHandler:
 
             # Initialize base price if not set (should be set from client side)
             if alert.base_price is None:
+                print("Warning: Base price not set for alert")
                 alert.base_price = current_price
                 self.db.save_alert(alert)
 
@@ -246,14 +312,14 @@ class AlertHandler:
                 if alert.last_checked_price is None:
                     if (alert.upper_target_price and current_price >= alert.upper_target_price):
                         message = (
-                            f"🚀 Initial Price Alert: {crypto} has reached ${current_price:,.2f}, "
+                            f"🚀 Initial Price Alert: {alert.name} has reached ${current_price:,.2f}, "
                             f"above your target of ${alert.upper_target_price:,.2f}"
                         )
                         should_notify = True
                         alert.last_checked_price = current_price
                     elif (alert.lower_target_price and current_price <= alert.lower_target_price):
                         message = (
-                            f"📉 Price Alert: {crypto} has fallen to ${current_price:,.2f}, "
+                            f"📉 Price Alert: {alert.name} has fallen to ${current_price:,.2f}, "
                             f"below your target of ${alert.lower_target_price:,.2f}"
                         )
                         should_notify = True
@@ -267,7 +333,7 @@ class AlertHandler:
                     (alert.lower_target_price and price_movement < 0):
                         is_reminder = True
                         message = (
-                            f"⚠️ Final Reminder: {crypto} price is now ${current_price:,.2f}\n"
+                            f"⚠️ Final Reminder: {alert.name} price is now ${current_price:,.2f}\n"
                             f"This alert will be removed after this notification."
                         )
                         should_notify = True
@@ -278,7 +344,7 @@ class AlertHandler:
                 percent_change = self.calculate_percent_change(current_price, alert.base_price)
                 if abs(percent_change) >= alert.percent_change_threshold:
                     message = (
-                        f"📊 Price Change Alert: {crypto} has changed by {percent_change:.2f}% "
+                        f"📊 Price Change Alert: {alert.name} has changed by {percent_change:.2f}% "
                         f"from ${alert.base_price:,.2f} to ${current_price:,.2f}, "
                         f"exceeding your {alert.percent_change_threshold}% threshold"
                     )
@@ -292,17 +358,15 @@ class AlertHandler:
 
             # Send notification if needed
             if should_notify:
-                user = self.db.get_user_by_email(alert.email)
-                if user and user.is_verified:
-                    try:
-                        await self.bot.bot.send_message(
-                            chat_id=user.telegram_chat_id,
-                            text=message
-                        )
-                        self.alert_cooldowns[alert_id] = datetime.now()
-                        bot_logger.info(f"Alert sent for {crypto} to {user.email}")
-                    except Exception as e:
-                        bot_logger.error(f"Error sending alert: {e}")
+                try:
+                    await self.bot.bot.send_message(
+                        chat_id=alert.telegram_chat_id,
+                        text=message
+                    )
+                    self.alert_cooldowns[alert_id] = datetime.now()
+                    bot_logger.info(f"Alert sent for {alert.name} to {alert.telegram_chat_id}")
+                except Exception as e:
+                    bot_logger.error(f"Error sending alert: {e}")
 
         # Remove alerts that have sent their final reminder
         for alert_id in alerts_to_remove:
@@ -403,20 +467,20 @@ class CryptoBot:
                 return
             
             # Get unique cryptocurrencies to check
-            cryptos = {alert.crypto.upper() for alert in alerts}
+            crypto_ids = {alert.cmc_id for alert in alerts}
             
             # Fetch latest prices
-            price_data = await self.alert_handler.price_monitor.get_crypto_prices(cryptos)
+            price_data = await self.alert_handler.price_monitor.get_crypto_prices(crypto_ids)
             
             # Process each cryptocurrency
-            for crypto in cryptos:
-                if crypto not in price_data:
+            for id in crypto_ids:
+                if id not in price_data:
                     continue
                     
-                crypto_alerts = [alert for alert in alerts if alert.crypto.upper() == crypto]
-                crypto_price_data = price_data[crypto][0]  # Get first quote for the symbol
-                
-                await self.alert_handler.process_price_alerts(crypto, crypto_price_data, crypto_alerts)
+                crypto_alerts = [alert for alert in alerts if alert.cmc_id == id]
+                crypto_price_data = price_data[id]  # Get first quote for the symbol
+                    
+                await self.alert_handler.process_price_alerts(id, crypto_price_data, crypto_alerts)
                 
         except Exception as e:
             bot_logger.error(f"Error in price check job: {e}", exc_info=True)
@@ -575,7 +639,7 @@ class CryptoBot:
         verification_code = self.generate_verification_code()
         
         # Save user data
-        user = User(
+        user = AlertUser(
             email=email,
             telegram_chat_id=chat_id,
             verification_code=verification_code,
@@ -652,7 +716,7 @@ class CryptoBot:
         
         alert_messages = []
         for alert in alerts:
-            msg = f"🔔 {alert.crypto}:\n"
+            msg = f"🔔 {alert.name} - {alert.symbol}:\n"
             if alert.upper_target_price:
                 msg += f"  • Target: ${alert.upper_target_price:,.2f}\n"
             if alert.lower_target_price:

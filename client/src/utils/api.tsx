@@ -120,7 +120,7 @@ const defaultRetryConfig = {
   delayMs: 5000,
 };
 
-export function useDataFetching<T>(config: EndpointConfig): FetchState<T> {
+export function useDataFetching<T>(config: EndpointConfig, email: string | null = null ): FetchState<T> {
   const [state, setState] = useState<FetchState<T>>({
     data: config.initialData?.data || null,
     isLoading: !config.initialData?.data,
@@ -139,7 +139,11 @@ export function useDataFetching<T>(config: EndpointConfig): FetchState<T> {
 
     while (retries <= maxRetries) {
       try {
-        const apiUrl = showLoading ? `${config.endpoint}?force_update=true` : config.endpoint;
+        const params = new URLSearchParams();
+        if (showLoading) params.append('force_update', 'true');
+        if (email) params.append('email', email);
+        const apiUrl = `${config.endpoint}${params.toString() ? `?${params.toString()}` : ''}`;
+
         const response = await api.get(apiUrl);
 
         if (config.cacheInStorage) {
@@ -273,5 +277,9 @@ export const ENDPOINTS = {
   DEFAULT_TOKENS: {
     endpoint: '/overview/get-default-tokens',
     staleTime: 10 * 60 * 1000,
+  },
+  ALERTS: {
+    endpoint: '/alerts/get-alerts',
+    staleTime: 5 * 60 * 1000,
   }
 } as const;

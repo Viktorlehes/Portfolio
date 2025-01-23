@@ -1,7 +1,7 @@
 # app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import overview, dashboard, tokens, wallets
+from app.routers import overview, dashboard, tokens, wallets, alerts
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import Depends
@@ -45,6 +45,7 @@ app.include_router(overview.router, prefix="/overview", tags=["Overview"], depen
 app.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"], dependencies=[Depends(verify_api_key)])
 app.include_router(tokens.router, prefix="/tokens", tags=["Tokens"], dependencies=[Depends(verify_api_key)])
 app.include_router(wallets.router, prefix="/wallets", tags=["Wallets"], dependencies=[Depends(verify_api_key)])
+app.include_router(alerts.router, prefix="/alerts", tags=["Alerts"], dependencies=[Depends(verify_api_key)])
 
 if __name__ == "__main__":
     import uvicorn

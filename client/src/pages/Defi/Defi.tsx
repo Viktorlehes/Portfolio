@@ -1,6 +1,5 @@
 import React from "react";
 import { useDataFetching, ENDPOINTS } from "../../utils/api";
-import CustomNavbar from "../../components/Default/CustomNavBar";
 import { components } from "../../types/api-types";
 import ValueCard from "../../components/Dashboard/WalletsView/ValueCard";
 import "./Defi.css";
@@ -68,7 +67,6 @@ const DefiView: React.FC = () => {
                 <div className="custom-headers">
                     <h1>DeFi</h1>
                 </div>
-                <CustomNavbar />
             </div>
             <div className="page-content">
                 <section className="defi-head">
