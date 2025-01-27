@@ -125,9 +125,10 @@ class DatabaseManager:
         bot_logger.info(f"Found user: {user_exists}")
         
         result = self.crypto_bot_db.users.update_one(
-            {"_id": ObjectId(user._id)} if user_exists else {"email": user.email},
+            {"_id": user_exists["_id"]} if user_exists else {"email": user.email},
             {"$set": user_dict},
         )
+        
         bot_logger.info(f"User saved: {result.upserted_id}")
         
         return str(result.upserted_id) if result.upserted_id else None
