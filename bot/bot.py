@@ -411,10 +411,7 @@ class CryptoBot:
             
             # Add error handlers
             self.app.add_error_handler(self.error_handler)
-            
-            # Initialize alert handler
-            self.alert_handler = AlertHandler(self.db, self.app, self.price_monitor)
-            bot_logger.info("Alert handler initialized")
+            bot_logger.info("Error handlers added")
             
             # Initialize alert handler
             self.alert_handler = AlertHandler(self.db, self.app, self.price_monitor)
