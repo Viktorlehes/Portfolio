@@ -601,7 +601,7 @@ class CryptoBot:
             is_verified=False
         )
         
-        print("user data:", user)
+        bot_logger.info(f"New user: {user}")
         
         if existing_user.verification_code:
             await update.message.reply_text(
