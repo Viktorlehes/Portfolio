@@ -394,6 +394,7 @@ class CryptoBot:
         self.mongodb_uri = Config.MONGODB_URI
         self.cmc_api_key = Config.CMC_API_KEY
         self._running = False
+        self._loop = None
         
         bot_logger.info("Initializing CryptoBot...")
         try:
@@ -406,7 +407,10 @@ class CryptoBot:
             bot_logger.info("Price monitor initialized")
             
             # Initialize Telegram application
-            self.app = ApplicationBuilder().token(self.telegram_token).build()
+            self.app = (ApplicationBuilder()
+                       .token(self.telegram_token)
+                       .concurrent_updates(False)
+                       .build())
             bot_logger.info("Telegram application created")
             
             # Add error handlers
@@ -422,8 +426,6 @@ class CryptoBot:
             bot_logger.info("Handlers setup complete")
             self.app.post_init = self.setup_commands
             bot_logger.info("Commands setup complete")
-            #self.app.post_init = self.start_price_monitoring
-            bot_logger.info("Handlers and commands setup complete")
             
         except Exception as e:
             bot_logger.error(f"Error initializing bot: {e}", exc_info=True)
@@ -702,18 +704,23 @@ class CryptoBot:
     async def error_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle errors in the Telegram bot"""
         try:
-            if isinstance(context.error, telegram.error.Conflict):
+            error = context.error
+            
+            if isinstance(error, telegram.error.Conflict):
                 if self._running:
                     bot_logger.warning("Detected another bot instance, shutting down...")
                     await self.shutdown()
                 return
+                
+            if isinstance(error, RuntimeError) and "different loop" in str(error):
+                bot_logger.warning("Event loop conflict detected, initiating graceful shutdown...")
+                await self.shutdown()
+                return
             
-            # Get the error details
-            error = context.error
+            # Log the error details
             tb_list = traceback.format_exception(None, error, error.__traceback__)
             tb_string = ''.join(tb_list)
             
-            # Log the error
             update_str = update.to_dict() if isinstance(update, Update) else str(update)
             message = (
                 f'An exception was raised while handling an update\n'
@@ -722,7 +729,7 @@ class CryptoBot:
             )
             bot_logger.error(message)
             
-            # Send message to user
+            # Notify user if possible
             if update and update.effective_message:
                 text = "Sorry, an error occurred while processing your request."
                 await update.effective_message.reply_text(text)
@@ -733,29 +740,70 @@ class CryptoBot:
     async def shutdown(self) -> None:
         """Gracefully shutdown the bot"""
         try:
-            self._running = False
-            if self.app:
-                await self.app.shutdown()
-            bot_logger.info("Bot has been shut down")
+            if self._running:
+                self._running = False
+                
+                # Cancel all pending tasks
+                if self._loop:
+                    for task in asyncio.all_tasks(self._loop):
+                        if not task.done():
+                            task.cancel()
+                    
+                    # Wait for tasks to complete
+                    await asyncio.gather(*asyncio.all_tasks(self._loop), 
+                                      return_exceptions=True)
+                
+                # Stop the application
+                if self.app:
+                    await self.app.stop()
+                    await self.app.shutdown()
+                
+                bot_logger.info("Bot has been shut down gracefully")
+                
         except Exception as e:
             bot_logger.error(f"Error during shutdown: {e}")
+        finally:
+            # Cleanup the event loop
+            if self._loop:
+                self._loop.stop()
+                self._loop.close()
 
     def run(self) -> None:
-        """Run the bot with proper startup and shutdown handling"""
+        """Run the bot with proper event loop handling"""
         try:
             if not self._running:
                 self._running = True
                 bot_logger.info("Starting bot...")
-                self.app.run_polling(allowed_updates=Update.ALL_TYPES)
+                
+                # Get or create event loop
+                try:
+                    self._loop = asyncio.get_event_loop()
+                except RuntimeError:
+                    self._loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(self._loop)
+                
+                # Run the application
+                self.app.run_polling(
+                    allowed_updates=Update.ALL_TYPES,
+                    close_loop=False,  # Don't close the loop automatically
+                    stop_signals=None  # Handle signals manually
+                )
+                
         except telegram.error.Conflict:
             bot_logger.warning("Another bot instance is already running")
         except KeyboardInterrupt:
             bot_logger.info("Bot stopped by user")
-            asyncio.run(self.shutdown())
+            if self._loop and self._loop.is_running():
+                self._loop.run_until_complete(self.shutdown())
         except Exception as e:
             bot_logger.error(f"Error running bot: {e}", exc_info=True)
-            asyncio.run(self.shutdown())
+            if self._loop and self._loop.is_running():
+                self._loop.run_until_complete(self.shutdown())
             raise
+        finally:
+            # Ensure the loop is closed
+            if self._loop and not self._loop.is_closed():
+                self._loop.close()
 
 if __name__ == "__main__":
     bot = CryptoBot()
