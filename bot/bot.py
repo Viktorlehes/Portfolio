@@ -582,6 +582,13 @@ class CryptoBot:
                 "Please use a different email address."
             )
             return WAITING_FOR_EMAIL
+        elif not existing_user:
+            await update.message.reply_text(
+                "This email is not registered."
+                "Please create an account on Matrix.fin to continue."
+                "Use /start to begin the process after registeration."
+            )
+            return ConversationHandler.END
         
         # Generate verification code
         verification_code = self.generate_verification_code()
@@ -593,6 +600,8 @@ class CryptoBot:
             verification_code=verification_code,
             is_verified=False
         )
+        
+        print("user data:", user)
         
         if existing_user.verification_code:
             await update.message.reply_text(
