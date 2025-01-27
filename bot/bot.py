@@ -3,6 +3,8 @@ import re
 import secrets
 import asyncio
 import aiohttp
+import telegram
+import traceback
 from bot.config import Config
 from bson import ObjectId
 from pymongo import MongoClient
@@ -391,6 +393,7 @@ class CryptoBot:
         self.telegram_token = Config.TELEGRAM_BOT_TOKEN
         self.mongodb_uri = Config.MONGODB_URI
         self.cmc_api_key = Config.CMC_API_KEY
+        self._running = False
         
         bot_logger.info("Initializing CryptoBot...")
         try:
@@ -405,6 +408,13 @@ class CryptoBot:
             # Initialize Telegram application
             self.app = ApplicationBuilder().token(self.telegram_token).build()
             bot_logger.info("Telegram application created")
+            
+            # Add error handlers
+            self.app.add_error_handler(self.error_handler)
+            
+            # Initialize alert handler
+            self.alert_handler = AlertHandler(self.db, self.app, self.price_monitor)
+            bot_logger.info("Alert handler initialized")
             
             # Initialize alert handler
             self.alert_handler = AlertHandler(self.db, self.app, self.price_monitor)
@@ -692,13 +702,62 @@ class CryptoBot:
         await update.message.reply_text("Registration cancelled. Use /start to begin again.")
         return ConversationHandler.END
 
-    def run(self) -> None:
-        """Run the bot"""
+    async def error_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle errors in the Telegram bot"""
         try:
-            bot_logger.info("Starting bot...")
-            self.app.run_polling()
+            if isinstance(context.error, telegram.error.Conflict):
+                if self._running:
+                    bot_logger.warning("Detected another bot instance, shutting down...")
+                    await self.shutdown()
+                return
+            
+            # Get the error details
+            error = context.error
+            tb_list = traceback.format_exception(None, error, error.__traceback__)
+            tb_string = ''.join(tb_list)
+            
+            # Log the error
+            update_str = update.to_dict() if isinstance(update, Update) else str(update)
+            message = (
+                f'An exception was raised while handling an update\n'
+                f'update = {update_str}\n\n'
+                f'error = {tb_string}'
+            )
+            bot_logger.error(message)
+            
+            # Send message to user
+            if update and update.effective_message:
+                text = "Sorry, an error occurred while processing your request."
+                await update.effective_message.reply_text(text)
+                
+        except Exception as e:
+            bot_logger.error(f"Error in error handler: {e}", exc_info=True)
+
+    async def shutdown(self) -> None:
+        """Gracefully shutdown the bot"""
+        try:
+            self._running = False
+            if self.app:
+                await self.app.shutdown()
+            bot_logger.info("Bot has been shut down")
+        except Exception as e:
+            bot_logger.error(f"Error during shutdown: {e}")
+
+    def run(self) -> None:
+        """Run the bot with proper startup and shutdown handling"""
+        try:
+            if not self._running:
+                self._running = True
+                bot_logger.info("Starting bot...")
+                self.app.run_polling(allowed_updates=Update.ALL_TYPES)
+        except telegram.error.Conflict:
+            bot_logger.warning("Another bot instance is already running")
+        except KeyboardInterrupt:
+            bot_logger.info("Bot stopped by user")
+            asyncio.run(self.shutdown())
         except Exception as e:
             bot_logger.error(f"Error running bot: {e}", exc_info=True)
+            asyncio.run(self.shutdown())
             raise
 
 if __name__ == "__main__":
