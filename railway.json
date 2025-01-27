@@ -1,11 +1,9 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "api": {
-      "dockerfile": "Dockerfile.api"
-    },
-    "bot": {
-      "dockerfile": "Dockerfile.bot"
-    }
+    "builder": "DOCKERFILE"
+  },
+  "deploy": {
+    "startCommand": ""
   }
 }
