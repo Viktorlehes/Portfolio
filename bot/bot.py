@@ -122,10 +122,14 @@ class DatabaseManager:
         
         user_exists = self.crypto_bot_db.users.find_one({"email": user.email})
         
+        bot_logger.info(f"Found user: {user_exists}")
+        
         result = self.crypto_bot_db.users.update_one(
             {"_id": ObjectId(user._id)} if user_exists else {"email": user.email},
             {"$set": user_dict},
         )
+        bot_logger.info(f"User saved: {result.upserted_id}")
+        
         return str(result.upserted_id) if result.upserted_id else None
 
     def get_user_by_chat_id(self, chat_id: str) -> Optional[AlertUser]:
@@ -611,7 +615,7 @@ class CryptoBot:
             return ConversationHandler.END
         else: 
             self.db.save_user(user)
-            print(f"User updated / saved: {user.email}")
+            bot_logger.info(f"User updated: {user.email}")
         
         # In a real application, send this code via email
         await update.message.reply_text(
