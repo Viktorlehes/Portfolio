@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { components } from '../../types/api-types';
 
@@ -7,11 +7,13 @@ type Alert = components["schemas"]["Alert"];
 interface ActiveAlertsProps {
   alerts: Alert[];
   isNull: boolean;
+  error: Number | null;
   onDeleteAlert: (alertId: string) => void;
 }
 
-const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, onDeleteAlert, isNull }) => {
+const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, isNull, error, onDeleteAlert }) => {
   const [mode, setMode] = useState<'asset' | 'wallet'>('asset');
+  const [errorElement, setErrorElement] = useState<JSX.Element | null>(null);
 
   const formatAlertDetails = (alert: Alert) => {
     if (alert.upper_target_price || alert.lower_target_price) {
@@ -23,6 +25,38 @@ const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, onDeleteAlert, isNu
       return `${alert.percent_change_threshold}%`;
     }
   };
+
+  useEffect(() => {
+    if (error) {
+      let element = <></>
+      switch (error) {
+        case 404:
+          element = <div className="error-message">
+            <p>Error: {error.toString()}</p>
+            <p>User not found</p>
+          </div>
+          break;
+        case 403:
+          element = <div className="">
+          <p>Visit <a referrerPolicy='no-referrer' target='_blank' href="https://t.me/MatrixFinAlertsBot">Telegram Bot🤖</a> and verify your account to create Alerts!</p>
+          </div>
+          break;
+        case 204:
+          element = <div className="error-message">
+            <p>No Active Alerts</p>
+          </div>
+          break;
+        default:
+          element = <div className="error-message">
+            <p>Error: {error.toString()}</p>
+          </div>
+          break;
+    }
+    setErrorElement(element);
+    }
+    console.log(error);
+    
+  }, [error]);
 
   return (
     <div className="aa-alerts-wrapper">
@@ -50,8 +84,8 @@ const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, onDeleteAlert, isNu
         </div>
       ) : (
         <div className="aa-alerts-container">
-          {isNull ? (
-            <div className="alert-item">No active alerts</div>
+          {(isNull || alerts.length == 0) ? (
+           <div>{ error ? errorElement : <div className="no-alerts">No Active Alerts</div> }</div>
           ) : (
             <div className="alerts-grid">
               {alerts.map((alert) => (

@@ -100,14 +100,15 @@ class DatabaseManager:
     def __init__(self, connection_string: str):
         self.client = MongoClient(connection_string)
         # Connect to the database collection crypto_bot_db
-        self.db: Database = self.client.crypto_bot_db
+        self.crypto_bot_db: Database = self.client.crypto_bot_db
+        self.client_db: Database = self.client.main
         self.init_db()
 
     def init_db(self):
         # Create indexes for faster queries
-        self.db.users.create_index("email", unique=True)
-        self.db.users.create_index("telegram_chat_id")
-        self.db.alerts.create_index([("email", 1), ("crypto", 1)])
+        self.crypto_bot_db.users.create_index("email", unique=True)
+        self.crypto_bot_db.users.create_index("telegram_chat_id")
+        self.crypto_bot_db.alerts.create_index([("email", 1), ("crypto", 1)])
 
     def save_user(self, user: AlertUser) -> str:
         user_dict = {
@@ -118,13 +119,13 @@ class DatabaseManager:
         }
         
         if user._id:
-            self.db.users.update_one(
+            self.crypto_bot_db.users.update_one(
                 {"_id": ObjectId(user._id)},
                 {"$set": user_dict}
             )
             return user._id
         else:
-            result = self.db.users.update_one(
+            result = self.crypto_bot_db.users.update_one(
                 {"email": user.email},
                 {"$set": user_dict},
                 upsert=True
@@ -132,7 +133,7 @@ class DatabaseManager:
             return str(result.upserted_id) if result.upserted_id else None
 
     def get_user_by_chat_id(self, chat_id: str) -> Optional[AlertUser]:
-        user_doc = self.db.users.find_one({"telegram_chat_id": chat_id})
+        user_doc = self.crypto_bot_db.users.find_one({"telegram_chat_id": chat_id})
         if user_doc:
             return AlertUser(
                 email=user_doc["email"],
@@ -144,7 +145,7 @@ class DatabaseManager:
         return None
 
     def get_user_by_email(self, email: str) -> Optional[AlertUser]:
-        user_doc = self.db.users.find_one({"email": email})
+        user_doc = self.crypto_bot_db.users.find_one({"email": email})
         if user_doc:
             return AlertUser(
                 email=user_doc["email"],
@@ -170,19 +171,19 @@ class DatabaseManager:
         }
         
         if alert._id:
-            self.db.alerts.update_one(
+            self.crypto_bot_db.alerts.update_one(
                 {"_id": ObjectId(alert._id)},
                 {"$set": alert_dict}
             )
             return alert._id
         else:
-            result = self.db.alerts.insert_one(alert_dict)
+            result = self.crypto_bot_db.alerts.insert_one(alert_dict)
             return str(result.inserted_id)
         
     def delete_alert(self, alert_id: str) -> bool:
         """Delete an alert by its ID"""
         try:
-            result = self.db.alerts.delete_one({"_id": ObjectId(alert_id)})
+            result = self.crypto_bot_db.alerts.delete_one({"_id": ObjectId(alert_id)})
             return result.deleted_count > 0
         except Exception as e:
             bot_logger.error(f"Error deleting alert: {e}")
@@ -190,7 +191,7 @@ class DatabaseManager:
         
     def get_alerts_by_telegram_chat_id(self, telegram_chat_id: str) -> List[Alert]:
         alerts = []
-        for alert_doc in self.db.alerts.find({"telegram_chat_id": telegram_chat_id}):
+        for alert_doc in self.crypto_bot_db.alerts.find({"telegram_chat_id": telegram_chat_id}):
             alerts.append(Alert(
                 cmc_id=alert_doc["cmc_id"],
                 symbol=alert_doc["symbol"],
@@ -208,11 +209,11 @@ class DatabaseManager:
 
     def get_all_active_alerts(self) -> List[Alert]:
         """Get all alerts for verified users"""
-        verified_users = self.db.users.find({"is_verified": True})
+        verified_users = self.crypto_bot_db.users.find({"is_verified": True})
         verified_telegram_ids = [user["telegram_chat_id"] for user in verified_users]
         
         alerts = []
-        for alert_doc in self.db.alerts.find({"telegram_chat_id": {"$in": verified_telegram_ids}}):
+        for alert_doc in self.crypto_bot_db.alerts.find({"telegram_chat_id": {"$in": verified_telegram_ids}}):
             alerts.append(Alert(
                 cmc_id=alert_doc["cmc_id"],
                 symbol=alert_doc["symbol"],
@@ -448,23 +449,10 @@ class CryptoBot:
                 name='price_check',
                 job_kwargs={'misfire_grace_time': 30}  # Allow job to be delayed up to 30 seconds
             )
-             
+            
         except Exception as e:
             bot_logger.error(f"Error setting up handlers: {e}", exc_info=True)
             raise
-
-    # async def start_price_monitoring(self, application: Application) -> None:
-    #     """Start the price monitoring in a background task"""
-    #     bot_logger.info("Starting price monitoring task")
-    #     while True:
-    #         try:
-    #             await self.check_prices_job(None)
-    #             await asyncio.sleep(60)  # Wait for 60 seconds before next check
-    #         except asyncio.CancelledError:
-    #             break
-    #         except Exception as e:
-    #             bot_logger.error(f"Error in price monitoring: {e}")
-    #             await asyncio.sleep(5)  # Short delay on error before retrying
 
     async def check_prices_job(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Job for checking prices and sending alerts"""
@@ -549,63 +537,6 @@ class CryptoBot:
             parse_mode='Markdown'
         )
 
-    # async def clear_chat(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    #     """Clear the chat and show active alerts"""
-    #     chat_id = str(update.effective_chat.id)
-    #     message_id = update.message.message_id
-    #     user = self.db.get_user_by_chat_id(chat_id)
-        
-    #     # Delete the command message itself
-    #     await update.message.delete()
-        
-    #     try:
-    #         # Delete messages from newest to oldest (last 100 messages)
-    #         for i in range(message_id, message_id - 100, -1):
-    #             try:
-    #                 await context.bot.delete_message(chat_id=chat_id, message_id=i)
-    #             except Exception:
-    #                 # Skip if message can't be deleted or doesn't exist
-    #                 continue
-                    
-    #     except Exception as e:
-    #         print(f"Error clearing chat: {e}")
-        
-    #     # Show welcome message and active alerts
-    #     welcome_text = "🧹 Chat cleared! Here are your active alerts:\n\n"
-    #     await context.bot.send_message(
-    #         chat_id=chat_id,
-    #         text=welcome_text
-    #     )
-        
-    #     # Reuse status command to show alerts
-    #     if user and user.is_verified:
-    #         alerts = self.db.get_alerts_by_email(user.email)
-    #         if not alerts:
-    #             await context.bot.send_message(
-    #                 chat_id=chat_id,
-    #                 text="You don't have any active alerts.\n"
-    #                      "Set up alerts through the website to receive notifications here."
-    #             )
-    #             return
-            
-    #         alert_messages = []
-    #         for alert in alerts:
-    #             msg = f"🔔 {alert.crypto}:\n"
-    #             if alert.upper_target_price:
-    #                 msg += f"  • Upper target: ${alert.upper_target_price:,.2f}\n"
-    #             if alert.lower_target_price:
-    #                 msg += f"  • Lower target: ${alert.lower_target_price:,.2f}\n"
-    #             if alert.percent_change_threshold:
-    #                 msg += f"  • Change threshold: {alert.percent_change_threshold}%\n"
-    #                 if alert.base_price:
-    #                     msg += f"  • Base price: ${alert.base_price:,.2f}\n"
-    #             alert_messages.append(msg)
-            
-    #         await context.bot.send_message(
-    #             chat_id=chat_id,
-    #             text="Your active alerts:\n\n" + "\n".join(alert_messages)
-    #         )
-
     def generate_verification_code(self) -> str:
         return secrets.token_hex(3)  # 6 character hex code
 
@@ -625,7 +556,7 @@ class CryptoBot:
             return ConversationHandler.END
         
         await update.message.reply_text(
-            "Welcome to the Crypto Alert Bot! 🤖\n"
+            "Welcome to the Alert bot by Matrix Finance! 🤖\n"
             "Please enter your email address to get started."
         )
         return WAITING_FOR_EMAIL
@@ -659,7 +590,16 @@ class CryptoBot:
             verification_code=verification_code,
             is_verified=False
         )
-        self.db.save_user(user)
+        
+        if existing_user.verification_code:
+            await update.message.reply_text(
+                "You have already registered an email address. "
+                "Use /verify to complete the verification process."
+            )
+            return ConversationHandler.END
+        else: 
+            self.db.save_user(user)
+            print(f"User updated / saved: {user.email}")
         
         # In a real application, send this code via email
         await update.message.reply_text(
@@ -761,7 +701,6 @@ class CryptoBot:
             bot_logger.error(f"Error running bot: {e}", exc_info=True)
             raise
 
-
 if __name__ == "__main__":
     bot = CryptoBot()
     try:
@@ -770,30 +709,3 @@ if __name__ == "__main__":
         print("Bot stopped by user")
     except Exception as e:
         print(f"Error occurred: {e}")
-        
-        
-# Example of creating different types of alerts
-# def create_upper_price_alert(email: str, crypto: str, target_price: float):
-#     alert = Alert(
-#         email=email,
-#         crypto=crypto,
-#         upper_target_price=target_price
-#     )
-#     db.save_alert(alert)
-
-# def create_lower_price_alert(email: str, crypto: str, target_price: float):
-#     alert = Alert(
-#         email=email,
-#         crypto=crypto,
-#         lower_target_price=target_price
-#     )
-#     db.save_alert(alert)
-
-# def create_percent_change_alert(email: str, crypto: str, threshold: float):
-#     alert = Alert(
-#         email=email,
-#         crypto=crypto,
-#         percent_change_threshold=threshold,
-#         base_price=None  # Will be set on first price check
-#     )
-#     db.save_alert(alert)

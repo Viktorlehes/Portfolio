@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./Alerts.css";
 import ActiveAlerts from "../../components/alerts/ActiveAlerts";
 import AlertCreation from "../../components/alerts/AlertCreation";
@@ -20,7 +20,8 @@ export interface CreateAlertData {
 
 const Alerts: React.FC = () => {
     const alertsState = useDataFetching<Alert[]>(ENDPOINTS.ALERTS, "viktor.lehes@gmail.com");
-
+    const [error, setError] = React.useState<Number | null>(Number(alertsState.error?.message.split(":")[1]) || null);
+    
     const onDeleteAlert = async (alertId: string) => {
         try {
             const response = await api.post("/alerts/delete-alert", { alert_id: alertId } );
@@ -46,6 +47,7 @@ const Alerts: React.FC = () => {
 
         try {
             const response = await api.post('/alerts/create-alert', alertData);
+            
             if (!response.detail) {
                 alertsState.refetch();
             }
@@ -67,6 +69,12 @@ const Alerts: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        if (alertsState.error) {
+            setError(Number(alertsState.error?.message.split(":")[1]));
+        }
+    }, [alertsState.error]);
+
     return (
         <div className="default-page">
             <div className="overview-page-header">
@@ -76,7 +84,8 @@ const Alerts: React.FC = () => {
             </div>
             <div className="page-content">
                 <div className="alerts-page-wrapper">
-                    <ActiveAlerts alerts={alertsState.data || []} isNull={alertsState.isLoading} onDeleteAlert={onDeleteAlert} />
+                    <ActiveAlerts alerts={alertsState.data || []} isNull={alertsState.isLoading} onDeleteAlert={onDeleteAlert} error={error}
+                     />
                     <AlertCreation onCreateAlert={onCreateAlert} fetchAssets={fetchSearchedTokens} />
                 </div>
             </div>

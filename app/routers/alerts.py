@@ -9,33 +9,24 @@ from app.schemas.alerts_users.alert_users import Alert, AlertUser
 router = APIRouter()
 
 @router.get("/get-alerts", response_model=List[Alert])
-async def get_alerts(
-    email: str
-):
-    try:
-        # First find user by email and verify
-        user = await bot_users.find_one({"email": email})
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-            
-        user = AlertUser.from_dict(user)
+async def get_alerts(email: str):
+    # First find user by email and verify
+    user = await bot_users.find_one({"email": email})        
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
         
-        if not user.is_verified:
-            raise HTTPException(status_code=403, detail="User not verified")
+    user = AlertUser.from_dict(user)
+    
+    if not user.is_verified:
+        raise HTTPException(status_code=403, detail="User not verified")
 
-        # Use the telegram_chat_id from the user record to find alerts
-        alerts = await alerts_collection.find({"telegram_chat_id": user.telegram_chat_id}).to_list(length=100)
+    # Use the telegram_chat_id from the user record to find alerts
+    alerts = await alerts_collection.find({"telegram_chat_id": user.telegram_chat_id}).to_list(length=100)
+    
+    if not alerts or alerts == []:
+        raise HTTPException(status_code=204, detail="No alerts found")
         
-        if not alerts or len(alerts) == 0:
-            raise HTTPException(status_code=404, detail="No alerts found")
-            
-        return [Alert.from_dict(alert) for alert in alerts]
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
-        )
+    return [Alert.from_dict(alert) for alert in alerts]
         
 class CreateAlertRequest(BaseModel):
     id: int

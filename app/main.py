@@ -9,16 +9,22 @@ from fastapi import Depends
 # Utils
 from app.utils.token_updates import update_all_tokens 
 from app.core.auth import verify_api_key
+from app.routers.wallets import get_wallets
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler = AsyncIOScheduler()
     
-    @scheduler.scheduled_job('interval', hours=1)
+    @scheduler.scheduled_job('interval', minutes=1)
     async def scheduled_job():
+        print("Updating tokens with scheduler...")
         await update_all_tokens()
+        
+    @scheduler.scheduled_job('interval', minutes=5)
+    async def scheduled_job():
+        print("Updating wallets with scheduler...")
+        await get_wallets()
     
-    print("Adding scheduler job...")
     scheduler.start()
     print("Started scheduler!")
     

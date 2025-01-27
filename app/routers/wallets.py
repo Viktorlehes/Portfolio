@@ -24,15 +24,12 @@ from app.core.db import tokens_collection
 
 router = APIRouter()
 
-
 @router.get('/get_wallets', response_model=List[Wallet], tags=["Dashboard"])
 async def get_wallets():
 
     print("Fetching wallets")
 
     try:
-        await update_all_tokens()
-
         current_time = datetime.now()
 
         asynio_wallets = wallets_collection.find({})
@@ -48,9 +45,8 @@ async def get_wallets():
         for index, wallet in enumerate(wallets):
             last_updated = wallet['last_updated']
 
-            print(f'Updating wallet {index+1}/{len(wallets)}')
-
             if (current_time - last_updated) > timedelta(minutes=5):
+                print(f'Updating wallet {index+1}/{len(wallets)}')
 
                 wallet_data = WalletData(color=wallet['color'], name=wallet['name'], mode=wallet['wallet_mode'])
 
