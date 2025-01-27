@@ -120,19 +120,13 @@ class DatabaseManager:
             "is_verified": user.is_verified
         }
         
-        if user._id:
-            self.crypto_bot_db.users.update_one(
-                {"_id": ObjectId(user._id)},
-                {"$set": user_dict}
-            )
-            return user._id
-        else:
-            result = self.crypto_bot_db.users.update_one(
-                {"email": user.email},
-                {"$set": user_dict},
-                upsert=True
-            )
-            return str(result.upserted_id) if result.upserted_id else None
+        user_exists = self.crypto_bot_db.users.find_one({"email": user.email})
+        
+        result = self.crypto_bot_db.users.update_one(
+            {"_id": ObjectId(user._id)} if user_exists else {"email": user.email},
+            {"$set": user_dict},
+        )
+        return str(result.upserted_id) if result.upserted_id else None
 
     def get_user_by_chat_id(self, chat_id: str) -> Optional[AlertUser]:
         user_doc = self.crypto_bot_db.users.find_one({"telegram_chat_id": chat_id})
