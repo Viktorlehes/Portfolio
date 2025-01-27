@@ -113,6 +113,10 @@ class DatabaseManager:
         self.crypto_bot_db.alerts.create_index([("email", 1), ("crypto", 1)])
 
     def save_user(self, user: AlertUser) -> str:
+        """
+        Save or update a user in the database.
+        Returns the user's ID as a string.
+        """
         user_dict = {
             "email": user.email,
             "telegram_chat_id": user.telegram_chat_id,
@@ -120,18 +124,18 @@ class DatabaseManager:
             "is_verified": user.is_verified
         }
         
-        user_exists = self.crypto_bot_db.users.find_one({"email": user.email})
+        # Check if user exists
+        existing_user = self.crypto_bot_db.users.find_one({"email": user.email})
+        bot_logger.info(f"Found user: {existing_user}")
         
-        bot_logger.info(f"Found user: {user_exists}")
-        
-        result = self.crypto_bot_db.users.update_one(
-            {"_id": user_exists["_id"]} if user_exists else {"email": user.email},
-            {"$set": user_dict},
-        )
-        
-        bot_logger.info(f"User saved: {result.upserted_id}")
-        
-        return str(result.upserted_id) if result.upserted_id else None
+        if existing_user:
+            # Update existing user
+            result = self.crypto_bot_db.users.update_one(
+                {"_id": existing_user["_id"]},
+                {"$set": user_dict}
+            )
+            bot_logger.info(f"Updated user document. Modified count: {result.modified_count}")
+            return str(existing_user["_id"])
 
     def get_user_by_chat_id(self, chat_id: str) -> Optional[AlertUser]:
         user_doc = self.crypto_bot_db.users.find_one({"telegram_chat_id": chat_id})
