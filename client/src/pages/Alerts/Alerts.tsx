@@ -19,7 +19,7 @@ export interface CreateAlertData {
 }
 
 const Alerts: React.FC = () => {
-    const alertsState = useDataFetching<Alert[]>(ENDPOINTS.ALERTS, "viktor.lehes@gmail.com");
+    const alertsState = useDataFetching<Alert[]>(ENDPOINTS.ALERTS, "timo.j.lehes@icloud.com");
     const [error, setError] = React.useState<Number | null>(Number(alertsState.error?.message.split(":")[1]) || null);
     
     const onDeleteAlert = async (alertId: string) => {
@@ -42,7 +42,7 @@ const Alerts: React.FC = () => {
             lower_target_price: alert.lower_target_price,
             percent_change_threshold: alert.percent_change_threshold,
             base_price: alert.base_price,
-            email: "viktor.lehes@gmail.com"
+            email: "timo.j.lehes@icloud.com"
         }
 
         try {
