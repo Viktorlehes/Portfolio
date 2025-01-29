@@ -22,6 +22,9 @@ const Alerts: React.FC = () => {
     const alertsState = useDataFetching<Alert[]>(ENDPOINTS.ALERTS, "timo.j.lehes@icloud.com");
     const [error, setError] = React.useState<Number | null>(Number(alertsState.error?.message.split(":")[1]) || null);
     
+    console.log(alertsState);
+    
+
     const onDeleteAlert = async (alertId: string) => {
         try {
             const response = await api.post("/alerts/delete-alert", { alert_id: alertId } );
