@@ -3,7 +3,8 @@ import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AuthProvider } from "./auth/authContext";
 import App from "./App";
-import Login from "./pages/misc/Login";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
 import Overview, {overviewLoader} from "./pages/Overview/Overview";
 import Dashboard, {dashboardLoader} from "./pages/Dashboard/Dashboard";
 import SingleWalletView, {walletLoader} from "./pages/Dashboard/SingleWalletView";
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/register",
+    element: <Register />
   },
   {
     path: "/",

@@ -25,11 +25,14 @@
   width: 2rem;
   height: 2rem;
   min-width: 2rem;
-  background-color: #8b5cf6;
-  border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.sidebar-logo img {
+  height: 58px;
+  width: 58px;
 }
 
 .sidebar-logo span {

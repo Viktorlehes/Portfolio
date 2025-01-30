@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, PanelsTopLeft, HandCoins, BellRing } from "lucide-react";
+import logo from "../../assets/Matrix_logo.png"
 import './Sidebar.css'
 
 const Sidebar: React.FC = () => {
@@ -18,7 +19,7 @@ const Sidebar: React.FC = () => {
     <div className="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <span>M</span>
+        <img src={logo} alt="M"/>
         </div>
         <span className="sidebar-title">Portfolio</span>
       </div>

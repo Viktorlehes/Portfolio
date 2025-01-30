@@ -1,5 +1,6 @@
 import os
 from pydantic_settings import BaseSettings
+from datetime import timedelta
 
 class Settings(BaseSettings):
     DB_URI: str
@@ -14,6 +15,11 @@ class Settings(BaseSettings):
     PROXY_USERNAME: str
     PROXY_PASSWORD: str
     TELEGRAM_BOT_TOKEN: str
+    USER_SECRET_KEY: str
+    USER_PUBLIC_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_DELTA: timedelta = timedelta(minutes=30)
+    ACCOUNT_LOCKOUT_DURATION: timedelta = timedelta(minutes=15)
     
     class Config:
         env_file = ".env"
@@ -34,3 +40,8 @@ VITE_API_URL = settings.VITE_API_URL
 PROXY_USERNAME = settings.PROXY_USERNAME
 PROXY_PASSWORD = settings.PROXY_PASSWORD
 TELEGRAM_BOT_TOKEN = settings.TELEGRAM_BOT_TOKEN
+USER_SECRET_KEY = settings.USER_SECRET_KEY
+USER_PUBLIC_KEY = settings.USER_PUBLIC_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_DELTA = settings.ACCESS_TOKEN_EXPIRE_DELTA
+ACCOUNT_LOCKOUT_DURATION = settings.ACCOUNT_LOCKOUT_DURATION

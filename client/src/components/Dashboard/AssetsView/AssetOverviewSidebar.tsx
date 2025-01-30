@@ -28,7 +28,7 @@ const AssetOverviewSidebar: React.FC<AssetOverviewSidebarProps> = ({ assets }) =
       {assets.map((asset, index) => (
         <div key={index} className="overview-row">
           <span className="asset-name">{asset.icon ? <img src={asset.icon} alt={asset.name} className="icon" /> : <CircleDollarSign/> }{asset.symbol}</span>
-          <span>${asset.value.toFixed(0)}</span>
+          <span>${asset.value.toFixed(2)}</span>
           <span>${asset.price.toFixed(2)}</span>
           <span className={`overview-change ${asset.change >= 0 ? 'positive' : 'negative'}`}>
             {asset.change >= 0 ? '+' : ''}{asset.change.toFixed(2)}%

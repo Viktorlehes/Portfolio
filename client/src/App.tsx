@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { StrictMode } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './components/Default/Sidebar';
 import './index.css'
@@ -6,6 +6,7 @@ import { ActiveFetchesProvider } from './context/ActiveFetchesContext';
 
 const App: React.FC = () => {
   return (
+    <StrictMode>
     <div className="app-container">
       <Sidebar />
       <div className="main-container">
@@ -14,6 +15,7 @@ const App: React.FC = () => {
         </ActiveFetchesProvider>
       </div>
     </div>
+    </StrictMode>
   );
 };
 

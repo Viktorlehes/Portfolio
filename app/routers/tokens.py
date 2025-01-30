@@ -430,3 +430,41 @@ async def get_zerion_token(request: FungibleIdRequest):
                 status_code=response.status_code,
                 detail="Error fetching data from Zerion API"
             )
+            
+async def seed_cmc_ids():
+    # Seed cmc_ids map
+    from app.core.db import CMC_id_map
+    from app.core.config import CM_API_KEY
+    
+    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map'
+
+    headers = {
+        'Accepts': 'application/json',
+        'X-CMC_PRO_API_KEY': CM_API_KEY
+    }
+    
+    session = Session()
+    session.headers.update(headers)
+    
+    try:
+        # Fetch the tokens data from CoinMarketCap
+        response = session.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Check if the token data is in the response
+        if 'data' in data:
+            print("Seeding CMC id map...")
+            
+            inserted = await CMC_id_map.insert_many(data['data'])
+            
+            if inserted:
+                print("CMC id map seeded!", inserted)
+            else:
+                print("CMC id map seeding failed!")
+        else:
+            print("No data in response!")
+    except Exception as e:
+        print(f"Error seeding CMC id map: {e}")
+    finally:
+        session.close()

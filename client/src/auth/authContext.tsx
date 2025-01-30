@@ -1,12 +1,32 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { decryptPin, generateSessionToken, validateSessionToken } from './crypto';
+import { isTokenExpired, getUserFromToken } from './crypto';
 import { RateLimiter } from './rateLimit';
-import { AUTH_CONFIG } from './config';
+import { api } from '../utils/api';
 
 interface AuthContextType {
-  isAuthenticated: boolean;
-  login: (pin: string) => Promise<{ success: boolean; error?: string }>;
+  isAuthenticated: boolean
+  validateSession: () => void;
+  login: (userData: LoginUserData) => Promise<{ success: boolean; error?: string, status?: number }>;
+  register: (userData: LoginUserData) => Promise<{ success: boolean; error?: string, status?: number }>; 
+  getUserData: () => UserData | null;
   logout: () => void;
+}
+
+export interface DecodedToken {
+  sub: string;  // user id
+  email: string;
+  exp: number;
+  iat: number;
+}
+
+interface UserData {
+  id: string;
+  email: string;
+}
+
+interface LoginUserData {
+  email: string
+  password: string
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -16,33 +36,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const sessionToken = sessionStorage.getItem('sessionToken');
     if (!sessionToken) return false;
-    return validateSessionToken(sessionToken);
+    return isTokenExpired(sessionToken);
   });
 
-  // Validate session token on mount and after any changes
+  const validateSession = () => {
+    const sessionToken = sessionStorage.getItem('sessionToken');
+    if (!sessionToken) {
+      setIsAuthenticated(false);
+      return;
+    }
+
+    const isExpired = isTokenExpired(sessionToken);
+    if (isExpired) {
+      sessionStorage.removeItem('sessionToken');
+      setIsAuthenticated(false);
+    } else {
+      setIsAuthenticated(true);
+    }
+  };
+
   useEffect(() => {
-    const validateSession = () => {
-      const sessionToken = sessionStorage.getItem('sessionToken');
-      if (!sessionToken) {
-        setIsAuthenticated(false);
-        return;
-      }
-
-      const isValid = validateSessionToken(sessionToken);
-      if (!isValid) {
-        sessionStorage.removeItem('sessionToken');
-        setIsAuthenticated(false);
-      } else {
-        setIsAuthenticated(true);
-      }
-    };
-
-    // Periodically check token validity
-    const interval = setInterval(validateSession, 60000); // Every minute
+    const interval = setInterval(validateSession, 10000); // Every minute
     return () => clearInterval(interval);
   }, []);
 
-  const login = async (pin: string) => {
+  const register = async (userData: LoginUserData) => {
+    try {
+      const response = await api.post("/users/register", userData)      
+
+      if (!response.error && response.access_token) {
+        sessionStorage.setItem('sessionToken', response.access_token)
+        setIsAuthenticated(true)
+        return {success: true}
+      } else if (response.error && response.status) {
+        return {
+          success: false,
+          error: response.error,
+          status: response.status
+        }
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: (error instanceof Error ? error.message : "An unknown error occurred")
+      }
+    }
+    return {
+      success: false,
+      error: "Something went wrong"
+    }
+  }
+
+  const login = async (userData: LoginUserData) => {
     const rateLimit = RateLimiter.attempt();
     
     if (!rateLimit.allowed) {
@@ -53,28 +98,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const decryptedCorrectPin = decryptPin(AUTH_CONFIG.ENCRYPTED_PIN);
-      const isValid = pin === decryptedCorrectPin;
+      
+      const response = await api.post("/users/login", userData)
 
-      if (isValid) {
-        // Generate and store secure session token
-        const sessionToken = generateSessionToken(Date.now());
-        sessionStorage.setItem('sessionToken', sessionToken);
+      if (response.access_token) {
+        sessionStorage.setItem('sessionToken', response.access_token);
         setIsAuthenticated(true);
         RateLimiter.reset();
         return { success: true };
       }
 
       const remainingAttempts = RateLimiter.getRemainingAttempts();
+
       return { 
         success: false, 
-        error: `Invalid PIN. ${remainingAttempts} attempts remaining.` 
+        error: `Invalid Email or Password. ${remainingAttempts} attempts remaining.` 
       };
     } catch (error) {
-      console.error('Authentication error:', error);
+      console.error('Invalid Email or Password:', error);
       return { 
         success: false, 
-        error: 'Authentication error occurred.' 
+        error: 'Invalid Email or Password.' 
       };
     }
   };
@@ -84,8 +128,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsAuthenticated(false);
   };
 
+  const getUserData = () => {
+    const sessionToken = sessionStorage.getItem('sessionToken');
+    if (!sessionToken) {
+      return null
+    }
+
+    const userData = getUserFromToken(sessionToken)
+    
+    if (userData) {
+      return userData
+    } else {
+      return null
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, validateSession, login, register, getUserData, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -52,14 +52,16 @@ export const fetchWithAuth = async (endpoint: string, options: FetchOptions = {}
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    const errorData = await response.json();
+    
+    return {
+      success: false,
+      error: errorData.detail || 'Request failed',
+      status: response.status
+    };
   }
 
-  if (response.status === 204) {
-    return null;
-  }
-
-  return response.json();
+  return await response.json(); 
 };
 
 // Helper methods for common HTTP methods
@@ -120,7 +122,7 @@ const defaultRetryConfig = {
   delayMs: 5000,
 };
 
-export function useDataFetching<T>(config: EndpointConfig, email: string | null = null ): FetchState<T> {
+export function useDataFetching<T>(config: EndpointConfig, email: string | null = null): FetchState<T> {
   const [state, setState] = useState<FetchState<T>>({
     data: config.initialData?.data || null,
     isLoading: !config.initialData?.data,

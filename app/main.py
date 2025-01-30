@@ -1,11 +1,10 @@
 # app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import overview, dashboard, tokens, wallets, alerts
+from app.routers import overview, dashboard, tokens, wallets, alerts, users
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import Depends
-from requests import Session
 
 # Utils
 from app.utils.token_updates import update_all_tokens 
@@ -30,7 +29,7 @@ async def lifespan(app: FastAPI):
     print("Started scheduler!")
     
     try:
-        yield  # Only one yield statement here
+        yield
     finally:
         print("Shutting down scheduler...")
         scheduler.shutdown()
@@ -53,44 +52,7 @@ app.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"], de
 app.include_router(tokens.router, prefix="/tokens", tags=["Tokens"], dependencies=[Depends(verify_api_key)])
 app.include_router(wallets.router, prefix="/wallets", tags=["Wallets"], dependencies=[Depends(verify_api_key)])
 app.include_router(alerts.router, prefix="/alerts", tags=["Alerts"], dependencies=[Depends(verify_api_key)])
-
-async def seed_cmc_ids():
-    # Seed cmc_ids map
-    from app.core.db import CMC_id_map
-    from app.core.config import CM_API_KEY
-    
-    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map'
-
-    headers = {
-        'Accepts': 'application/json',
-        'X-CMC_PRO_API_KEY': CM_API_KEY
-    }
-    
-    session = Session()
-    session.headers.update(headers)
-    
-    try:
-        # Fetch the tokens data from CoinMarketCap
-        response = session.get(url, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        
-        # Check if the token data is in the response
-        if 'data' in data:
-            print("Seeding CMC id map...")
-            
-            inserted = await CMC_id_map.insert_many(data['data'])
-            
-            if inserted:
-                print("CMC id map seeded!", inserted)
-            else:
-                print("CMC id map seeding failed!")
-        else:
-            print("No data in response!")
-    except Exception as e:
-        print(f"Error seeding CMC id map: {e}")
-    finally:
-        session.close()
+app.include_router(users.router, prefix="/users", tags=["Users"], dependencies=[Depends(verify_api_key)])
 
 if __name__ == "__main__":
     import uvicorn

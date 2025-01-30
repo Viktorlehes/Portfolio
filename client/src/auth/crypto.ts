@@ -1,34 +1,44 @@
-import CryptoJS from 'crypto-js';
+interface DecodedToken {
+  sub: string;     // user_id from your Python code
+  email: string;   // email from your Python code
+  exp: number;     // expiration timestamp
+}
 
-export const encryptPin = (pin: string): string => {
-  const secretKey = import.meta.env.VITE_PIN_SECRET_KEY;
-  return CryptoJS.AES.encrypt(pin, secretKey).toString();
-};
-
-export const decryptPin = (encryptedPin: string): string => {
-  const secretKey = import.meta.env.VITE_PIN_SECRET_KEY;
-  const bytes = CryptoJS.AES.decrypt(encryptedPin, secretKey);
-  return bytes.toString(CryptoJS.enc.Utf8);
-};
-
-// Generate a secure session token
-export const generateSessionToken = (timestamp: number): string => {
-  const secretKey = import.meta.env.VITE_PIN_SECRET_KEY;
-  const data = `${timestamp}-${crypto.randomUUID()}`;
-  return CryptoJS.AES.encrypt(data, secretKey).toString();
-};
-
-export const validateSessionToken = (token: string): boolean => {
+// Utility function to decode token
+export const decodeToken = (token: string): DecodedToken | null => {
   try {
-    const secretKey = import.meta.env.VITE_PIN_SECRET_KEY;
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const decoded = JSON.parse(window.atob(base64));
+      
+      const result = {
+        sub: decoded.sub,
+        email: decoded.email,
+        exp: decoded.exp
+      }
     
-    const decrypted = CryptoJS.AES.decrypt(token, secretKey).toString(CryptoJS.enc.Utf8);
-    const [timestamp] = decrypted.split('-');
-    
-    // Token is valid for 24 hours
-    const expirationTime = parseInt(timestamp) + (24 * 60 * 60 * 1000);
-    return Date.now() < expirationTime;
-  } catch {
-    return false;
+      return result ;
+  } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
   }
-};
+}
+
+export const isTokenExpired = (token: string): boolean => {
+  const decoded = decodeToken(token);
+  if (!decoded) return true;
+  
+  const currentTime = Math.floor(Date.now() / 1000);
+  
+  return decoded.exp < currentTime;
+}
+
+export const getUserFromToken = (token: string): { id: string, email: string } | null => {
+  const decoded = decodeToken(token);
+  if (!decoded) return null;
+  
+  return {
+      id: decoded.sub,
+      email: decoded.email
+  };
+}
