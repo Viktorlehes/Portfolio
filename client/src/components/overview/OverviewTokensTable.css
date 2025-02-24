@@ -90,8 +90,31 @@
 .token-row td {
   padding: 8px;
   text-align: right;
-  max-width: 100px;
+  max-width: 110px;
   border-bottom: 1px solid #eee;
+}
+
+.token-symbol-row img {
+  padding-right: 10px;
+}
+
+.token-symbol-row {
+  display: flex;
+  height: 60px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.token-only {
+  display: flex;
+  height: 60px;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.token-symbol {
+  height: 25px;
 }
 
 .token-row td:first-child {
@@ -145,6 +168,7 @@
   font-weight: 400;
   padding: 4px 8px;
   color: #323232;
+  text-align: center !important;
 }
 
 /* Positive changes */

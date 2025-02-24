@@ -20,12 +20,13 @@ const Register: React.FC = () => {
     const [error, setError] = useState('');
     const { register, isAuthenticated } = useAuth();
     const navigate = useNavigate();
+    const [successMessage, setSuccessMessage] = useState("")
 
     useEffect(() => {
         if (isAuthenticated) {
             navigate('/');
         }
-    })
+    }, [isAuthenticated] )
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,10 +48,10 @@ const Register: React.FC = () => {
             });
 
             if (result.success) {
-                navigate('/');
+                setSuccessMessage("Account created, Redirecting...")
             } else {
                 if (result.status && result.status === 409) {
-                    setError('Email already exists');
+                    setError('User already exists');
                 } else {
                     setError('Something went wrong');
                 }
@@ -120,6 +121,7 @@ const Register: React.FC = () => {
                         />
                     </div>
                     {error && <div className="error">{error}</div>}
+                    {successMessage && <div className="success">{successMessage}</div>}
                     <button type="submit">Register</button>
                     <div className="login-link">
                         Already have an account? <a href="/login">Login here</a>

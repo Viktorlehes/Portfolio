@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useLoaderData, Outlet, LoaderFunction } from "react-router-dom";
 import { ViewType } from "../../components/Dashboard/ViewSelector";
 import { components } from "../../types/api-types";
@@ -9,47 +9,42 @@ import ManageWallets from "./ManageWallets";
 import { api, ENDPOINTS, useDataFetching } from "../../utils/api";
 import "./Dashboard.css";
 
-type Wallet = components["schemas"]["Wallet"];
-
-interface LoaderData {
-  currentView: ViewType;
-  wallets: {
-    data: Wallet[] | null;
-    timestamp: number;
-  }
-}
+type Wallet = components["schemas"]["UnifiedWallet"];
 
 interface WalletUpdateData {
+  address: string
   name: string;
   color: string;
-  mode: string;
+  risk_level: string;
 }
 
 export const dashboardLoader: LoaderFunction = () => {
   const savedView = localStorage.getItem('dashboardView');
   const defaultView = 'Wallets' as ViewType;
   const currentView = savedView ? JSON.parse(savedView) as ViewType : defaultView;
-
-  const cachedWallets = localStorage.getItem(ENDPOINTS.WALLETS.endpoint);
   
   return {
     currentView,
-    wallets: cachedWallets ? JSON.parse(cachedWallets) : {
-      data: null,
-      timestamp: 0
-    }
   };
 };
 
 const Dashboard: React.FC = () => {
-  const { currentView: initialView, wallets: cachedWallets } = useLoaderData() as LoaderData;
+  const initialView = useLoaderData() as ViewType;
   const [currentView, setCurrentView] = useState<ViewType>(initialView);
   const location = useLocation();
 
   const walletState = useDataFetching<Wallet[]>({
     ...ENDPOINTS.WALLETS,
-    initialData: cachedWallets
   });
+
+  useEffect(() => {
+    const savedView = localStorage.getItem('dashboardView');
+    if (savedView) {
+      setCurrentView(JSON.parse(savedView));
+    } else {
+      setCurrentView("Wallets")
+    }
+  })
 
   const handleViewChange = (newView: ViewType) => {
     setCurrentView(newView);
@@ -62,7 +57,11 @@ const Dashboard: React.FC = () => {
 
   const handleDeleteWallet = async (address: string) => {
     try {
-      await api.delete(`/wallets/manage/delete_wallet/${address}`);
+      const response = await api.delete<boolean>(`/wallet/${address}`);
+
+      if (!response.success || response.error) {
+        return {success: false, error: response.error|| "Something went wrong"}
+      }
 
       await forcedWalletUpdate();
       return { success: true };
@@ -75,16 +74,20 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleAddWallet = async (address: string, name: string, color: string, walletType: string) => {
+  const handleAddWallet = async (address: string, name: string, color: string, risk_level: string) => {
     if (walletState.data?.some(wallet => wallet.address === address)) {
       return { success: false, error: 'Wallet already exists' };
     }
 
     try {
-      await api.post(
-        `/wallets/manage/new_wallet/${address}`,
-        { name, color, mode: walletType }
+      const response = await api.post<Wallet, WalletUpdateData>(
+        `/wallet/`,
+        { name, address, color, risk_level }
       );
+
+      if (!response.success || response.error) {
+        return { success: false, error: response.error || "Something went wrong"};
+      }
 
       await forcedWalletUpdate();
       return { success: true };
@@ -102,18 +105,27 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const colorOptions = [
+    { label: 'Safe', color: '#22c55e' },
+    { label: 'Normal', color: '#f97316' },
+    { label: 'Risky', color: '#ef4444' }
+  ];
+
   const handleEditWallet = async (wallet: Wallet) => {
+    const risk_level = colorOptions.find(option => option.color === wallet.color)?.label ?? "Normal";
     const updateData: WalletUpdateData = {
-      name: wallet.name,
+      address: wallet.address!,
       color: wallet.color,
-      mode: wallet.wallet_mode
+      risk_level: risk_level,
+      name: wallet.name
     };
 
     try {
-      await api.put(
-        `/wallets/manage/update_wallet/${wallet.address}`,
-        updateData
-      );
+      const response = await api.post<boolean, WalletUpdateData>(`/wallet/update`, updateData);
+
+      if (!response.success || response.error) {
+        return {success: false, error: response.error || "Something went wrong"}
+      }
 
       await forcedWalletUpdate();
       return { success: true };
@@ -126,30 +138,16 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const getLastUpdated = () => {
-    const cached = localStorage.getItem(ENDPOINTS.WALLETS.endpoint);
-    if (cached) {
-      const { timestamp } = JSON.parse(cached);
-      return timestamp;
-    }
-    return Date.now();
-  };
-
   const renderView = () => {
     if (location.pathname.includes('/wallet') || location.pathname.includes('/asset')) {
       return <Outlet />;
     }
-
-    const lastUpdated = getLastUpdated();
-
     switch (currentView) {
       case 'Wallets':
         return (
           <WalletsView
-            wallets={walletState.data || []}
+            walletState={walletState}
             onViewChange={handleViewChange}
-            isNull={walletState.isLoading}
-            lastUpdated={ lastUpdated }
             forcedUpdate={forcedWalletUpdate}
           />
         );
@@ -157,7 +155,7 @@ const Dashboard: React.FC = () => {
         return (
           <AssetsView 
             wallets={walletState.data|| []} 
-            isNull={walletState.isLoading} 
+            isNull={walletState.isLoading || !!walletState.error} 
           />
         );
       case 'Manage':
@@ -173,10 +171,8 @@ const Dashboard: React.FC = () => {
       default:
         return (
           <WalletsView
-            wallets={walletState.data || []}
+            walletState={walletState}
             onViewChange={handleViewChange}
-            isNull={walletState.isLoading}
-            lastUpdated={lastUpdated}
             forcedUpdate={forcedWalletUpdate}
           />
         );

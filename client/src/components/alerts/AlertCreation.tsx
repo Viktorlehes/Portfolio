@@ -4,10 +4,10 @@ import debounce from 'lodash/debounce';
 import { components } from '../../types/api-types';
 import { CreateAlertData } from '../../pages/Alerts/Alerts';
 
-type Token = components["schemas"]["FullCMCToken"];
+type Token = components["schemas"]["UnifiedToken"];
 
 interface AlertCreationProps {
-  onCreateAlert: (alert: CreateAlertData) => void;
+  onCreateAlert: (alert: CreateAlertData) => Promise<number | null>;
   fetchAssets: (query: string) => Promise<Token[]>;
 }
 
@@ -22,6 +22,7 @@ const AlertCreation: React.FC<AlertCreationProps> = ({
   const [searchResults, setSearchResults] = useState<Token[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const debouncedSearch = useCallback(
     debounce(async (term: string) => {
@@ -36,10 +37,10 @@ const AlertCreation: React.FC<AlertCreationProps> = ({
 
       try {
         const results = await fetchAssets(term) as Token[];
-        setSearchResults(results);
         if (results.length === 0) {
           setError('No assets found');
         }
+        setSearchResults(results);
       } catch (err) {
         setError('Error searching assets');
         setSearchResults([]);
@@ -55,33 +56,48 @@ const AlertCreation: React.FC<AlertCreationProps> = ({
     return () => debouncedSearch.cancel();
   }, [searchTerm, debouncedSearch]);
 
-  const handleCreateAlert = () => {
+  const handleCreateAlert = async () => {
     if (!selectedAsset || !threshold) return;
 
-    let alert = {
-      id: selectedAsset.id,
+    let alert: CreateAlertData = {
+      id: selectedAsset.cmc_id,
       symbol: selectedAsset.symbol,
       name: selectedAsset.name,
-      base_price: selectedAsset.quote.USD.price,
+      base_price: selectedAsset.price_data.price,
     };
 
     if (alertType === 'price') {
-      if (Number(threshold) > selectedAsset.quote.USD.price) {
-        onCreateAlert({
+      if (Number(threshold) > selectedAsset.price_data.price) {
+        const response = await onCreateAlert({
           ...alert,
           upper_target_price: Number(threshold),
         });
+        if (response && response == 403) {
+          setSubmitError("Verify your account before creating alert")
+        } else if (response) {
+          setSubmitError("Something went wrong")
+        }
       } else {
-        onCreateAlert({
+        const response = await onCreateAlert({
           ...alert,
           lower_target_price: Number(threshold),
         });
+        if (response && response == 403) {
+          setSubmitError("Verify your account before creating alert")
+        } else if (response) {
+          setSubmitError("Something went wrong")
+        }
       }
     } else {
-      onCreateAlert({
+      const response = await onCreateAlert({
         ...alert,
         percent_change_threshold: Number(threshold),
       });
+      if (response && response == 403) {
+        setSubmitError("Verify your account before creating alert")
+      } else if (response) {
+        setSubmitError("Something went wrong")
+      }
     }
 
     setSelectedAsset(null);
@@ -110,7 +126,7 @@ const AlertCreation: React.FC<AlertCreationProps> = ({
   const getPresetButtons = () => {
     if (!selectedAsset) return null;
     
-    const currentPrice = selectedAsset.quote.USD.price;
+    const currentPrice = selectedAsset.price_data.price;
     
     if (alertType === 'price') {
       const presets = [
@@ -177,7 +193,7 @@ const AlertCreation: React.FC<AlertCreationProps> = ({
               <div>
                 <span className="asset-symbol">{selectedAsset.symbol}</span>
                 {(selectedAsset.symbol != selectedAsset.name) && <span className="asset-name"> - {selectedAsset.name}</span>}
-                <span className="asset-name"> {`$${selectedAsset.quote.USD.price.toFixed(2)}`}</span>
+                <span className="asset-name"> {`$${selectedAsset.price_data.price.toFixed(2)}`}</span>
               </div>
               <button 
                 className="ac-change-button"
@@ -189,7 +205,7 @@ const AlertCreation: React.FC<AlertCreationProps> = ({
           )}
 
           {searchTerm.length >= 2 && !selectedAsset && (
-            <div className="search-results">
+            <div className={!isLoading ? "search-results" : "search-results-loading"}>
               {isLoading ? (
                 <div className="loading-spinner">
                   <Loader className="animate-spin" />
@@ -238,7 +254,7 @@ const AlertCreation: React.FC<AlertCreationProps> = ({
 
         <div className="form-group">
           {selectedAsset && (
-            <label>Current Price: ${selectedAsset.quote.USD.price.toFixed(2)}</label>
+            <label>Current Price: ${selectedAsset.price_data.price.toFixed(2)}</label>
           )}
           <div className="input-with-symbol">
             {alertType === 'price' ? <span className="currency-symbol">$</span>
@@ -252,6 +268,7 @@ const AlertCreation: React.FC<AlertCreationProps> = ({
             />
           </div>
           {selectedAsset && getPresetButtons()}
+          {submitError ? <span className='submit-error'>{submitError}</span> : null}
         </div>
 
         <button

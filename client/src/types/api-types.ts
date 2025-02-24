@@ -4,6 +4,195 @@
  */
 
 export interface paths {
+    "/user/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login User
+         * @description User login endpoint
+         */
+        post: operations["login_user_user_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register User
+         * @description User registration endpoint
+         */
+        post: operations["register_user_user_register_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Current User
+         * @description Get current user profile
+         */
+        get: operations["get_current_user_user_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/me/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Email
+         * @description Verify user email
+         */
+        post: operations["verify_email_user_me_verify_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/me/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change Password
+         * @description Change user password
+         */
+        post: operations["change_password_user_me_change_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallet/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Wallets
+         * @description Get all wallets for the current user.
+         *     Optionally filter by source (zerion, binance, etc.)
+         */
+        get: operations["get_wallets_wallet__get"];
+        put?: never;
+        /**
+         * Create Wallet
+         * @description Create a new wallet for the current user.
+         */
+        post: operations["create_wallet_wallet__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallet/{address}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Wallet
+         * @description Get a specific wallet by address
+         */
+        get: operations["get_wallet_wallet__address__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Remove Wallet
+         * @description Remove (deactivate) a wallet for the current user
+         */
+        delete: operations["remove_wallet_wallet__address__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallet/{address}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh Wallet
+         * @description Manually refresh wallet data from source
+         */
+        post: operations["refresh_wallet_wallet__address__refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallet/update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Update Wallet
+         * @description Update a wallet for the current user
+         */
+        post: operations["update_wallet_wallet_update_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/overview/feargreedindex": {
         parameters: {
             query?: never;
@@ -21,15 +210,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/overview/cryptostats": {
+    "/overview/marketstats": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Cryptostats */
-        get: operations["get_cryptostats_overview_cryptostats_get"];
+        /** Get Markestats */
+        get: operations["get_markestats_overview_marketstats_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -38,15 +227,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/overview/currencyIds": {
+    "/overview/scraped-CGLS-data": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Currencies */
-        get: operations["get_currencies_overview_currencyIds_get"];
+        /** Get Scraped Cgls Data */
+        get: operations["get_scraped_CGLS_data_overview_scraped_CGLS_data_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -55,207 +244,17 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/overview/get-coinglass-BTC-open-interest": {
+    "/overview/token_table": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Coinglass Market Data */
-        get: operations["get_coinglass_market_data_overview_get_coinglass_BTC_open_interest_get"];
+        /** Get Token Table */
+        get: operations["get_token_table_overview_token_table_get"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/overview/get-scraped-CGLS-data": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Scraped Coinglass Data */
-        get: operations["get_scraped_coinglass_data_overview_get_scraped_CGLS_data_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/overview/get-latest-tokens": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Latest Tokens */
-        get: operations["get_latest_tokens_overview_get_latest_tokens_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/overview/get-coinglass-token-via-symbol/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Coinglass Token */
-        get: operations["get_coinglass_token_overview_get_coinglass_token_via_symbol__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/overview/overview-tokens-table-data": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Overview Tokens Table Data */
-        get: operations["get_overview_tokens_table_data_overview_overview_tokens_table_data_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/overview/get-user-catagories": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Cmc Catagories */
-        get: operations["get_cmc_catagories_overview_get_user_catagories_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/overview/update-categories": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Update Categories
-         * @description Update existing categories with latest data from CMC
-         */
-        get: operations["update_categories_overview_update_categories_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/overview/get-default-categories": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Default Categories */
-        get: operations["get_default_categories_overview_get_default_categories_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/overview/add-CMC-category": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Add Cmc Category */
-        post: operations["add_cmc_category_overview_add_CMC_category_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/overview/remove-CMC-category": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Remove Cmc Category */
-        post: operations["remove_cmc_category_overview_remove_CMC_category_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/overview/get-custom-categories": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Custom Categories */
-        get: operations["get_custom_categories_overview_get_custom_categories_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/overview/remove-custom-category": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Remove Custom Category */
-        post: operations["remove_custom_category_overview_remove_custom_category_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -279,7 +278,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/overview/find-tokens-by-name": {
+    "/overview/default_categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Default Categories */
+        get: operations["get_default_categories_overview_default_categories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/user_categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get User Categories */
+        get: operations["get_user_categories_overview_user_categories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/add-cmc-category": {
         parameters: {
             query?: never;
             header?: never;
@@ -288,8 +321,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Get Tokens By Name */
-        post: operations["get_tokens_by_name_overview_find_tokens_by_name_post"];
+        /** Add Cmc Category */
+        post: operations["add_cmc_category_overview_add_cmc_category_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/remove-cmc-category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove Cmc Category */
+        post: operations["remove_cmc_category_overview_remove_cmc_category_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -313,7 +363,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/dashboard/charts": {
+    "/overview/remove-custom-category": {
         parameters: {
             query?: never;
             header?: never;
@@ -322,15 +372,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Get Charts */
-        post: operations["get_charts_dashboard_charts_post"];
+        /** Remove Cmc Category */
+        post: operations["remove_cmc_category_overview_remove_custom_category_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/dashboard/allCharts": {
+    "/overview/find-tokens-by-name": {
         parameters: {
             query?: never;
             header?: never;
@@ -339,15 +389,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Get Charts */
-        post: operations["get_charts_dashboard_allCharts_post"];
+        /** Find Token By Name */
+        post: operations["find_token_by_name_overview_find_tokens_by_name_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/tokens/update_tokens": {
+    "/chart/day": {
         parameters: {
             query?: never;
             header?: never;
@@ -356,225 +406,33 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Update Tokens */
-        post: operations["update_tokens_tokens_update_tokens_post"];
+        /** Get Token Chart */
+        post: operations["get_token_chart_chart_day_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/tokens/token_via_id/{token_id}": {
+    "/alert/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Token Via Id */
-        get: operations["get_token_via_id_tokens_token_via_id__token_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tokens/token_via_symbol/{token_symbol}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Token By Symbol */
-        get: operations["get_token_by_symbol_tokens_token_via_symbol__token_symbol__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tokens/token_via_CG": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Get Token Via Cg */
-        post: operations["get_token_via_CG_tokens_token_via_CG_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tokens/token_via_chain/{chain}/{token_address}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Token Via Chain */
-        get: operations["get_token_via_chain_tokens_token_via_chain__chain___token_address__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tokens/tokens/latest": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Latest Tokens */
-        get: operations["get_latest_tokens_tokens_tokens_latest_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tokens/zerionToken": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Get Zerion Token */
-        post: operations["get_zerion_token_tokens_zerionToken_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/wallets/get_wallets": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Wallets */
-        get: operations["get_wallets_wallets_get_wallets_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/wallets/manage/new_wallet/{wallet_address}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create New Wallet
-         * @description Create a new wallet with its positions based on selected mode.
-         */
-        post: operations["create_new_wallet_wallets_manage_new_wallet__wallet_address__post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/wallets/manage/update_wallet/{wallet_address}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Update Wallet */
-        put: operations["update_wallet_wallets_manage_update_wallet__wallet_address__put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/wallets/manage/delete_wallet/{wallet_address}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Delete Wallet
-         * @description Delete a wallet by its address.
-         */
-        delete: operations["delete_wallet_wallets_manage_delete_wallet__wallet_address__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/alerts/get-alerts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Alerts */
-        get: operations["get_alerts_alerts_get_alerts_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/alerts/create-alert": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
+        /** Get User Alerts */
+        get: operations["get_user_alerts_alert__get"];
         put?: never;
         /** Create Alert */
-        post: operations["create_alert_alerts_create_alert_post"];
+        post: operations["create_alert_alert__post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/alerts/delete-alert": {
+    "/alert/{alert_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -583,9 +441,9 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        post?: never;
         /** Delete Alert */
-        post: operations["delete_alert_alerts_delete_alert_post"];
-        delete?: never;
+        delete: operations["delete_alert_alert__alert_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -595,6 +453,306 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** APIResponse[Alert] */
+        APIResponse_Alert_: {
+            data?: components["schemas"]["Alert"] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[CoinglassMetrics] */
+        APIResponse_CoinglassMetrics_: {
+            data?: components["schemas"]["CoinglassMetrics"] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[DayChartData] */
+        APIResponse_DayChartData_: {
+            data?: components["schemas"]["DayChartData"] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[FearGreadData] */
+        APIResponse_FearGreadData_: {
+            data?: components["schemas"]["FearGreadData"] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[List[Alert]] */
+        APIResponse_List_Alert__: {
+            /** Data */
+            data?: components["schemas"]["Alert"][] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[List[DefaultCategory]] */
+        APIResponse_List_DefaultCategory__: {
+            /** Data */
+            data?: components["schemas"]["DefaultCategory"][] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[List[UnifiedToken]] */
+        APIResponse_List_UnifiedToken__: {
+            /** Data */
+            data?: components["schemas"]["UnifiedToken"][] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[List[UnifiedWallet]] */
+        APIResponse_List_UnifiedWallet__: {
+            /** Data */
+            data?: components["schemas"]["UnifiedWallet"][] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[LoginUserResponse] */
+        APIResponse_LoginUserResponse_: {
+            data?: components["schemas"]["LoginUserResponse"] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[MarketStats] */
+        APIResponse_MarketStats_: {
+            data?: components["schemas"]["MarketStats"] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[UnifiedWallet] */
+        APIResponse_UnifiedWallet_: {
+            data?: components["schemas"]["UnifiedWallet"] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[Union[List[UnifiedToken], NoneType]] */
+        APIResponse_Union_List_UnifiedToken___NoneType__: {
+            /** Data */
+            data?: components["schemas"]["UnifiedToken"][] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[Union[UserCategories, NoneType]] */
+        APIResponse_Union_UserCategories__NoneType__: {
+            data?: components["schemas"]["UserCategories"] | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /** APIResponse[bool] */
+        APIResponse_bool_: {
+            /** Data */
+            data?: boolean | null;
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+            /**
+             * Status Code
+             * @default 200
+             */
+            status_code: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
         /** Alert */
         Alert: {
             /** Cmc Id */
@@ -620,181 +778,27 @@ export interface components {
              * Format: date-time
              */
             created_at?: string;
-            /**  Id */
-            _id: string;
-        };
-        /** AssetAttributes */
-        AssetAttributes: {
-            /** Name */
-            name: string;
-            /** Symbol */
-            symbol: string;
-            /** Description */
-            description: string;
-            icon: components["schemas"]["IconData"];
-            flags: components["schemas"]["Flags"];
-            /** External Links */
-            external_links: components["schemas"]["ExternalLink"][];
-            /** Implementations */
-            implementations: components["schemas"]["Implementation"][];
-            market_data: components["schemas"]["MarketData"];
-        };
-        /** AssetData */
-        AssetData: {
-            /** Type */
-            type: string;
             /** Id */
             id: string;
-            attributes: components["schemas"]["AssetAttributes"];
-            relationships: components["schemas"]["AssetRelationships"];
         };
-        /** AssetLinks */
-        AssetLinks: {
-            /** Self */
-            self: string;
-        };
-        /** AssetRelationships */
-        AssetRelationships: {
-            chart_day: components["schemas"]["ChartRelation"];
-            chart_hour: components["schemas"]["ChartRelation"];
-            chart_max: components["schemas"]["ChartRelation"];
-            chart_month: components["schemas"]["ChartRelation"];
-            chart_week: components["schemas"]["ChartRelation"];
-            chart_year: components["schemas"]["ChartRelation"];
-        };
-        /** BasePosition */
-        BasePosition: {
-            /** Id */
-            id: string;
-            /** Name */
-            name: string;
-            /** Symbol */
-            symbol: string;
-            position_type: components["schemas"]["PositionType"];
-            quantity: components["schemas"]["Quantity"];
-            /** Value */
-            value: number;
-            /** Price */
-            price: number;
-            changes: components["schemas"]["Changes"];
+        /** Attributes */
+        Attributes: {
             /**
-             * Last Updated
+             * Begin At
              * Format: date-time
              */
-            last_updated: string;
-            /** Chain */
-            chain: string;
-            /** Icon */
-            icon: string;
-            /** Fungible Id */
-            fungible_id: string;
-        };
-        /** CG */
-        CG: {
-            /** Name */
-            name: string;
-            /** Symbol */
-            symbol: string;
-        };
-        /** CachedResponse[CategoryResponse] */
-        CachedResponse_CategoryResponse_: {
-            data: components["schemas"]["CategoryResponse"];
-            /** Is Updating */
-            is_updating: boolean;
-            /** Last Updated */
-            last_updated: string;
-        };
-        /** CachedResponse[CoinglassMetrics] */
-        CachedResponse_CoinglassMetrics_: {
-            data: components["schemas"]["CoinglassMetrics"];
-            /** Is Updating */
-            is_updating: boolean;
-            /** Last Updated */
-            last_updated: string;
-        };
-        /** CachedResponse[List[CustomCategory]] */
-        CachedResponse_List_CustomCategory__: {
-            /** Data */
-            data: components["schemas"]["CustomCategory"][];
-            /** Is Updating */
-            is_updating: boolean;
-            /** Last Updated */
-            last_updated: string;
-        };
-        /** CachedResponse[List[FullCMCToken]] */
-        CachedResponse_List_FullCMCToken__: {
-            /** Data */
-            data: components["schemas"]["FullCMCToken"][];
-            /** Is Updating */
-            is_updating: boolean;
-            /** Last Updated */
-            last_updated: string;
-        };
-        /** CachedResponse[List[TokenOverviewData]] */
-        CachedResponse_List_TokenOverviewData__: {
-            /** Data */
-            data: components["schemas"]["TokenOverviewData"][];
-            /** Is Updating */
-            is_updating: boolean;
-            /** Last Updated */
-            last_updated: string;
-        };
-        /** CategoryData */
-        CategoryData: {
-            /** Id */
-            id: string;
-            /** Name */
-            name: string;
-            /** Title */
-            title: string;
-            /** Description */
-            description: string;
-            /** Num Tokens */
-            num_tokens: number;
-            /** Avg Price Change */
-            avg_price_change: number;
-            /** Market Cap */
-            market_cap: number;
-            /** Market Cap Change */
-            market_cap_change: number;
-            /** Volume */
-            volume: number;
-            /** Volume Change */
-            volume_change: number;
+            begin_at: string;
             /**
-             * Last Updated
+             * End At
              * Format: date-time
              */
-            last_updated: string;
-        };
-        /**
-         * CategoryResponse
-         * @description A list of category data objects
-         */
-        CategoryResponse: components["schemas"]["CategoryData"][];
-        /** Changes */
-        Changes: {
-            /** Absolute 1D */
-            absolute_1d: number;
-            /** Percent 1D */
-            percent_1d: number;
-        };
-        /** ChartRelation */
-        ChartRelation: {
-            links: components["schemas"]["ChartRelationLinks"];
-            data: components["schemas"]["ChartRelationData"];
-        };
-        /** ChartRelationData */
-        ChartRelationData: {
-            /** Type */
-            type: string;
-            /** Id */
-            id: string;
-        };
-        /** ChartRelationLinks */
-        ChartRelationLinks: {
-            /** Related */
-            related: string;
+            end_at: string;
+            stats: components["schemas"]["Stats"];
+            /** Points */
+            points: [
+                number,
+                number
+            ][];
         };
         /** CoinglassMetrics */
         CoinglassMetrics: {
@@ -813,8 +817,6 @@ export interface components {
             symbol: string;
             /** Name */
             name: string;
-            /** Email */
-            email: string;
             /** Upper Target Price */
             upper_target_price?: number | null;
             /** Lower Target Price */
@@ -824,8 +826,200 @@ export interface components {
             /** Base Price */
             base_price?: number | null;
         };
-        /** CryptoData */
-        CryptoData: {
+        /**
+         * CreateWalletRequest
+         * @description Request model for creating a new wallet
+         */
+        CreateWalletRequest: {
+            /**
+             * Address
+             * @description Wallet address
+             */
+            address: string;
+            /**
+             * Name
+             * @description Display name for the wallet
+             */
+            name: string;
+            /**
+             * Color
+             * @description Color code for UI display
+             */
+            color: string;
+            /**
+             * Risk Level
+             * @description Risk level of wallet
+             */
+            risk_level: string;
+        };
+        /** CustomCategory */
+        CustomCategory: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Market Cap */
+            market_cap: number;
+            /** Volume */
+            volume: number;
+            /** Volume Change */
+            volume_change: number;
+            /** Avg Price Change */
+            avg_price_change: number;
+            /**
+             * Last Updated
+             * Format: date-time
+             */
+            last_updated: string;
+            /** Tokens */
+            tokens: number[];
+            /** Owner Id */
+            owner_id: string;
+        };
+        /** Data */
+        Data: {
+            /** Type */
+            type: string;
+            /** Id */
+            id: string;
+            attributes: components["schemas"]["Attributes"];
+        };
+        /** DayChartData */
+        DayChartData: {
+            links: components["schemas"]["Links"];
+            data: components["schemas"]["Data"];
+        };
+        /** DefaultCategory */
+        DefaultCategory: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Market Cap */
+            market_cap: number;
+            /** Volume */
+            volume: number;
+            /** Volume Change */
+            volume_change: number;
+            /** Avg Price Change */
+            avg_price_change: number;
+            /**
+             * Last Updated
+             * Format: date-time
+             */
+            last_updated: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Market Cap Change */
+            market_cap_change: number;
+            /** Num Tokens */
+            num_tokens: number;
+        };
+        /**
+         * DefiPosition
+         * @description Standardized Position model combining data from all sources
+         */
+        DefiPosition: {
+            /**
+             * Id
+             * @description Unique identifier
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Symbol */
+            symbol: string;
+            /** Position Name */
+            position_name: string;
+            /** Protocol */
+            protocol: string;
+            /** Chain */
+            chain: string;
+            /** Position Type */
+            position_type: string;
+            /** Cmc Id */
+            cmc_id: number | null;
+            /** Zerion Id */
+            zerion_id: string | null;
+            /** Coingecko Id */
+            coingecko_id: string | null;
+            /** Implementatioxns */
+            implementatioxns: components["schemas"]["TokenImplementation"][];
+            price_data: components["schemas"]["PositionPriceData"];
+            quantity: components["schemas"]["PositionQuantityData"];
+            /** Icon */
+            icon: string | null;
+            /** Protocol Id */
+            protocol_id: string | null;
+            /** Protocol Link */
+            protocol_link: string | null;
+            /** Protocol Icon */
+            protocol_icon: string | null;
+            /** Protocol Chain */
+            protocol_chain: string | null;
+            /** Dapp */
+            dapp: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ExternalLinks */
+        ExternalLinks: {
+            /** Type */
+            type: string;
+            /** Name */
+            name: string;
+            /** Url */
+            url: string;
+        };
+        /** FearGreadData */
+        FearGreadData: {
+            /** Value */
+            value: number;
+            /**
+             * Update Time
+             * Format: date-time
+             */
+            update_time: string;
+            /** Value Classification */
+            value_classification: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /** Links */
+        Links: {
+            /** Self */
+            self: string;
+        };
+        /** LoginUserRequest */
+        LoginUserRequest: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Password */
+            password: string;
+        };
+        /** LoginUserResponse */
+        LoginUserResponse: {
+            /** Access Token */
+            access_token: string;
+            /**
+             * Token Type
+             * @default bearer
+             */
+            token_type: string;
+        };
+        /** MarketStats */
+        MarketStats: {
             /** Active Cryptocurrencies */
             active_cryptocurrencies: number;
             /** Total Cryptocurrencies */
@@ -872,316 +1066,13 @@ export interface components {
             derivatives_24h_percentage_change: number;
             /** Quote */
             quote: {
-                [key: string]: components["schemas"]["app__schemas__market__market_data__USDQuote"];
+                [key: string]: components["schemas"]["USDQuote"];
             };
             /**
              * Last Updated
              * Format: date-time
              */
             last_updated: string;
-        };
-        /** CustomCategory */
-        CustomCategory: {
-            /** Id */
-            id: string;
-            /** Name */
-            name: string;
-            /** Num Tokens */
-            num_tokens: number;
-            /** Market Cap */
-            market_cap: number;
-            /** Market Cap Change */
-            market_cap_change: number;
-            /** Volume */
-            volume: number;
-            /** Volume Change */
-            volume_change: number;
-            /** Tokens Ids */
-            tokens_ids: components["schemas"]["CustomCategoryTokens"][];
-            /**
-             * Last Updated
-             * Format: date-time
-             */
-            last_updated: string;
-        };
-        /** CustomCategoryTokens */
-        CustomCategoryTokens: {
-            /** Id */
-            id: number;
-            /** Symbol */
-            symbol: string;
-        };
-        /** DefiPosition */
-        DefiPosition: {
-            /** Id */
-            id: string;
-            /** Name */
-            name: string;
-            /** Symbol */
-            symbol: string;
-            position_type: components["schemas"]["PositionType"];
-            quantity: components["schemas"]["Quantity"];
-            /** Value */
-            value: number;
-            /** Price */
-            price: number;
-            changes: components["schemas"]["Changes"];
-            /**
-             * Last Updated
-             * Format: date-time
-             */
-            last_updated: string;
-            /** Chain */
-            chain: string;
-            /** Icon */
-            icon: string;
-            /** Fungible Id */
-            fungible_id: string;
-            /** Protocol Id */
-            protocol_id: string;
-            /** Protocol Link */
-            protocol_link: string;
-            /** Protocol Icon */
-            protocol_icon: string;
-            /** Protocol Chain */
-            protocol_chain: string;
-            /** Protocol */
-            protocol: string;
-            /** Position Name */
-            position_name: string;
-            /** Dapp */
-            dapp: string;
-        };
-        /** DeleteAlertRequest */
-        DeleteAlertRequest: {
-            /** Email */
-            email: string;
-            /** Alert Id */
-            alert_id: string;
-        };
-        /** ExchangeMarketData */
-        ExchangeMarketData: {
-            /** Symbol */
-            symbol: string;
-            /** Exname */
-            exName: string;
-            /** Price */
-            price: number;
-            /** Pricechange24H */
-            priceChange24h: number;
-            /** Pricechangepercent24H */
-            priceChangePercent24h: number;
-            /** Volusd24H */
-            volUsd24h: number;
-            /** Buyvolusd24H */
-            buyVolUsd24h: number;
-            /** Sellvolusd24H */
-            sellVolUsd24h: number;
-            /** Volusdchange24H */
-            volUsdChange24h: number;
-            /** Volusdchangepercent24H */
-            volUsdChangePercent24h: number;
-            /** Flowsusd24H */
-            flowsUsd24h: number;
-            /** Pricechange12H */
-            priceChange12h: number;
-            /** Pricechangepercent12H */
-            priceChangePercent12h: number;
-            /** Volusd12H */
-            volUsd12h: number;
-            /** Buyvolusd12H */
-            buyVolUsd12h: number;
-            /** Sellvolusd12H */
-            sellVolUsd12h: number;
-            /** Volusdchange12H */
-            volUsdChange12h: number;
-            /** Volusdchangepercent12H */
-            volUsdChangePercent12h: number;
-            /** Flowsusd12H */
-            flowsUsd12h: number;
-            /** Pricechange4H */
-            priceChange4h: number;
-            /** Pricechangepercent4H */
-            priceChangePercent4h: number;
-            /** Volusd4H */
-            volUsd4h: number;
-            /** Buyvolusd4H */
-            buyVolUsd4h: number;
-            /** Sellvolusd4H */
-            sellVolUsd4h: number;
-            /** Volusdchange4H */
-            volUsdChange4h: number;
-            /** Volusdchangepercent4H */
-            volUsdChangePercent4h: number;
-            /** Flowsusd4H */
-            flowsUsd4h: number;
-            /** Pricechange1H */
-            priceChange1h: number;
-            /** Pricechangepercent1H */
-            priceChangePercent1h: number;
-            /** Volusd1H */
-            volUsd1h: number;
-            /** Buyvolusd1H */
-            buyVolUsd1h: number;
-            /** Sellvolusd1H */
-            sellVolUsd1h: number;
-            /** Volusdchange1H */
-            volUsdChange1h: number;
-            /** Volusdchangepercent1H */
-            volUsdChangePercent1h: number;
-            /** Flowsusd1H */
-            flowsUsd1h: number;
-            /** Pricechange1W */
-            priceChange1w: number;
-            /** Pricechangepercent1W */
-            priceChangePercent1w: number;
-            /** Volusd1W */
-            volUsd1w: number;
-            /** Buyvolusd1W */
-            buyVolUsd1w: number;
-            /** Sellvolusd1W */
-            sellVolUsd1w: number;
-            /** Volusdchange1W */
-            volUsdChange1w: number;
-            /** Volusdchangepercent1W */
-            volUsdChangePercent1w: number;
-            /** Flowsusd1W */
-            flowsUsd1w: number;
-        };
-        /** ExchangeResponse */
-        ExchangeResponse: {
-            /** Code */
-            code: string;
-            /** Msg */
-            msg: string;
-            /** Data */
-            data: components["schemas"]["ExchangeMarketData"][];
-            /** Success */
-            success: boolean;
-        };
-        /** ExternalLink */
-        ExternalLink: {
-            /** Type */
-            type: unknown;
-            /** Name */
-            name: string;
-            /** Url */
-            url: string;
-        };
-        /** FearGreedResponse */
-        FearGreedResponse: {
-            data: components["schemas"]["ValueData"];
-            status: components["schemas"]["app__schemas__market__feargreed_response__Status"];
-        };
-        /** Flags */
-        Flags: {
-            /** Verified */
-            verified: boolean;
-        };
-        /** FullCMCToken */
-        FullCMCToken: {
-            /** Id */
-            id: number;
-            /** Name */
-            name: string;
-            /** Symbol */
-            symbol: string;
-            /** Slug */
-            slug: string;
-            /** Num Market Pairs */
-            num_market_pairs: number;
-            /** Date Added */
-            date_added: string;
-            /** Tags */
-            tags: components["schemas"]["Tag"][];
-            /** Max Supply */
-            max_supply: number | null;
-            /** Circulating Supply */
-            circulating_supply: number;
-            /** Total Supply */
-            total_supply: number;
-            platform: components["schemas"]["Platform"] | null;
-            /** Is Active */
-            is_active: number;
-            /** Infinite Supply */
-            infinite_supply: boolean;
-            /** Cmc Rank */
-            cmc_rank: number;
-            /** Is Fiat */
-            is_fiat: number;
-            /** Self Reported Circulating Supply */
-            self_reported_circulating_supply: number | null;
-            /** Self Reported Market Cap */
-            self_reported_market_cap: number | null;
-            /** Tvl Ratio */
-            tvl_ratio: number | null;
-            /** Last Updated */
-            last_updated: string;
-            /** Quote */
-            quote: {
-                [key: string]: components["schemas"]["app__schemas__tokens__full_token__USDQuote"];
-            };
-        };
-        /** FullToken */
-        FullToken: {
-            /** Zerion Token */
-            zerion_token: boolean;
-            token_data?: components["schemas"]["Token"] | null;
-            zerion_data: components["schemas"]["BasePosition"];
-        };
-        /** FungibleIdRequest */
-        FungibleIdRequest: {
-            /** Fungible Id */
-            fungible_id: string;
-        };
-        /** HTTPValidationError */
-        HTTPValidationError: {
-            /** Detail */
-            detail?: components["schemas"]["ValidationError"][];
-        };
-        /** IconData */
-        IconData: {
-            /** Url */
-            url: string;
-        };
-        /** Implementation */
-        Implementation: {
-            /** Chain Id */
-            chain_id: string;
-            /** Address */
-            address: string | null;
-            /** Decimals */
-            decimals: number;
-        };
-        /** MarketChanges */
-        MarketChanges: {
-            /** Percent 1D */
-            percent_1d: number;
-            /** Percent 30D */
-            percent_30d: number;
-            /** Percent 90D */
-            percent_90d: number;
-            /** Percent 365D */
-            percent_365d: number;
-        };
-        /** MarketData */
-        MarketData: {
-            /** Total Supply */
-            total_supply: number;
-            /** Circulating Supply */
-            circulating_supply: number;
-            /** Market Cap */
-            market_cap: number;
-            /** Fully Diluted Valuation */
-            fully_diluted_valuation: number;
-            /** Price */
-            price: number;
-            changes: components["schemas"]["MarketChanges"];
-        };
-        /** MarketDataResponse */
-        MarketDataResponse: {
-            status: components["schemas"]["app__schemas__market__market_data__Status"];
-            data: components["schemas"]["CryptoData"];
         };
         /** MetricItem */
         MetricItem: {
@@ -1194,75 +1085,59 @@ export interface components {
             /** Sub Text */
             sub_text?: string | null;
         };
-        /** OpenInterestData */
-        OpenInterestData: {
-            /** Exchange */
-            exchange: string;
-            /** Symbol */
-            symbol: string;
-            /** Openinterest */
-            openInterest: number;
-            /** Openinterestamount */
-            openInterestAmount: number;
-            /** Openinterestbycoinmargin */
-            openInterestByCoinMargin: number;
-            /** Openinterestbystablecoinmargin */
-            openInterestByStableCoinMargin: number;
-            /** Openinterestamountbycoinmargin */
-            openInterestAmountByCoinMargin: number;
-            /** Openinterestamountbystablecoinmargin */
-            openInterestAmountByStableCoinMargin: number;
-            /** Openinterestchangepercent5M */
-            openInterestChangePercent5m: number;
-            /** Openinterestchangepercent15M */
-            openInterestChangePercent15m: number;
-            /** Openinterestchangepercent30M */
-            openInterestChangePercent30m: number;
-            /** Openinterestchangepercent1H */
-            openInterestChangePercent1h: number;
-            /** Openinterestchangepercent4H */
-            openInterestChangePercent4h: number;
-            /** Openinterestchangepercent24H */
-            openInterestChangePercent24h: number;
-        };
-        /** OpenInterestResponse */
-        OpenInterestResponse: {
-            /** Code */
-            code: string;
-            /** Msg */
-            msg: string;
-            /** Data */
-            data: components["schemas"]["OpenInterestData"][];
-            /** Success */
-            success: boolean;
-        };
-        /** Platform */
-        Platform: {
-            /** Id */
-            id: number;
-            /** Name */
-            name: string;
-            /** Symbol */
-            symbol: string;
-            /** Slug */
-            slug: string;
-            /** Token Address */
-            token_address: string;
+        /**
+         * PositionPriceData
+         * @description Unified price data from multiple sources
+         */
+        PositionPriceData: {
+            /** Current Value */
+            current_value: number;
+            /** Current Price */
+            current_price: number;
+            /** Price Change 24H */
+            price_change_24h: number | null;
+            /** Percent Change 24H */
+            percent_change_24h: number;
         };
         /**
-         * PositionType
-         * @enum {string}
+         * PositionQuantityData
+         * @description Position Quantity Data
          */
-        PositionType: "wallet" | "deposit" | "loan" | "reward" | "staked" | "locked" | "airdrop" | "margin";
-        /** Quantity */
-        Quantity: {
+        PositionQuantityData: {
+            /** Int */
+            int: string;
+            /** Decimals */
+            decimals: number;
             /** Float */
             float: number;
             /** Numeric */
             numeric: string;
         };
-        /** Tag */
-        Tag: {
+        /** RegisterUserRequest */
+        RegisterUserRequest: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Password */
+            password: string;
+        };
+        /** Stats */
+        Stats: {
+            /** First */
+            first: number;
+            /** Min */
+            min: number;
+            /** Avg */
+            avg: number;
+            /** Max */
+            max: number;
+            /** Last */
+            last: number;
+        };
+        /** Tags */
+        Tags: {
             /** Slug */
             slug: string;
             /** Name */
@@ -1270,195 +1145,93 @@ export interface components {
             /** Category */
             category: string;
         };
-        /** Token */
-        Token: {
-            /** Id */
-            id: string;
-            /** Symbol */
-            symbol: string;
-            /** Name */
-            name: string;
-            /** Value */
-            value: number;
-            /** Price */
-            price: number;
-            /** Amount */
-            amount: number;
-            /** Change24H */
-            change24h: number;
-            /** Position Type */
-            position_type: string;
-            /** Chain */
-            chain: string;
-            /**
-             * Last Updated
-             * Format: date-time
-             */
-            last_updated: string;
-            /**
-             * Zerion Id
-             * @default false
-             */
-            zerion_id: boolean | null;
-            /**
-             * Coingecko Id
-             * @default false
-             */
-            coingecko_id: boolean | null;
-        };
-        /** TokenOverviewData */
-        TokenOverviewData: {
-            /**
-             * Name
-             * @description Name of the cryptocurrency
-             */
-            name: string;
-            /**
-             * Price
-             * @description Current price in USD
-             */
-            price: number;
-            /**
-             * Change24H
-             * @description 24-hour price change percentage
-             */
-            change24h: number;
-            /**
-             * Change7D
-             * @description 7-day price change percentage
-             */
-            change7d: number;
-            /**
-             * Volume
-             * @description 24-hour trading volume in USD
-             */
-            volume: number;
-            /**
-             * Volumechange24H
-             * @description 24-hour volume change percentage
-             */
-            volumeChange24h: number;
-            /**
-             * Marketcap
-             * @description Market capitalization in USD
-             */
-            marketCap: number;
-            /**
-             * Netinflow24H
-             * @description Net inflow over 24 hours across all exchanges
-             */
-            netInflow24h: number;
-            /**
-             * Lastupdated
-             * @description Last updated timestamp
-             */
-            lastUpdated: string;
-        };
-        /** ValidationError */
-        ValidationError: {
-            /** Location */
-            loc: (string | number)[];
-            /** Message */
-            msg: string;
-            /** Error Type */
-            type: string;
-        };
-        /** ValueData */
-        ValueData: {
-            /** Value */
-            value: number;
-            /**
-             * Update Time
-             * Format: date-time
-             */
-            update_time: string;
-            /** Value Classification */
-            value_classification: string;
-        };
-        /** Wallet */
-        Wallet: {
+        /**
+         * TokenImplementation
+         * @description Chain-specific token implementation details
+         */
+        TokenImplementation: {
+            /** Chain Id */
+            chain_id: string;
             /** Address */
-            address: string;
-            /** Name */
-            name: string;
-            /** Color */
-            color: string;
-            wallet_mode: components["schemas"]["WalletMode"];
-            /**
-             * Last Updated
-             * Format: date-time
-             */
-            last_updated: string;
-            /** Tokens */
-            tokens?: components["schemas"]["FullToken"][];
-            /** Defi Positions */
-            defi_positions?: components["schemas"]["DefiPosition"][];
-            /**
-             * Asset Total
-             * @default 0
-             */
-            asset_total: number;
-            /**
-             * Defi Total
-             * @default 0
-             */
-            defi_total: number;
-        };
-        /** WalletData */
-        WalletData: {
-            /** Color */
-            color: string;
-            /** Name */
-            name: string;
-            /** Mode */
-            mode: string;
+            address: string | null;
+            /** Decimals */
+            decimals: number;
         };
         /**
-         * WalletMode
-         * @enum {string}
+         * TokenNetFlow
+         * @description Exchange flow data from Coinglass
          */
-        WalletMode: "simple" | "full";
-        /** ZerionToken */
-        ZerionToken: {
-            links: components["schemas"]["AssetLinks"];
-            data: components["schemas"]["AssetData"];
-        };
-        /** Status */
-        app__schemas__market__feargreed_response__Status: {
+        TokenNetFlow: {
             /**
-             * Timestamp
+             * Net Flow 1H
+             * @default 0
+             */
+            net_flow_1h: number;
+            /**
+             * Net Flow 4H
+             * @default 0
+             */
+            net_flow_4h: number;
+            /**
+             * Net Flow 12H
+             * @default 0
+             */
+            net_flow_12h: number;
+            /**
+             * Net Flow 24H
+             * @default 0
+             */
+            net_flow_24h: number;
+            /**
+             * Net Flow 1W
+             * @default 0
+             */
+            net_flow_1w: number;
+            /**
+             * Last Updated
              * Format: date-time
              */
-            timestamp: string;
-            /** Error Code */
-            error_code: string;
-            /** Error Message */
-            error_message: string;
-            /** Elapsed */
-            elapsed: number;
-            /** Credit Count */
-            credit_count: number;
+            last_updated: string;
         };
-        /** Status */
-        app__schemas__market__market_data__Status: {
+        /**
+         * TokenPrice
+         * @description Price data from cmc
+         */
+        TokenPrice: {
+            /** Price */
+            price: number;
+            /** Volume 24H */
+            volume_24h: number;
+            /** Volume Change 24H */
+            volume_change_24h: number;
+            /** Percent Change 1H */
+            percent_change_1h: number;
+            /** Percent Change 24H */
+            percent_change_24h: number;
+            /** Percent Change 7D */
+            percent_change_7d: number;
+            /** Percent Change 30D */
+            percent_change_30d: number;
+            /** Percent Change 60D */
+            percent_change_60d: number;
+            /** Percent Change 90D */
+            percent_change_90d: number;
+            /** Market Cap */
+            market_cap: number;
+            /** Market Cap Dominance */
+            market_cap_dominance: number;
+            /** Fully Diluted Market Cap */
+            fully_diluted_market_cap: number;
+            /** Tvl */
+            tvl: number | null;
             /**
-             * Timestamp
+             * Last Updated
              * Format: date-time
              */
-            timestamp: string;
-            /** Error Code */
-            error_code: number;
-            /** Error Message */
-            error_message?: string | null;
-            /** Elapsed */
-            elapsed: number;
-            /** Credit Count */
-            credit_count: number;
-            /** Notice */
-            notice?: string | null;
+            last_updated: string;
         };
         /** USDQuote */
-        app__schemas__market__market_data__USDQuote: {
+        USDQuote: {
             /** Total Market Cap */
             total_market_cap: number;
             /** Total Volume 24H */
@@ -1507,35 +1280,292 @@ export interface components {
              */
             last_updated: string;
         };
-        /** USDQuote */
-        app__schemas__tokens__full_token__USDQuote: {
-            /** Price */
-            price: number;
-            /** Volume 24H */
-            volume_24h: number;
-            /** Volume Change 24H */
-            volume_change_24h: number;
-            /** Percent Change 1H */
-            percent_change_1h: number;
-            /** Percent Change 24H */
-            percent_change_24h: number;
-            /** Percent Change 7D */
-            percent_change_7d: number;
-            /** Percent Change 30D */
-            percent_change_30d: number;
-            /** Percent Change 60D */
-            percent_change_60d: number;
-            /** Percent Change 90D */
-            percent_change_90d: number;
-            /** Market Cap */
-            market_cap: number;
-            /** Market Cap Dominance */
-            market_cap_dominance: number;
-            /** Fully Diluted Market Cap */
-            fully_diluted_market_cap: number;
-            /** Tvl */
-            tvl: number | null;
-            /** Last Updated */
+        /**
+         * UnifiedToken
+         * @description Standardized token model combining data from all sources
+         */
+        UnifiedToken: {
+            /**
+             * Id
+             * @description Unique identifier
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Symbol */
+            symbol: string;
+            /** Slug */
+            slug: string;
+            /** Cmc Id */
+            cmc_id: number;
+            /** Cg Id */
+            cg_id?: string | null;
+            /** Zerion Id */
+            zerion_id?: string | null;
+            /** Implementations */
+            implementations?: components["schemas"]["TokenImplementation"][] | null;
+            /** Total Supply */
+            total_supply?: number | null;
+            /** Circulating Supply */
+            circulating_supply?: number | null;
+            /** Max Supply */
+            max_supply?: number | null;
+            price_data: components["schemas"]["TokenPrice"];
+            net_flow_data?: components["schemas"]["TokenNetFlow"] | null;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: components["schemas"]["Tags"][] | null;
+            /** Description */
+            description?: string | null;
+            /** Logo Url */
+            logo_url?: string | null;
+            /** External Links */
+            external_links?: components["schemas"]["ExternalLinks"][] | null;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+            /** Rank */
+            rank?: number | null;
+            /** Zerion Last Updated */
+            zerion_last_updated?: string | null;
+            /**
+             * Last Active
+             * Format: date-time
+             */
+            last_active: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * UnifiedWallet
+         * @description Standardized wallet model supporting multiple sources
+         */
+        UnifiedWallet: {
+            /** Id */
+            id: string;
+            /** User Id */
+            user_id: string;
+            /** Name */
+            name: string;
+            /** Color */
+            color: string;
+            /**
+             * Risk Level
+             * @default Default
+             */
+            risk_level: string;
+            source: components["schemas"]["WalletSource"];
+            /** Address */
+            address: string | null;
+            /**
+             * Tokens
+             * @default []
+             */
+            tokens: components["schemas"]["WalletToken"][];
+            /**
+             * Defi Positions
+             * @default []
+             */
+            defi_positions: components["schemas"]["DefiPosition"][];
+            /**
+             * Total Value Usd
+             * @default 0
+             */
+            total_value_usd: number;
+            /** Total Value Assets */
+            total_value_assets: number | null;
+            /** Total Value Defi */
+            total_value_defi: number | null;
+            /**
+             * Metadata
+             * @default {}
+             */
+            metadata: Record<string, never>;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * UpdateWalletRequest
+         * @description Request model for updating a new wallet
+         */
+        UpdateWalletRequest: {
+            /**
+             * Address
+             * @description Wallet address
+             */
+            address: string;
+            /**
+             * Name
+             * @description Display name for the wallet
+             */
+            name: string;
+            /**
+             * Color
+             * @description Color code for UI display
+             */
+            color: string;
+            /**
+             * Risk Level
+             * @description Risk level of wallet
+             */
+            risk_level: string;
+        };
+        /**
+         * User
+         * @example {
+         *       "email": "user@example.com",
+         *       "email_verified": true,
+         *       "id": "123e4567-e89b-12d3-a456-426614174000",
+         *       "mfa_enabled": false
+         *     }
+         */
+        User: {
+            /**  Id */
+            _id?: string;
+            /** Email */
+            email: string;
+            /**
+             * Email Verified
+             * @default false
+             */
+            email_verified: boolean | null;
+            /** Password Hash */
+            password_hash: string;
+            /**
+             * Mfa Enabled
+             * @default false
+             */
+            mfa_enabled: boolean;
+            /** Mfa Secret */
+            mfa_secret?: string | null;
+            /** Password Reset Token */
+            password_reset_token?: string | null;
+            /** Password Reset Expires */
+            password_reset_expires?: string | null;
+            /**
+             * Failed Login Attempts
+             * @default 0
+             */
+            failed_login_attempts: number | null;
+            /** Locked Until */
+            locked_until?: string | null;
+            settings?: components["schemas"]["UserSettings"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /**
+             * Last Login
+             * Format: date-time
+             */
+            last_login?: string;
+            /**
+             * Last Active
+             * Format: date-time
+             */
+            last_active?: string;
+        };
+        /** UserCategories */
+        UserCategories: {
+            /** Default Categories */
+            default_categories: components["schemas"]["DefaultCategory"][] | null;
+            /** Custom Categories */
+            custom_categories: components["schemas"]["CustomCategory"][] | null;
+        };
+        /**
+         * UserSettings
+         * @example {
+         *       "default_currency": "USD",
+         *       "notification_preferences": {},
+         *       "theme": "light"
+         *     }
+         */
+        UserSettings: {
+            /**
+             * Default Currency
+             * @default USD
+             */
+            default_currency: string;
+            /**
+             * Theme
+             * @default light
+             */
+            theme: string;
+            /**
+             * Notification Preferences
+             * @default {}
+             */
+            notification_preferences: Record<string, never>;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
+        /**
+         * WalletSource
+         * @enum {string}
+         */
+        WalletSource: "zerion" | "binance" | "coinbase" | "custom";
+        /**
+         * WalletToken
+         * @description Token position in a wallet
+         */
+        WalletToken: {
+            /** Token Id */
+            token_id: string;
+            /** Name */
+            name: string;
+            /** Symbol */
+            symbol: string;
+            /** Amount */
+            amount: number;
+            /** Value Usd */
+            value_usd: number;
+            /** Price Usd */
+            price_usd: number;
+            /** Price 24H Change */
+            price_24h_change: number;
+            /** Position Type */
+            position_type: string;
+            /** Chain */
+            chain: string | null;
+            /** Icon */
+            icon: string | null;
+            /**
+             * Last Updated
+             * Format: date-time
+             */
             last_updated: string;
         };
     };
@@ -1547,6 +1577,335 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    login_user_user_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginUserRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_LoginUserResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    register_user_user_register_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterUserRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_LoginUserResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_current_user_user_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+        };
+    };
+    verify_email_user_me_verify_email_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    change_password_user_me_change_password_post: {
+        parameters: {
+            query: {
+                old_password: string;
+                new_password: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_wallets_wallet__get: {
+        parameters: {
+            query?: {
+                /** @description Filter by wallet source */
+                source?: components["schemas"]["WalletSource"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_List_UnifiedWallet__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_wallet_wallet__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWalletRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UnifiedWallet_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_wallet_wallet__address__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                address: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UnifiedWallet_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_wallet_wallet__address__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                address: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_bool_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_wallet_wallet__address__refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                address: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UnifiedWallet_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_wallet_wallet_update_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWalletRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_bool_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_feargreedindex_overview_feargreedindex_get: {
         parameters: {
             query?: never;
@@ -1562,12 +1921,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FearGreedResponse"];
+                    "application/json": components["schemas"]["APIResponse_FearGreadData_"];
                 };
             };
         };
     };
-    get_cryptostats_overview_cryptostats_get: {
+    get_markestats_overview_marketstats_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1582,12 +1941,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MarketDataResponse"];
+                    "application/json": components["schemas"]["APIResponse_MarketStats_"];
                 };
             };
         };
     };
-    get_currencies_overview_currencyIds_get: {
+    get_scraped_CGLS_data_overview_scraped_CGLS_data_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1602,12 +1961,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["APIResponse_CoinglassMetrics_"];
                 };
             };
         };
     };
-    get_coinglass_market_data_overview_get_coinglass_BTC_open_interest_get: {
+    get_token_table_overview_token_table_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1622,290 +1981,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OpenInterestResponse"];
-                };
-            };
-        };
-    };
-    get_scraped_coinglass_data_overview_get_scraped_CGLS_data_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CachedResponse_CoinglassMetrics_"];
-                };
-            };
-        };
-    };
-    get_latest_tokens_overview_get_latest_tokens_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    get_coinglass_token_overview_get_coinglass_token_via_symbol__get: {
-        parameters: {
-            query: {
-                symbol: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ExchangeResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_overview_tokens_table_data_overview_overview_tokens_table_data_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CachedResponse_List_TokenOverviewData__"];
-                };
-            };
-        };
-    };
-    get_cmc_catagories_overview_get_user_catagories_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CachedResponse_CategoryResponse_"];
-                };
-            };
-        };
-    };
-    update_categories_overview_update_categories_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": string[];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_default_categories_overview_get_default_categories_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CachedResponse_CategoryResponse_"];
-                };
-            };
-        };
-    };
-    add_cmc_category_overview_add_CMC_category_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": Record<string, never>;
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remove_cmc_category_overview_remove_CMC_category_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": Record<string, never>;
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_custom_categories_overview_get_custom_categories_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CachedResponse_List_CustomCategory__"];
-                };
-            };
-        };
-    };
-    remove_custom_category_overview_remove_custom_category_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": Record<string, never>;
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["APIResponse_List_UnifiedToken__"];
                 };
             };
         };
@@ -1925,12 +2001,52 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CachedResponse_List_FullCMCToken__"];
+                    "application/json": components["schemas"]["APIResponse_List_UnifiedToken__"];
                 };
             };
         };
     };
-    get_tokens_by_name_overview_find_tokens_by_name_post: {
+    get_default_categories_overview_default_categories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_List_DefaultCategory__"];
+                };
+            };
+        };
+    };
+    get_user_categories_overview_user_categories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_Union_UserCategories__NoneType__"];
+                };
+            };
+        };
+    };
+    add_cmc_category_overview_add_cmc_category_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1949,7 +2065,40 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FullCMCToken"][];
+                    "application/json": components["schemas"]["APIResponse_bool_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_cmc_category_overview_remove_cmc_category_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_bool_"];
                 };
             };
             /** @description Validation Error */
@@ -1982,7 +2131,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["APIResponse_bool_"];
                 };
             };
             /** @description Validation Error */
@@ -1996,7 +2145,7 @@ export interface operations {
             };
         };
     };
-    get_charts_dashboard_charts_post: {
+    remove_cmc_category_overview_remove_custom_category_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2015,7 +2164,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["APIResponse_bool_"];
                 };
             };
             /** @description Validation Error */
@@ -2029,7 +2178,7 @@ export interface operations {
             };
         };
     };
-    get_charts_dashboard_allCharts_post: {
+    find_token_by_name_overview_find_tokens_by_name_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2048,7 +2197,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["APIResponse_Union_List_UnifiedToken___NoneType__"];
                 };
             };
             /** @description Validation Error */
@@ -2062,89 +2211,7 @@ export interface operations {
             };
         };
     };
-    update_tokens_tokens_update_tokens_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    get_token_via_id_tokens_token_via_id__token_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                token_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FullCMCToken"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_token_by_symbol_tokens_token_via_symbol__token_symbol__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                token_symbol: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FullCMCToken"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_token_via_CG_tokens_token_via_CG_post: {
+    get_token_chart_chart_day_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2153,7 +2220,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CG"];
+                "application/json": Record<string, never>;
             };
         };
         responses: {
@@ -2163,7 +2230,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["APIResponse_DayChartData_"];
                 };
             };
             /** @description Validation Error */
@@ -2177,39 +2244,7 @@ export interface operations {
             };
         };
     };
-    get_token_via_chain_tokens_token_via_chain__chain___token_address__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                chain: string;
-                token_address: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_latest_tokens_tokens_tokens_latest_get: {
+    get_user_alerts_alert__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2224,197 +2259,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["APIResponse_List_Alert__"];
                 };
             };
         };
     };
-    get_zerion_token_tokens_zerionToken_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FungibleIdRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ZerionToken"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_wallets_wallets_get_wallets_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Wallet"][];
-                };
-            };
-        };
-    };
-    create_new_wallet_wallets_manage_new_wallet__wallet_address__post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                wallet_address: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WalletData"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_wallet_wallets_manage_update_wallet__wallet_address__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                wallet_address: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WalletData"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_wallet_wallets_manage_delete_wallet__wallet_address__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                wallet_address: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_alerts_alerts_get_alerts_get: {
-        parameters: {
-            query: {
-                email: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Alert"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_alert_alerts_create_alert_post: {
+    create_alert_alert__post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2433,7 +2283,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Alert"];
+                    "application/json": components["schemas"]["APIResponse_Alert_"];
                 };
             };
             /** @description Validation Error */
@@ -2447,18 +2297,16 @@ export interface operations {
             };
         };
     };
-    delete_alert_alerts_delete_alert_post: {
+    delete_alert_alert__alert_id__delete: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                alert_id: string;
+            };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DeleteAlertRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -2466,7 +2314,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["APIResponse_bool_"];
                 };
             };
             /** @description Validation Error */

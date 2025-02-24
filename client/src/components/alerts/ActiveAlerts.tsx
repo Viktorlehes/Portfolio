@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { components } from '../../types/api-types';
+import { FetchState } from '../../utils/api';
 
 type Alert = components["schemas"]["Alert"];
 
 interface ActiveAlertsProps {
-  alerts: Alert[];
-  isNull: boolean;
-  error: Number | null;
+  alertState: FetchState<Alert[]>;
   onDeleteAlert: (alertId: string) => void;
 }
 
-const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, isNull, error, onDeleteAlert }) => {
+const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alertState, onDeleteAlert }) => {
   const [mode, setMode] = useState<'asset' | 'wallet'>('asset');
   const [errorElement, setErrorElement] = useState<JSX.Element | null>(null);
 
@@ -27,13 +26,12 @@ const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, isNull, error, onDe
   };
 
   useEffect(() => {
-    if (error) {
+    if (alertState.error) {
       let element = <></>
-      switch (error) {
+      switch (alertState.status) {
         case 404:
           element = <div className="error-message">
-            <p>Error: {error.toString()}</p>
-            <p>User not found</p>
+            <p>Error: {alertState.status}</p>
           </div>
           break;
         case 403:
@@ -48,15 +46,16 @@ const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, isNull, error, onDe
           break;
         default:
           element = <div className="error-message">
-            <p>Error: {error.toString()}</p>
+            <p>Error: {alertState.status}</p>
           </div>
           break;
     }
     setErrorElement(element);
     }
-    console.log(error);
-    
-  }, [error]);
+  }, [alertState]);
+
+  console.log(alertState);
+  
 
   return (
     <div className="aa-alerts-wrapper">
@@ -84,15 +83,15 @@ const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, isNull, error, onDe
         </div>
       ) : (
         <div className="aa-alerts-container">
-          {(isNull || alerts.length == 0) ? (
-           <div>{ error ? errorElement : <div className="no-alerts">No Active Alerts</div> }</div>
+          {alertState.error || alertState.isLoading ? (
+           <div>{errorElement}</div>
           ) : (
             <div className="alerts-grid">
-              {alerts.map((alert) => (
-                <div key={alert._id} className="alert-card">
+              {alertState.data!.map((alert) => (
+                <div key={alert.id} className="alert-card">
                   <button
                     className="delete-button"
-                    onClick={() => onDeleteAlert(alert._id)}
+                    onClick={() => onDeleteAlert(alert.id)}
                   >
                     <X size={16} />
                   </button>

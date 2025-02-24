@@ -9,18 +9,13 @@ import TotalWorth from "../../components/overview/TotalWorth";
 import { OverviewTokensTable } from "../../components/overview/OverviewTokensTable";
 import { useDataFetching, FetchState, ENDPOINTS } from "../../utils/api";
 
-type MarketData = components["schemas"]["MarketDataResponse"];
-type FearGreedResponse = components["schemas"]["FearGreedResponse"];
-type Wallet = components["schemas"]["Wallet"];
+type MarketStats = components['schemas']['MarketStats'];
+type FearGreadData = components['schemas']['FearGreadData'];
+type Wallet = components["schemas"]["UnifiedWallet"];
 type CoinglassMetrics = components['schemas']['CoinglassMetrics'];
-type TokenOverviewResponse = components['schemas']['TokenOverviewData'];
-type CategoryData = components['schemas']['CategoryData'];
-type CustomCategory = components['schemas']['CustomCategory'];
-
-type TokenTableResponse = FetchState<TokenOverviewResponse[]>;
+type CategoryData = components['schemas']['UserCategories'];
+type UnifiedToken = components['schemas']['UnifiedToken']
 type CoinglassMetricsResponse = FetchState<CoinglassMetrics>;
-type CategoryResponse = FetchState<CategoryData[]>;
-type CustomCategoryResponse = FetchState<CustomCategory[]>;
 
 interface LoaderData {
   wallets: {
@@ -44,20 +39,19 @@ export const overviewLoader: LoaderFunction = () => {
 
 const Overview: React.FC = () => {
   const { wallets: cachedWallets } = useLoaderData() as LoaderData;
-  const tokenState = useDataFetching<TokenTableResponse>(ENDPOINTS.TOKENS);
+  const tokenTableState = useDataFetching<UnifiedToken[]>(ENDPOINTS.TOKENS);
   const walletState = useDataFetching<Wallet[]>({
     ...ENDPOINTS.WALLETS,
     initialData: cachedWallets
   });
-  const marketState = useDataFetching<MarketData>(ENDPOINTS.MARKET);
-  const fearGreedState = useDataFetching<FearGreedResponse>(ENDPOINTS.FEAR_GREED);
-  const categoriesState = useDataFetching<CategoryResponse>(ENDPOINTS.CATEGORIES);
-  const customCategoriesState = useDataFetching<CustomCategoryResponse>(ENDPOINTS.CUSTOM_CATEGORIES);  
+  const marketState = useDataFetching<MarketStats>(ENDPOINTS.MARKET);
+  const fearGreedState = useDataFetching<FearGreadData>(ENDPOINTS.FEAR_GREED);
+  const categoriesState = useDataFetching<CategoryData>(ENDPOINTS.CATEGORIES);
   const cglsScrapeDataState = useDataFetching<CoinglassMetricsResponse>(ENDPOINTS.CGLS_SCRAPE);
 
   const handleTokenTableRefetch = async () => {
-    await tokenState.refetch();
-  }
+    await tokenTableState.refetch();
+  }    
 
   return (
     <div className="default-page">
@@ -67,12 +61,8 @@ const Overview: React.FC = () => {
         </div>
         <div>
           <CryptoStatsBar
-            cryptoStats={marketState.data}
-            feargreeddata={fearGreedState.data}
-            isNull={{
-              market: marketState.isLoading,
-              fearGreed: fearGreedState.isLoading
-            }}
+            cryptoStats={marketState}
+            feargreedData={fearGreedState}
           />
         </div>
       </div>
@@ -91,14 +81,12 @@ const Overview: React.FC = () => {
             </section>
             <section className="overview-token-table">
               <OverviewTokensTable
-                tokens={tokenState.data && tokenState.data?.data || []}
-                isNull={tokenState.isLoading}
+                tokens={tokenTableState.data || null}
+                isNull={tokenTableState.isLoading || tokenTableState.error ? true : false}
                 reFetch={handleTokenTableRefetch}
               />
               <CryptoCategoriesSidebar
-                categories={categoriesState.data && categoriesState.data.data || []}
-                customCategories={customCategoriesState.data && customCategoriesState.data.data || []}
-                isNull={customCategoriesState.isLoading}
+                categories={categoriesState}
               />
             </section>
           </div>

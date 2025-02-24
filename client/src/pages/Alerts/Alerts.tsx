@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import "./Alerts.css";
 import ActiveAlerts from "../../components/alerts/ActiveAlerts";
 import AlertCreation from "../../components/alerts/AlertCreation";
@@ -6,7 +6,7 @@ import { components } from "../../types/api-types";
 import { useDataFetching, ENDPOINTS, api } from "../../utils/api";
 
 type Alert = components["schemas"]["Alert"];
-type Token = components["schemas"]["FullCMCToken"];
+type Token = components["schemas"]["UnifiedToken"];
 
 export interface CreateAlertData {
     id: number;
@@ -19,24 +19,22 @@ export interface CreateAlertData {
 }
 
 const Alerts: React.FC = () => {
-    const alertsState = useDataFetching<Alert[]>(ENDPOINTS.ALERTS, "timo.j.lehes@icloud.com");
-    const [error, setError] = React.useState<Number | null>(Number(alertsState.error?.message.split(":")[1]) || null);
-    
-    console.log(alertsState);
-    
+    const alertsState = useDataFetching<Alert[]>(ENDPOINTS.ALERTS);
 
     const onDeleteAlert = async (alertId: string) => {
         try {
-            const response = await api.post("/alerts/delete-alert", { alert_id: alertId } );
-            if (!response.detail) {
+            const response = await api.delete<Alert[]>(`/alert/${alertId}`);
+            if (response.success) {
                 alertsState.refetch();
+            } else {
+
             }
         } catch (error) {
             console.error("Error deleting alert:", error);
         }
     }
 
-    const onCreateAlert = async (alert: CreateAlertData) => {
+    const onCreateAlert = async (alert: CreateAlertData): Promise<number | null> => {
         const alertData = {
             id: alert.id,
             symbol: alert.symbol,
@@ -45,38 +43,37 @@ const Alerts: React.FC = () => {
             lower_target_price: alert.lower_target_price,
             percent_change_threshold: alert.percent_change_threshold,
             base_price: alert.base_price,
-            email: "timo.j.lehes@icloud.com"
         }
 
         try {
-            const response = await api.post('/alerts/create-alert', alertData);
+            const response = await api.post<boolean, CreateAlertData>('/alert/', alertData);
             
-            if (!response.detail) {
+            if (response.success) {
                 alertsState.refetch();
-            }
+                return null
+            } 
+
+            return alertsState.status
         } catch (error) {
             console.error('Error creating alert:', error);
+            return 500
         }
-
-
     }
 
     const fetchSearchedTokens = async (name: string): Promise<Token[]> => {
         try {
-            const response = await api.post('/overview/find-tokens-by-name', { name });
+            const response = await api.post<Token[], object>('/overview/find-tokens-by-name', { name });
 
-            return response;
+            if (response.success) {
+                return response.data!;
+            } else {
+                return [];
+            }
         } catch (error) {
             console.error('Error searching tokens:', error);
             return [];
         }
     };
-
-    useEffect(() => {
-        if (alertsState.error) {
-            setError(Number(alertsState.error?.message.split(":")[1]));
-        }
-    }, [alertsState.error]);
 
     return (
         <div className="default-page">
@@ -87,8 +84,7 @@ const Alerts: React.FC = () => {
             </div>
             <div className="page-content">
                 <div className="alerts-page-wrapper">
-                    <ActiveAlerts alerts={alertsState.data || []} isNull={alertsState.isLoading} onDeleteAlert={onDeleteAlert} error={error}
-                     />
+                    <ActiveAlerts alertState={alertsState} onDeleteAlert={onDeleteAlert}/>
                     <AlertCreation onCreateAlert={onCreateAlert} fetchAssets={fetchSearchedTokens} />
                 </div>
             </div>

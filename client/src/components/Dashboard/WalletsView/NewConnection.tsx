@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import './NewConnection.css';
 interface NewConnectionProps {
-  onAddWallet: (address: string, name: string, color: string, walletType: string) => Promise<{ success: boolean; error?: string }>;
+  onAddWallet: (address: string, name: string, color: string, risk_level: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const NewConnection: React.FC<NewConnectionProps> = ({onAddWallet}) => {
   const [walletAddress, setWalletAddress] = useState('');
   const [portfolioName, setPortfolioName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#22c55e'); // Default to safe (green)
-  const [walletType, setWalletType] = useState('simple');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +28,6 @@ const NewConnection: React.FC<NewConnectionProps> = ({onAddWallet}) => {
     setWalletAddress('');
     setPortfolioName('');
     setSelectedColor('#22c55e');
-    setWalletType('simple');
   };
 
   const addWalletInfo = async () => {
@@ -37,25 +35,27 @@ const NewConnection: React.FC<NewConnectionProps> = ({onAddWallet}) => {
     setIsLoading(true);
     
     try {
-      const result = await onAddWallet(walletAddress, portfolioName, selectedColor, walletType);
+      const risk_level = colorOptions.find(option => option.color === selectedColor)?.label ?? "Normal";
+
+      const result = await onAddWallet(walletAddress, portfolioName, selectedColor, risk_level);
       
       if (result.success) {
         setShowSuccess(true);
         setTimeout(() => {
           resetStates();
           resetForm();
-        }, 2000);
+        }, 1500);
       } else {
         setError(result.error || 'An unexpected error occurred');
         setTimeout(() => {
           resetStates();
-        }, 3000);
+        }, 1500);
       }
     } catch (error) {
       setError('Server error: Unable to process your request');
       setTimeout(() => {
         resetStates();
-      }, 3000);
+      }, 1500);
     } finally {
       if (!showSuccess) {
         setIsLoading(false);
@@ -117,21 +117,6 @@ const NewConnection: React.FC<NewConnectionProps> = ({onAddWallet}) => {
           maxLength={24}
         />
         <p className="char-count">{portfolioName.length}/24 characters</p>
-      </div>
-      <div className="wallet-type-selector">
-        <label htmlFor="walletType">Wallet Type</label>
-        <select
-          id="walletType"
-          value={walletType}
-          onChange={(e) => setWalletType(e.target.value)}
-        >
-          <option value="simple">Simple</option>
-          <option value="full">Full</option>
-        </select>
-        <p className="info-text wallet-type-info">
-          Simple - Only tokens<br />
-          Full - Tokens and defi positions
-        </p>
       </div>
       <button 
         className="create-btn" 

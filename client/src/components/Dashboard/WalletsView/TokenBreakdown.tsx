@@ -3,7 +3,7 @@ import { components } from "../../../types/api-types";
 import './TokenBreakdown.css';
 import { formatCurrency } from "../../../utils/calc";
 
-type FullToken = components["schemas"]['FullToken'];
+type FullToken = components["schemas"]['WalletToken'];
 
 interface AssetBreakdownProps {
   name: string;
@@ -15,7 +15,7 @@ interface AssetBreakdownProps {
   //change24h: number;
   onViewDefi?: () => void;
   onViewWallet: (address: string) => void;
-  onViewAsset: (assetId: string, assetName: string, isFungible: boolean) => void;
+  onViewAsset: (assetId: string) => void;
 }
 
 const AssetBreakdown: React.FC<AssetBreakdownProps> = ({
@@ -31,8 +31,8 @@ const AssetBreakdown: React.FC<AssetBreakdownProps> = ({
 }) => {
 
   const sortedTokens = [...tokens].sort((a, b) => {
-    const aValue = a.token_data ? a.token_data.value : a.zerion_data.value;
-    const bValue = b.token_data ? b.token_data.value : b.zerion_data.value;
+    const aValue = a.value_usd
+    const bValue = b.value_usd
     return bValue - aValue;
   });
 
@@ -43,19 +43,14 @@ const AssetBreakdown: React.FC<AssetBreakdownProps> = ({
   const top3Tokens = sortedTokens.slice(0, 3);
   const otherTokens = sortedTokens.slice(3);
   const otherTokensValue = otherTokens.reduce((acc, token) => {
-    return acc + (token.token_data ? token.token_data.value : token.zerion_data.value);
+    return acc + (token.value_usd);
   }, 0);
 
   const handleAssetClick = (e: React.MouseEvent, token: FullToken) => {
     e.stopPropagation(); // Prevent triggering the container click
 
-    if (token.token_data) {
-      onViewAsset(token.token_data.id, token.token_data.name, false);
-      return;
-    } else if (token.zerion_data) {
-      onViewAsset(token.zerion_data.fungible_id, token.zerion_data.name, true);
-      return;
-    }
+    onViewAsset(token.token_id);
+    return;
   };
 
   return (
@@ -96,24 +91,24 @@ const AssetBreakdown: React.FC<AssetBreakdownProps> = ({
           >
             <div className="asset-info">
               <div className="dashboard-token-icon">
-                {token.zerion_data.icon && (
+                {token.icon && (
                   <img
-                    src={token.zerion_data.icon}
+                    src={token.icon}
                     alt="token icon"
                   />
                 )}
               </div>
               <div className="token-details">
                 <div className="token-symbol">
-                  {token.token_data ? token.token_data.symbol : token.zerion_data.symbol}
+                  {token.symbol}
                 </div>
                 <div className="token-amount">
-                  {(token.token_data ? token.token_data.amount : token.zerion_data.quantity.float).toFixed(4)}
+                  {token.amount.toFixed(2)}
                 </div>
               </div>
             </div>
             <div className="asset-value">
-              {formatCurrency(token.token_data ? token.token_data.value : token.zerion_data.value, 0, 0)}
+              {formatCurrency(token.value_usd, 1, 1)}
             </div>
           </div>
         ))}

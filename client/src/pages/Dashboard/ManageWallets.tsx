@@ -6,13 +6,13 @@ import { components } from "../../types/api-types";
 import { ViewType } from "../../components/Dashboard/ViewSelector";
 import "./ManageWallets.css";
 
-type Wallet = components["schemas"]["Wallet"];
+type Wallet = components["schemas"]["UnifiedWallet"];
 
 interface ManageWalletsProps {
   wallets: Wallet[];
   onViewChange: (view: ViewType) => void;
-  onDeleteWallet: (address: string) => void;
-  onAddWallet: (address: string, name: string, color: string, walletType: string) => Promise<{ success: boolean; error?: string }>;
+  onDeleteWallet: (address: string) => Promise<{ success: boolean; error?: string }>;
+  onAddWallet: (address: string, name: string, color: string, risk_level: string) => Promise<{ success: boolean; error?: string }>;
   onEditWallet: (wallet: Wallet) => Promise<{ success: boolean; error?: string }>;
 }
 
