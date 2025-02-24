@@ -1,21 +1,21 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import './CryptoCategorieList.css';
 import { components } from '../../../types/api-types';
 import { formatCurrencySuffix } from '../../../utils/calc';
 import { Settings2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { FetchState } from '../../../utils/api';
 
-type CategoryData = components['schemas']['CategoryData'];
+type CategoryData = components['schemas']['UserCategories'];
+type DefaultCategory = components['schemas']['DefaultCategory']
 type CustomCategory = components['schemas']['CustomCategory'];
 
 interface CryptoCategoriesListProps {
-  categories: CategoryData[] | null;
-  customCategories: CustomCategory[] | null;
-  isNull: boolean;
+  categories: FetchState<CategoryData>;
 }
 
 interface CategoryRowProps {
-  category: CategoryData | CustomCategory;
+  category: DefaultCategory | CustomCategory;
   onClick: (name: string) => void;
 }
 
@@ -38,9 +38,9 @@ const CategoryRow: React.FC<CategoryRowProps> = ({ category, onClick }) => {
   return (
     <tr className="category-row" onClick={() => onClick(category.name)}>
       <td>{category.name}</td>
-      <td className={getChangeClass(category.market_cap_change)}>
-        {category.market_cap_change > 0 ? '+' : ''}
-        {category.market_cap_change.toFixed(2)}%
+      <td className={getChangeClass(category.avg_price_change)}>
+        {category.avg_price_change > 0 ? '+' : ''}
+        {category.avg_price_change.toFixed(2)}%
       </td>
       <td className="market-cap-cell">
         {formatCurrencySuffix(category.market_cap)}
@@ -51,27 +51,18 @@ const CategoryRow: React.FC<CategoryRowProps> = ({ category, onClick }) => {
 
 export const CryptoCategoriesList: React.FC<CryptoCategoriesListProps> = ({ 
   categories, 
-  customCategories,
-  isNull 
 }) => {
-  const navigate = useNavigate();
+  const [showNull, setShowNull] = useState(categories.isLoading)
 
-  const latestUpdate = () => {
-    if (!isNull && categories && categories.length > 0 && categories[0].last_updated) {
-      const date = new Date(categories[0].last_updated); // Parse the UTC date
-      const utcDate = new Date(date.toISOString()); // Ensure it's in UTC
-  
-      const options: Intl.DateTimeFormatOptions = {
-        timeZone: "Europe/Stockholm", // Format for Swedish time
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      };
-  
-      const swedishLocalTime = new Intl.DateTimeFormat("sv-SE", options).format(utcDate);
-      return swedishLocalTime;
+  useEffect(() => {
+    if (categories.isLoading) {
+      setShowNull(categories.isLoading)
+    } else {
+      setShowNull( (categories.error ? true : false))
     }
-  };
+  }, [categories])
+
+  const navigate = useNavigate();
 
   const handleRedirect = (name: string) => {
     //replace spaces with dashes and lowercase
@@ -79,7 +70,7 @@ export const CryptoCategoriesList: React.FC<CryptoCategoriesListProps> = ({
     window.open(`https://coinmarketcap.com/view/${name}`, '_blank');
   };
 
-  const allCategories = [...(categories || []), ...(customCategories || [])];
+  const allCategories = !showNull ? [...(categories.data?.default_categories || []), ...(categories.data?.custom_categories || [])] : [];
   const sortedCategories = allCategories.sort((a, b) => b.market_cap - a.market_cap);
   
   return (
@@ -88,7 +79,6 @@ export const CryptoCategoriesList: React.FC<CryptoCategoriesListProps> = ({
         <div className='catagories-container-edit'>
           <div className='catagories-container-title'>Categories</div>
           <section className='categories-container-details'>
-            <div className='catagories-container-update' style={{'paddingBottom': '4px'}}>Last updated: {latestUpdate()}</div>
             <button className='catagories-container-edit-button'>
               <Settings2 size={20} 
               onClick={() => navigate('/ManageCatagories')}
@@ -105,7 +95,7 @@ export const CryptoCategoriesList: React.FC<CryptoCategoriesListProps> = ({
             </tr>
           </thead>
           <tbody>
-            {!isNull && sortedCategories.map((category, index) => (
+            {!showNull && sortedCategories.map((category, index) => (
               <CategoryRow 
                 key={index} 
                 category={category} 

@@ -5,9 +5,12 @@ __pycache__/
 *.so
 .Python
 app/__pycache__/
+app_v2/__pycache__/
 app/**/__pycache__/
+app_v2/**/__pycache__/
 *.pyc
-
+app_v2/scripts/migration_script.py
+app_v2/scripts/seed_cmc_id_map.py
 # Virtual Environment
 venv/
 ENV/
@@ -40,6 +43,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+ids.txt
 
 # Testing
 .coverage

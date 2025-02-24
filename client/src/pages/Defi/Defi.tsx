@@ -5,8 +5,9 @@ import ValueCard from "../../components/Dashboard/WalletsView/ValueCard";
 import "./Defi.css";
 import DefiPositions from "../../components/Dashboard/WalletView/DefiPositions";
 import LoadingOverlay from "../../components/Default/LoadingOverlay";
+import { calculate24hDefiChange } from "../../utils/calc";
 
-type Wallet = components["schemas"]["Wallet"];
+type Wallet = components["schemas"]["UnifiedWallet"];
 type DefiPosition = components["schemas"]["DefiPosition"];
 
 export interface ExtendedDefiPosition extends DefiPosition {
@@ -18,48 +19,22 @@ const DefiView: React.FC = () => {
     const walletState = useDataFetching<Wallet[]>(ENDPOINTS.WALLETS);
     const [showSmallValues, setShowSmallValues] = React.useState(false);
 
-    //TODO: Add routing to wallet view
-    //const location = useLocation();
-
-    const calculate24hChange = (wallets: Wallet[]) => {
-        const allPositions = wallets.reduce((acc, wallet) => {
-            const defiPositions = (wallet.defi_positions || []).map(position => ({
-                ...position,
-                walletAddress: wallet.address,
-                walletName: wallet.name
-            }));
-            return [...acc, ...defiPositions];
-        }, [] as ExtendedDefiPosition[]);
-
-        const totalValue = allPositions.reduce((acc, item) => {
-            return acc + item.value;
-        }, 0);
-
-        const totalChange = allPositions.reduce((acc, item) => {
-            return acc + (item.changes.absolute_1d || 0);
-        }, 0);
-
-        return totalValue > 0 ? (totalChange / totalValue) * 100 : 0;
-    };
-
-
-    const total24hChange = walletState.data ? calculate24hChange(walletState.data) : 0; 
-    const totalDefiValue = walletState.data ? walletState.data.reduce(
-        (sum, wallet) => sum + wallet.defi_total,
-        0
-    ) : 0;
+    const total24hChange = walletState.data ? calculate24hDefiChange(walletState.data) : 0; 
+    const totalValue = walletState.data ? walletState.data.reduce((acc, wallet) => {
+        return acc += wallet.total_value_defi || 0
+    }, 0) : 0
 
     const defiPositions: ExtendedDefiPosition[] = walletState.data ? walletState.data.reduce((acc, wallet) => {
         const defiPositions = (wallet.defi_positions || []).map(position => ({
             ...position,
-            walletAddress: wallet.address,
+            walletAddress: wallet.address || "",
             walletName: wallet.name
         }));
         return [...acc, ...defiPositions];
     }, [] as ExtendedDefiPosition[]) : [];
 
     const filteredDefiPositions = defiPositions.filter(position =>
-        showSmallValues || position.value >= 1);
+        showSmallValues || position.price_data.current_value >= 1);
 
     return (
         <div className="default-page">
@@ -74,7 +49,7 @@ const DefiView: React.FC = () => {
                         <ValueCard
                             key={"defiTotal"}
                             label={"DeFi Total"}
-                            value={totalDefiValue}
+                            value={totalValue}
                             color={'black'}
                         />
                         <ValueCard

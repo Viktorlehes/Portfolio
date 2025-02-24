@@ -25,17 +25,17 @@ export interface ChartData {
 }
 
 interface TokenPriceChartProps {
-  chartData: ChartData;
+  chartData: ChartData | null;
 }
 
 const TokenPriceChart: React.FC<TokenPriceChartProps> = ({ chartData }) => {
-  const transformedData = chartData.data.attributes.points.map(([timestamp, price]) => ({
+  const transformedData = chartData!.data.attributes.points.map(([timestamp, price]) => ({
     timestamp,
     price,
     date: new Date(timestamp * 1000)
   }));
 
-  const { first, last, min, max } = chartData.data.attributes.stats;
+  const { first, last, min, max } = chartData!.data.attributes.stats;
   const isNegativeChange = last < first;
   const lineColor = isNegativeChange ? '#ef4444' : '#22c55e';
 

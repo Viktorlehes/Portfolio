@@ -820,7 +820,6 @@ async def remove_custom_category(category_id: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
     
-    
 @router.get("/get-default-tokens", response_model=CachedResponse[List[FullCMCToken]])
 @cached_endpoint("get-default-tokens", expiry_minutes=5)
 async def get_default_tokens():

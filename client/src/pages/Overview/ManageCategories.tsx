@@ -1,49 +1,63 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import './ManageCategories.css'
 import SelectedCategories from "../../components/overview/Categories/SelectedCategories"
 import CategoryManager from "../../components/overview/Categories/CategoryManager"
 import { ArrowLeftFromLine } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import { components } from "../../types/api-types";
-import { api, FetchState, useDataFetching, ENDPOINTS } from "../../utils/api";
+import { api, useDataFetching, ENDPOINTS } from "../../utils/api";
 
-type Category = components["schemas"]["CategoryData"];
-type CustomCategory = components["schemas"]["CustomCategory"];
-type Token = components['schemas']['FullCMCToken'];
 
-type CategoryResponse = FetchState<Category[]>;
-type CustomCategoryResponse = FetchState<CustomCategory[]>;
-type TokenResponse = FetchState<Token[]>;
+type UserCategories = components["schemas"]["UserCategories"]
+type DefaultCategory = components["schemas"]["DefaultCategory"];
+type Token = components['schemas']['UnifiedToken'];
 
 const Managecategories: React.FC = ({ }) => {
-    const defaultCategoriesState = useDataFetching<CategoryResponse>(ENDPOINTS.DEFAULT_CATEGORIES);
-    const userCategoriesState = useDataFetching<CategoryResponse>(ENDPOINTS.CATEGORIES);
-    const customCategoriesState = useDataFetching<CustomCategoryResponse>(ENDPOINTS.CUSTOM_CATEGORIES);
-    const defaultTokensState = useDataFetching<TokenResponse>(ENDPOINTS.DEFAULT_TOKENS);
+    const defaultCategoriesState = useDataFetching<DefaultCategory[]>(ENDPOINTS.DEFAULT_CATEGORIES);
+    const userCategoriesState = useDataFetching<UserCategories>(ENDPOINTS.CATEGORIES);
+    const defaultTokensState = useDataFetching<Token[]>(ENDPOINTS.DEFAULT_TOKENS);
     const navigate = useNavigate();
 
-    const handleAddCMCCategory = async (category: Category) => {
-        // Check if category already exists
-        if (userCategoriesState.data?.data?.find(cat => cat.id === category.id)) {
+    const [showNull, setShowNull] = useState({
+        defaultCategoriesState: defaultCategoriesState.isLoading,
+        userCategoriesState: userCategoriesState.isLoading,
+        defaultTokensState: defaultTokensState.isLoading
+    })
+
+    useEffect(() => {
+        setShowNull(prev => ({
+            ...prev,
+            defaultCategoriesState: defaultCategoriesState.isLoading || !!defaultCategoriesState.error,
+            userCategoriesState: userCategoriesState.isLoading || !!userCategoriesState.error,
+            defaultTokensState: defaultTokensState.isLoading || !!defaultTokensState.error
+        }));
+      }, [defaultCategoriesState, userCategoriesState, defaultTokensState]);
+
+    const handleAddCMCCategory = async (category_id: string) => {
+        if (!showNull.userCategoriesState && userCategoriesState.data!.default_categories!.find(cat => cat.id === category_id)) {
             console.log('Category already added');
             return;
         }
-        const categoryId = category.id;
-        await api.post('/overview/add-CMC-category', { categoryId });
+        await api.post<boolean, object>('/overview/add-cmc-category', { category_id });
         await userCategoriesState.refetch();
     };
     
-    const handleRemoveCMCCategory = async (categoryId: string) => {
-        await api.post('/overview/remove-CMC-category', { categoryId });
+    const handleRemoveCMCCategory = async (category_id: string) => {
+        await api.post<boolean, object>('/overview/remove-cmc-category', { category_id });
         await userCategoriesState.refetch();
     };
 
     const fetchSearchedTokens = async (name: string): Promise<Token[]> => {
         try {
-            const response = await api.post('/overview/find-tokens-by-name', { name });
+            const response = await api.post<Token[], object>('/overview/find-tokens-by-name', { name });
             console.log('Search results:', response);
             
-            return response;
+            if (response.success) {
+                return response.data!;
+            } else {
+                return []
+            }
+
         } catch (error) {
             console.error('Error searching tokens:', error);
             return [];
@@ -52,21 +66,21 @@ const Managecategories: React.FC = ({ }) => {
 
     const handleCreateCustomCategory = async (name: string, tokenIds: number[]) => {
         try {
-            await api.post('/overview/add-custom-category', {
+            await api.post<boolean, object>('/overview/add-custom-category', {
                 name,
-                token_ids: tokenIds
+                tokens: tokenIds
             });
-            await customCategoriesState.refetch();
+            await userCategoriesState.refetch();
         } catch (error) {
             console.error('Error creating custom category:', error);
             throw error;
         }
     };
 
-    const handleRemoveCustomCategory = async (categoryId: string) => {
+    const handleRemoveCustomCategory = async (category_id: string) => {
         try {
-            await api.post('/overview/remove-custom-category', { categoryId });
-            await customCategoriesState.refetch();
+            await api.post<boolean, object>('/overview/remove-custom-category', { category_id });
+            await userCategoriesState.refetch();
         } catch (error) {
             console.error('Error removing custom category:', error);
         }
@@ -88,24 +102,17 @@ return (
                 </button>
                 <section className="managecategories-selected-categories">
                     <SelectedCategories 
-                    userCategories={ userCategoriesState.data?.data || []}
-                    customCategories={ customCategoriesState.data?.data || []}
-                    nullStates={{
-                        userCategories: userCategoriesState.isLoading,
-                        customCategories: customCategoriesState.isLoading
-                    }} 
+                    userCategories={userCategoriesState}
+                    nullStates={showNull} 
                     handleRemoveCategory={handleRemoveCMCCategory}
                     handleRemoveCustomCategory={handleRemoveCustomCategory}
                     />
                 </section>
                 <section className="managecategories-catagory-manager">
                     <CategoryManager 
-                    defaultCategories={defaultCategoriesState.data?.data || []} 
-                    defaultTokens={defaultTokensState.data?.data || []}
-                    nullStates={{
-                        defaultCategories: defaultCategoriesState.isLoading,
-                        defaultTokens: defaultTokensState.isLoading
-                    }}
+                    defaultCategories={defaultCategoriesState} 
+                    defaultTokens={defaultTokensState}
+                    nullStates={showNull}
                     handleAddCMCCategory={handleAddCMCCategory}
                     fetchSearchedTokens={fetchSearchedTokens}
                     handleCreateCustomCategory={handleCreateCustomCategory}

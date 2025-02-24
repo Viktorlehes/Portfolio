@@ -22,31 +22,9 @@ WAITING_FOR_EMAIL = 1
 @dataclass
 class AlertUser:
     email: str
-    telegram_chat_id: str
-    verification_code: Optional[str] = None
     is_verified: bool = False
-    _id: Optional[str] = field(default_factory=lambda: str(ObjectId()), repr=True)
-
-    def to_dict(self):
-        """Convert the dataclass to a MongoDB-compatible dictionary"""
-        return {
-            "_id": ObjectId(self._id) if self._id else ObjectId(),
-            "email": self.email,
-            "telegram_chat_id": self.telegram_chat_id,
-            "verification_code": self.verification_code,
-            "is_verified": self.is_verified
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict):
-        """Create an AlertUser instance from a MongoDB document"""
-        if data is None:
-            return None
-            
-        if "_id" in data:
-            data["_id"] = str(data["_id"])
-            
-        return cls(**data)
+    verification_code: Optional[str] = None
+    telegram_chat_id: Optional[str] = None 
     
 @dataclass
 class Alert:
@@ -54,40 +32,13 @@ class Alert:
     symbol: str
     name: str
     telegram_chat_id: str  # Changed from email to telegram_chat_id
+    id: str
     upper_target_price: Optional[float] = None
     lower_target_price: Optional[float] = None
     percent_change_threshold: Optional[float] = None
     base_price: Optional[float] = None
     last_checked_price: Optional[float] = None
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    _id: str = field(default_factory=lambda: str(ObjectId()), repr=True)
-
-    def to_dict(self):
-        """Convert the dataclass to a MongoDB-compatible dictionary"""
-        return {
-            "_id": ObjectId(self._id) if self._id else ObjectId(),
-            "cmc_id": self.cmc_id,
-            "telegram_chat_id": self.telegram_chat_id,
-            "symbol": self.symbol,
-            "name": self.name,
-            "upper_target_price": self.upper_target_price,
-            "lower_target_price": self.lower_target_price,
-            "percent_change_threshold": self.percent_change_threshold,
-            "base_price": self.base_price,
-            "last_checked_price": self.last_checked_price,
-            "created_at": self.created_at
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict):
-        """Create an Alert instance from a MongoDB document"""
-        if data is None:
-            return None
-            
-        if "_id" in data:
-            data["_id"] = str(data["_id"])
-            
-        return cls(**data)
 
     def validate(self) -> bool:
         """Validate that the alert has valid price targets"""
@@ -104,10 +55,11 @@ class DatabaseManager:
         # Connect to the database collection crypto_bot_db
         self.crypto_bot_db: Database = self.client.crypto_bot_db
         self.client_db: Database = self.client.main
-        self.init_db()
+        #self.init_db()
 
     def init_db(self):
         # Create indexes for faster queries
+        #TODO: Fix index conflicts
         self.crypto_bot_db.users.create_index("email", unique=True)
         self.crypto_bot_db.users.create_index("telegram_chat_id")
         self.crypto_bot_db.alerts.create_index([("email", 1), ("crypto", 1)])
@@ -175,12 +127,12 @@ class DatabaseManager:
             "created_at": alert.created_at
         }
         
-        if alert._id:
+        if alert.id:
             self.crypto_bot_db.alerts.update_one(
                 {"_id": ObjectId(alert._id)},
                 {"$set": alert_dict}
             )
-            return alert._id
+            return alert.id
         else:
             result = self.crypto_bot_db.alerts.insert_one(alert_dict)
             return str(result.inserted_id)
@@ -208,7 +160,7 @@ class DatabaseManager:
                 telegram_chat_id=alert_doc["telegram_chat_id"],
                 last_checked_price=alert_doc.get("last_checked_price"),
                 created_at=alert_doc.get("created_at", datetime.now(timezone.utc)),
-                _id=str(alert_doc["_id"])
+                id=str(alert_doc["id"])
             ))
         return alerts
 
@@ -230,18 +182,50 @@ class DatabaseManager:
                 telegram_chat_id=alert_doc["telegram_chat_id"],
                 last_checked_price=alert_doc.get("last_checked_price"),
                 created_at=alert_doc.get("created_at", datetime.now(timezone.utc)),
-                _id=str(alert_doc["_id"])
+                id=str(alert_doc["id"])
             ))
         
         bot_logger.info(f"Active alerts: {len(alerts)}")    
         return alerts
 
 class PriceMonitor:
-    def __init__(self, cmc_api_key: str, check_interval: int = 60):
+    def __init__(self, cmc_api_key: str, db_manager: DatabaseManager,   check_interval: int = 60):
         self.api_key = cmc_api_key
         self.check_interval = check_interval  # seconds
         self.price_cache: Dict[str, Dict] = {}  # Store latest prices
         self.last_check: Dict[str, float] = {}  # Store last check time
+        self.db = db_manager
+        
+    async def get_crypto_prices_via_db(self, cmc_ids: Set[int]) -> Dict[str, Dict]:
+        """Fetch prices from DB"""
+        #self.client_db
+        if not cmc_ids:
+            return {}
+        
+        try: 
+            cursor = self.db.client_db.tokens.find(
+                {"cmc_id": {"$in": cmc_ids}}
+            )
+
+            print(cursor)
+
+            tokens = await cursor.to_list(length=None)
+            
+            print(tokens)
+            
+            #TODO: Implement last_active logic to make sure tokens stay active when used for alerts
+            
+            if tokens:
+                print(f"Found {len(tokens)} / {len(cmc_ids)} tokens in DB")
+                
+                response_dict = {token["cmc_id"]: token for token in tokens}
+
+                return response_dict
+            else:
+                return {}
+        except Exception as e:
+            print(f"Error getting tokens from DB: {str(e)}")
+            return {}
         
     async def get_crypto_prices(self, cmc_ids: Set[int]) -> Dict[str, Dict]:
         """Fetch prices from CoinMarketCap API"""
@@ -271,7 +255,7 @@ class PriceMonitor:
                 return {}
 
 class AlertHandler:
-    def __init__(self, db_manager, bot_app, price_monitor: PriceMonitor):
+    def __init__(self, db_manager: DatabaseManager, bot_app, price_monitor: PriceMonitor):
         self.db = db_manager
         self.bot = bot_app
         self.price_monitor = price_monitor
@@ -293,12 +277,12 @@ class AlertHandler:
         
     async def process_price_alerts(self, id: int, price_data: Dict, alerts: List[Alert]) -> None:
         """Process alerts for a specific cryptocurrency"""
-        current_price = price_data["quote"]["USD"]["price"]
+        current_price = price_data["price_data"]["price"]
         
         alerts_to_remove = []  # Track alerts that need to be removed
         
         for alert in alerts:
-            alert_id = alert._id
+            alert_id = alert.id
             
             if not self.should_send_alert(alert_id):
                 continue
@@ -344,7 +328,7 @@ class AlertHandler:
                             f"This alert will be removed after this notification."
                         )
                         should_notify = True
-                        alerts_to_remove.append(alert._id)
+                        alerts_to_remove.append(alert.id)
                         
             # Handle percent change alerts
             elif alert.percent_change_threshold:
@@ -406,7 +390,7 @@ class CryptoBot:
             bot_logger.info("Database connected")
             
             # Initialize price monitoring components
-            self.price_monitor = PriceMonitor(self.cmc_api_key)
+            self.price_monitor = PriceMonitor(self.cmc_api_key, self.db)
             bot_logger.info("Price monitor initialized")
             
             # Initialize Telegram application
@@ -481,18 +465,18 @@ class CryptoBot:
                     crypto_ids.append(alert.cmc_id)
             
             # Fetch latest prices
-            price_data = await self.alert_handler.price_monitor.get_crypto_prices(crypto_ids)
+            price_data = await self.alert_handler.price_monitor.get_crypto_prices_via_db(crypto_ids)
             
             bot_logger.info(f"Checking prices for {len(crypto_ids)} cryptocurrencies")
             
             # Process each cryptocurrency
             for id in crypto_ids:
-                if str(id) not in price_data:
+                if id not in price_data:
                     print(f"Price data not found for {id}")
                     continue
                     
                 crypto_alerts = [alert for alert in alerts if alert.cmc_id == id]
-                crypto_price_data = price_data[str(id)]  # Get first quote for the symbol
+                crypto_price_data = price_data[id]  # Get first quote for the symbol
                     
                 await self.alert_handler.process_price_alerts(id, crypto_price_data, crypto_alerts)
                 

@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { isTokenExpired, getUserFromToken } from './crypto';
-import { RateLimiter } from './rateLimit';
 import { api } from '../utils/api';
 
 interface AuthContextType {
@@ -17,6 +16,11 @@ export interface DecodedToken {
   email: string;
   exp: number;
   iat: number;
+}
+
+interface UserAuth {
+  access_token: string,
+  token_type: string
 }
 
 interface UserData {
@@ -56,69 +60,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    const handleAuthError = () => {
+      setIsAuthenticated(false);
+    };
+
+    window.addEventListener('auth-error', handleAuthError);
+    return () => window.removeEventListener('auth-error', handleAuthError);
+  }, []);
+
+  useEffect(() => {
     const interval = setInterval(validateSession, 10000); // Every minute
     return () => clearInterval(interval);
   }, []);
 
   const register = async (userData: LoginUserData) => {
     try {
-      const response = await api.post("/users/register", userData)      
+      const response = await api.post<UserAuth, LoginUserData>("/user/register", userData)      
 
-      if (!response.error && response.access_token) {
-        sessionStorage.setItem('sessionToken', response.access_token)
+      if (!response.error && response.data?.access_token) {
+        sessionStorage.setItem('sessionToken', response.data.access_token)
         setIsAuthenticated(true)
         return {success: true}
-      } else if (response.error && response.status) {
+      } else if (response.error && response.status_code){
         return {
           success: false,
           error: response.error,
-          status: response.status
+          status: response.status_code
         }
       }
+      
+      return { 
+        success: false, 
+        error: `An error occurred during login` 
+      };
     } catch (error) {
       return {
         success: false,
         error: (error instanceof Error ? error.message : "An unknown error occurred")
       }
     }
-    return {
-      success: false,
-      error: "Something went wrong"
-    }
   }
 
   const login = async (userData: LoginUserData) => {
-    const rateLimit = RateLimiter.attempt();
-    
-    if (!rateLimit.allowed) {
-      return { 
-        success: false, 
-        error: `Too many attempts. Try again in ${rateLimit.remainingTime} seconds.` 
-      };
-    }
-
     try {
-      
-      const response = await api.post("/users/login", userData)
+      const response = await api.post<UserAuth, LoginUserData>("/user/login", userData)
 
-      if (response.access_token) {
-        sessionStorage.setItem('sessionToken', response.access_token);
+      if (!response.error && response.data?.access_token) {
+        sessionStorage.setItem('sessionToken', response.data.access_token);
         setIsAuthenticated(true);
-        RateLimiter.reset();
         return { success: true };
+      } else if (response.error && response.status_code){
+        return {
+          success: false,
+          error: response.error,
+          status: response.status_code
+        }
       }
 
-      const remainingAttempts = RateLimiter.getRemainingAttempts();
-
       return { 
         success: false, 
-        error: `Invalid Email or Password. ${remainingAttempts} attempts remaining.` 
+        error: `An error occurred during login` 
       };
     } catch (error) {
-      console.error('Invalid Email or Password:', error);
+      console.error('Login error:', error);
       return { 
         success: false, 
-        error: 'Invalid Email or Password.' 
+        error: 'An error occurred during login' 
       };
     }
   };

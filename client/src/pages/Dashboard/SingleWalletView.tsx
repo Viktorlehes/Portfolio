@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useLoaderData, useNavigate, LoaderFunction, LoaderFunctionArgs } from "react-router-dom";
 import { components } from "../../types/api-types";
 import { ArrowLeft } from "lucide-react"; 4
@@ -10,10 +10,9 @@ import LoadingOverlay from "../../components/Default/LoadingOverlay";
 import { ExtendedDefiPosition } from "../Defi/Defi";
 import { ENDPOINTS, useDataFetching } from "../../utils/api";
 
-type Wallet = components["schemas"]["Wallet"];
-type FullToken = components["schemas"]["FullToken"];
+type Wallet = components["schemas"]["UnifiedWallet"];
+type WalletToken = components["schemas"]["WalletToken"];
 type DefiPosition = components["schemas"]["DefiPosition"];
-
 
 interface LoaderData {
     wallets: {
@@ -35,10 +34,10 @@ export const walletLoader: LoaderFunction = async ({ params }: LoaderFunctionArg
     };
 };
 
-const handleAssetClick = (token: FullToken, navigate: ReturnType<typeof useNavigate>) => {
-    const assetId = token.token_data ? token.token_data.id : token.zerion_data.fungible_id;
-    const assetName = token.token_data ? token.token_data.name : token.zerion_data.name;
-    const isFungible = token.token_data ? false : true;
+const handleAssetClick = (token: WalletToken, navigate: ReturnType<typeof useNavigate>) => {
+    const assetId = token.token_id;
+    const assetName = token.name;
+    const isFungible = false
 
     const searchParams = new URLSearchParams({
         name: assetName,
@@ -49,28 +48,24 @@ const handleAssetClick = (token: FullToken, navigate: ReturnType<typeof useNavig
 };
 
 const AssetTableRow: React.FC<{
-    token: FullToken;
+    token: WalletToken;
     navigate: ReturnType<typeof useNavigate>;
     formatCurrency: (value: number) => string;
     formatNumber: (value: number) => string;
     formatPercent: (value: number) => string;
-    getValue: (token: FullToken) => number;
-    getChange: (token: FullToken) => number;
 }> = ({
     token,
     navigate,
     formatCurrency,
     formatNumber,
     formatPercent,
-    getValue,
-    getChange
 }) => {
-        const value = getValue(token);
-        const change24h = getChange(token);
-        const symbol = token.token_data ? token.token_data.symbol : token.zerion_data.symbol;
-        const price = token.token_data ? token.token_data.price : token.zerion_data.price;
-        const amount = token.token_data ? token.token_data.amount : token.zerion_data.quantity.float;
-        const chain = token.zerion_data.chain;
+        const value = token.value_usd;
+        const change24h = token.price_24h_change;
+        const symbol = token.symbol
+        const price = token.price_usd
+        const amount = token.amount
+        const chain = token.chain;
         const absoluteChange = value * (change24h / 100);
 
         return (
@@ -83,8 +78,8 @@ const AssetTableRow: React.FC<{
                 <div className="col-asset">
                     <div className="asset-info">
                         <div className="token-icon">
-                            {token.zerion_data.icon && (
-                                <img src={token.zerion_data.icon} alt={symbol} />
+                            {token.icon && (
+                                <img src={token.icon} alt={symbol} />
                             )}
                         </div>
                         <div className="token-details">
@@ -118,50 +113,35 @@ const SingleWalletView: React.FC = () => {
         ...ENDPOINTS.WALLETS,
         initialData: wallets
       });
-    const [cachedWallet, setcachedWalletWallet] = React.useState<Wallet | null>(walletState.data?.find(wallet => wallet.address === walletAddress) || null);
+    const [cachedWallet, setcachedWalletWallet] = useState<Wallet | null>(walletState.data?.find(wallet => wallet.address === walletAddress) || null);
     const navigate = useNavigate();
-    const [showSmallValues, setShowSmallValues] = React.useState(false);
+    const [showSmallValues, setShowSmallValues] = useState(false);
+    const [showNull, setShowNull] = useState(walletState.isLoading)
 
     useEffect(() => {
-        if (walletState.data) {
+        setShowNull(walletState.isLoading || !!walletState.error)
+
+        if (!showNull && walletState.data) {
             setcachedWalletWallet(walletState.data.find(wallet => wallet.address === walletAddress) || null);
         }
     }, [walletState.data, walletAddress]);
-    
-    const getValue = (token: FullToken): number => {
-        try {
-            return token.token_data?.value || token.zerion_data.value || 0;
-        } catch (error) {
-            console.error('Error getting token value:', error);
-            return 0;
-        }
-    };
-
-    const getChange = (token: FullToken): number => {
-        try {
-            return token.token_data?.change24h || token.zerion_data.changes.percent_1d || 0;
-        } catch (error) {
-            console.error('Error getting token change:', error);
-            return 0;
-        }
-    };
 
     const calculate24hChange = () => {
-        const tokens: FullToken[] = cachedWallet?.tokens || [];
+        const tokens: WalletToken[] = cachedWallet?.tokens || [];
         const defiPositions: DefiPosition[] = cachedWallet?.defi_positions || [];
 
         // Calculate assets change
-        const assetsTotalValue = tokens.reduce((acc, token) => acc + getValue(token), 0);
+        const assetsTotalValue = cachedWallet!.total_value_assets || 0
         const assetsChange = tokens.reduce((acc, token) => {
-            const value = getValue(token);
-            const change = getChange(token);
+            const value = token.value_usd;
+            const change = token.price_24h_change;
             return acc + (value * (change / 100));
         }, 0);
 
         // Calculate DeFi change
-        const defiTotalValue = defiPositions.reduce((acc, pos) => acc + pos.value, 0);
+        const defiTotalValue = cachedWallet!.total_value_defi || 0
         const defiChange = defiPositions.reduce((acc, pos) =>
-            acc + pos.changes.absolute_1d, 0);
+            acc + pos.price_data.price_change_24h! , 0);
 
         // Calculate total percentage change
         const totalValue = assetsTotalValue + defiTotalValue;
@@ -170,21 +150,21 @@ const SingleWalletView: React.FC = () => {
         return totalValue > 0 ? (totalChange / totalValue) * 100 : 0;
     };
 
-    const tokens = cachedWallet?.tokens || [];
+    const tokens = !showNull && cachedWallet!.tokens || [];
 
-    const filteredDefiPositions = cachedWallet?.defi_positions?.filter(position =>
-        showSmallValues || position.value >= 1
+    const filteredDefiPositions = !showNull && cachedWallet!.defi_positions?.filter(position =>
+        showSmallValues || position.price_data.current_value >= 1
     ) || [];
 
-    const defiPositions: ExtendedDefiPosition[] = filteredDefiPositions.map(position => ({
+    const defiPositions: ExtendedDefiPosition[] = !showNull && filteredDefiPositions.map(position => ({
         ...position,
-        walletAddress: cachedWallet ? cachedWallet.address : '',
-        walletName: cachedWallet ? cachedWallet.name : ''
-    }));
+        walletAddress: cachedWallet!.address || "",
+        walletName: cachedWallet!.name
+    })) || [];
 
-    const totalChange24h = calculate24hChange();
+    const totalChange24h = !showNull && calculate24hChange() || 0;
     const filteredTokens = tokens.filter(token =>
-        showSmallValues || getValue(token) >= 1
+        showSmallValues || token.value_usd >= 1
     );
 
     const shortenAddress = (address: string, startLength: number = 8, endLength: number = 8): string => {
@@ -207,25 +187,25 @@ const SingleWalletView: React.FC = () => {
                 </div>
                 <div className="wallet-overview-values">
                     <ValueCard
-                        label={shortenAddress(cachedWallet ? cachedWallet.address : '')}
+                        label={shortenAddress(cachedWallet?.address || '')}
                         value={cachedWallet?.name || ''}
                         isText={true}
                         color={'#666'}
                     />
                     <ValueCard
                         label="Total"
-                        value={(cachedWallet?.asset_total || 0) + (cachedWallet?.defi_total || 0)}
+                        value={(cachedWallet?.total_value_assets || 0) + (cachedWallet?.total_value_defi || 0) || 0}
                         color={'#666'}
                     />
                     <ValueCard
                         label="Assets"
-                        value={cachedWallet?.asset_total || 0}
+                        value={cachedWallet?.total_value_assets || 0}
                         color={'#666'}
                     />
-                    {cachedWallet?.defi_total || 0 > 0 ? (
+                    {cachedWallet?.total_value_defi || 0 > 0 ? (
                         <ValueCard
                             label="DeFi"
-                            value={cachedWallet?.defi_total || 0}
+                            value={cachedWallet?.total_value_defi || 0}
                             color={'#666'}
                         />
                     ) : null}
@@ -239,14 +219,14 @@ const SingleWalletView: React.FC = () => {
             </section>
 
             {!cachedWallet ? (
-                <LoadingOverlay message="Loading wallets..." />
+                <LoadingOverlay message="Loading wallet..." />
             ) : (
                 <div className="wallet-content">
                     <div className="assets-section">
                         <div className="section-header">
                             <div className="section-title">
                                 <h2>Assets</h2>
-                                <div className="section-total">{formatCurrency(cachedWallet?.asset_total || 0)}</div>
+                                <div className="section-total">{formatCurrency(cachedWallet?.total_value_assets || 0)}</div>
                             </div>
                             <div className="toggle-container">
                                 <span className="toggle-label">Show &lt;$1</span>
@@ -276,8 +256,6 @@ const SingleWalletView: React.FC = () => {
                                     formatCurrency={formatCurrency}
                                     formatNumber={formatNumber}
                                     formatPercent={formatPercent}
-                                    getValue={getValue}
-                                    getChange={getChange}
                                 />
                             ))}
                         </div>

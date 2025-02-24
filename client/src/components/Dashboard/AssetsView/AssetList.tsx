@@ -6,7 +6,7 @@ import { Asset } from './AssetsView';
 
 interface AssetListProps {
   assets: Asset[];
-  handleClick: (assetId: string, assetName: string, isFungible: boolean, navigate: ReturnType<typeof useNavigate> ) => void;
+  handleClick: (assetId: string, navigate: ReturnType<typeof useNavigate> ) => void;
   navigate: ReturnType<typeof useNavigate>;
 }
 
@@ -24,7 +24,7 @@ const AssetList: React.FC<AssetListProps> = ({ assets, handleClick, navigate }) 
         {assets.map((asset, index) =>     
         (
           <div key={index} className="table-row-asset-list redirectable-card"
-          onClick={() => handleClick(asset.fungible_id, asset.name, true, navigate)}
+          onClick={() => handleClick(asset.fungible_id, navigate)}
           role="button"
           tabIndex={0}
           >

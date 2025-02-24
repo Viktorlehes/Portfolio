@@ -3,10 +3,10 @@ import React from 'react';
 import { components } from '../../types/api-types';
 import { formatCurrencySuffix } from '../../utils/calc';
 
-type TokenOverviewResponse = components['schemas']['TokenOverviewData'];
+type UnifiedToken = components['schemas']['UnifiedToken']
 
 interface TokenTableRowProps {
-    data: TokenOverviewResponse;
+    data: UnifiedToken;
     rank: number;
 }
 
@@ -51,22 +51,26 @@ export const TokenTableRow: React.FC<TokenTableRowProps> = ({ data, rank }) => {
 
     return (
         <tr className="token-row">
-            <td>{rank}</td>
-            <td>{data.name}</td>
-            <td className="price-cell">${data.price.toFixed(2)}</td>
-            <td className={`change-cell ${getPercentageClass(data.change24h)}`}>
-                {formatPercentage(data.change24h)}
+            <td >{rank}</td>
+            <td className={data.logo_url && 'token-symbol-row' || "token-only" }>
+            {data.logo_url &&    
+            <img className='token-symbol' src={data.logo_url} alt="token icon"/>}
+            {data.name}
             </td>
-            <td className={`change-cell ${getPercentageClass(data.change7d)}`}>
-                {formatPercentage(data.change7d)}
+            <td className="price-cell">${data.price_data.price.toFixed(2)}</td>
+            <td className={`change-cell ${getPercentageClass(data.price_data.percent_change_24h)}`}>
+                {formatPercentage(data.price_data.percent_change_24h)}
             </td>
-            <td className="volume-cell">{formatCurrencySuffix(data.volume)}</td>
-            <td className={`change-cell ${getPercentageClass(data.volumeChange24h)}`}>
-                {formatPercentage(data.volumeChange24h)}
+            <td className={`change-cell ${getPercentageClass(data.price_data.percent_change_7d)}`}>
+                {formatPercentage(data.price_data.percent_change_7d)}
             </td>
-            <td className="market-cap-cell">{formatCurrencySuffix(data.marketCap)}</td>
-            <td className={`flow-cell ${getNetFlowClass(data.netInflow24h)}`}>
-                {formatNetFlow(data.netInflow24h)}
+            <td className="volume-cell">{formatCurrencySuffix(data.price_data.volume_24h)}</td>
+            <td className={`change-cell ${getPercentageClass(data.price_data.volume_change_24h)}`}>
+                {formatPercentage(data.price_data.volume_change_24h)}
+            </td>
+            <td className="market-cap-cell">{formatCurrencySuffix(data.price_data.market_cap)}</td>
+            <td className={`flow-cell ${getNetFlowClass(data.net_flow_data ? data.net_flow_data.net_flow_24h : 0)}`}>
+                {formatNetFlow(data.net_flow_data ? data.net_flow_data.net_flow_24h : 0)}
             </td>
         </tr>
     );

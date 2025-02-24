@@ -55,7 +55,10 @@
 
 /* Navigation */
 .sidebar-nav {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
 }
 
 .sidebar-nav ul {

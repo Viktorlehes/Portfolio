@@ -80,7 +80,7 @@ const ProtocolGroup: React.FC<ProtocolGroupProps> = ({
                             <div className="col-asset">
                                 <div className="asset-info">
                                     <div className="token-icon">
-                                        <img src={position.icon} alt={position.name} />
+                                        <img src={position.icon || ""} alt={position.name} />
                                     </div>
                                     <div className="token-details">
                                         <div className="token-name">{position.name}</div>
@@ -101,11 +101,11 @@ const ProtocolGroup: React.FC<ProtocolGroupProps> = ({
 
                             <div className="col-value">
                                 <div className={`value-info ${position.position_type === 'loan' ? 'loan-value' : ''}`}>
-                                    <div>{formatCurrency(position.value, 2, 2)}</div>
-                                    {position.changes.absolute_1d !== 0 && (
-                                        <div className={`change-value ${position.changes.absolute_1d >= 0 ? 'positive' : 'negative'}`}>
-                                            {position.changes.absolute_1d > 0 ? '+' : ''}
-                                            {formatCurrency(position.changes.absolute_1d, 2, 2)}
+                                    <div>{formatCurrency(position.price_data.current_value, 2, 2)}</div>
+                                    {position.price_data.price_change_24h && position.price_data.price_change_24h !== 0 && (
+                                        <div className={`change-value ${position.price_data.price_change_24h >= 0 ? 'positive' : 'negative'}`}>
+                                            {position.price_data.price_change_24h > 0 ? '+' : ''}
+                                            {formatCurrency(position.price_data.price_change_24h, 2, 2)}
                                         </div>
                                     )}
                                 </div>
@@ -125,12 +125,12 @@ const DefiPositions: React.FC<{ positions: ExtendedDefiPosition[], displayTotal?
             acc[protocol] = {
                 positions: [],
                 totalValue: 0,
-                icon: position.protocol_icon,
-                protocolLink: position.protocol_link
+                icon: position.icon || "",
+                protocolLink: position.protocol_link || ""
             };
         }
         acc[protocol].positions.push(position);
-        acc[protocol].totalValue += position.position_type != 'loan' ? position.value : -position.value;
+        acc[protocol].totalValue += position.position_type != 'loan' ? position.price_data.current_value : -position.price_data.current_value;
         return acc;
     }, {} as Record<string, { positions: ExtendedDefiPosition[], totalValue: number, icon: string, protocolLink: string }>);
 

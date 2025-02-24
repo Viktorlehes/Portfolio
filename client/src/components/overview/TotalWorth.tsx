@@ -3,7 +3,7 @@ import './TotalWorth.css';
 import { components } from '../../types/api-types';
 import { calculate24hChange, calculate24hDefiChange, calculate24hTokenChange, formatCurrencySuffix } from '../../utils/calc';
 
-type Wallet = components["schemas"]["Wallet"];
+type Wallet = components["schemas"]["UnifiedWallet"];
 
 interface TotalWorthProps {
   wallets: Wallet[] | null;
@@ -35,12 +35,12 @@ const calculateMetrics = (wallets: Wallet[] | null): WorthMetrics => {
   }
 
   const totalAssetValue = wallets.reduce(
-    (sum, wallet) => sum + (wallet?.asset_total ?? 0),
+    (sum, wallet) => sum + (wallet.total_value_assets || 0 ),
     0
   );
 
   const totalDefiValue = wallets.reduce(
-    (sum, wallet) => sum + (wallet?.defi_total ?? 0),
+    (sum, wallet) => sum + (wallet.total_value_defi || 0),
     0
   );
 

@@ -2,20 +2,22 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Search, Plus, X, ExternalLink, Loader } from 'lucide-react';
 import { components } from '../../../types/api-types';
 import { formatCurrencySuffix } from '../../../utils/calc';
+import { FetchState } from '../../../utils/api';
 import debounce from 'lodash/debounce';
 import './CategoryManager.css';
 
-type Category = components["schemas"]["CategoryData"];
-type Token = components["schemas"]["FullCMCToken"];
+type DefaultCategory = components["schemas"]["DefaultCategory"];
+type Token = components["schemas"]['UnifiedToken'];
 
 interface CategoryManagerProps {
-  defaultCategories: Category[];
-  defaultTokens: Token[];
+  defaultCategories: FetchState<DefaultCategory[]>;
+  defaultTokens: FetchState<Token[]>;
   nullStates: {
-    defaultCategories: boolean;
-    defaultTokens: boolean;
+    defaultCategoriesState: boolean,
+    userCategoriesState: boolean,
+    defaultTokensState: boolean
   };
-  handleAddCMCCategory: (category: Category) => void;
+  handleAddCMCCategory: (category_id: string) => void;
   fetchSearchedTokens: (name: string) => Promise<Token[]>;
   handleCreateCustomCategory: (name: string, tokenIds: number[]) => Promise<void>;
 }
@@ -71,12 +73,12 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
     return () => debouncedSearch.cancel();
   }, [searchTerm, activeTab, debouncedSearch]);
 
-  const filteredCategories = !nullStates.defaultCategories ? defaultCategories.filter(cat =>
+  const filteredCategories = !nullStates.defaultCategoriesState ? defaultCategories.data!.filter(cat =>
     cat.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) : [];
 
-  const displayTokens = searchTerm.length >= 2 ? searchResults : defaultTokens;
-  const filteredTokens = !nullStates.defaultTokens && displayTokens.filter(token =>
+  const displayTokens = searchTerm.length >= 2 ? searchResults : defaultTokens.data;
+  const filteredTokens = !nullStates.defaultTokensState && displayTokens!.filter(token =>
     token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     token.symbol.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [] as Token[];
@@ -89,7 +91,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
       return;
     }
     
-    const tokenIds = selectedTokens.map(token => token.id);
+    const tokenIds = selectedTokens.map(token => token.cmc_id);
     console.log('Creating custom category:', categoryName, tokenIds);
     
     handleCreateCustomCategory(categoryName, tokenIds)
@@ -197,7 +199,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                   </a>
                   <button 
                     className="add-button"
-                    onClick={() => handleAddCMCCategory(category)}
+                    onClick={() => handleAddCMCCategory(category.id)}
                   >
                     <Plus size={16} />
                   </button>

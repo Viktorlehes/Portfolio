@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { components } from "../types/api-types";
+import { useAuth } from '../auth/authContext';
 const API_KEY = import.meta.env.VITE_API_KEY;
 const BASE_URL = import.meta.env.VITE_API_URL;
-
-type Wallet = components["schemas"]["Wallet"];
 
 interface CachedData<T> {
   data: T;
@@ -27,11 +25,13 @@ interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | boolean>;
 }
 
-export const fetchWithAuth = async (endpoint: string, options: FetchOptions = {}) => {
+export async function fetchWithAuth<T>(
+  endpoint: string, 
+  options: FetchOptions = {}
+): Promise<APIResponse<T>> {
   const { params, ...fetchOptions } = options;
   let url = `${BASE_URL}${endpoint}`;
 
-  // Add query parameters if they exist
   if (params) {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
@@ -40,68 +40,77 @@ export const fetchWithAuth = async (endpoint: string, options: FetchOptions = {}
     url += `?${searchParams.toString()}`;
   }
 
+  const sessionToken = sessionStorage.getItem('sessionToken');
+  console.log(sessionToken);
+
   const headers = {
     'Content-Type': 'application/json',
     'X-API-Key': API_KEY,
+    ...(sessionToken && { 'Authorization': `Bearer ${sessionToken}` }),
     ...options.headers,
   };
 
-  const response = await fetch(url, {
-    ...fetchOptions,
-    headers,
-  });
+  try {
+    const response = await fetch(url, {
+      ...fetchOptions,
+      headers,
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    
+    const responseData = await response.json();
+
+    // Handle non-OK responses
+    if (!response.ok) {
+      if (response.status === 401) {
+        sessionStorage.removeItem('sessionToken');
+        window.dispatchEvent(new Event('auth-error'));
+      }
+    }
+
+    return responseData;
+  } catch (error) {
     return {
+      data: null,
       success: false,
-      error: errorData.detail || 'Request failed',
-      status: response.status
+      error: error instanceof Error ? error.message : 'Network error',
+      status_code: 500,
+      timestamp: new Date().toISOString()
     };
   }
-
-  return await response.json(); 
-};
+}
 
 // Helper methods for common HTTP methods
 export const api = {
-  get: (endpoint: string, params?: Record<string, string | number | boolean>) =>
-    fetchWithAuth(endpoint, { method: 'GET', params }),
+  get: function<T>(endpoint: string, params?: Record<string, string | number | boolean>) {
+    return fetchWithAuth<T>(endpoint, { method: 'GET', params });
+  },
 
-  post: (endpoint: string, data: any, params?: Record<string, string | number | boolean>) =>
-    fetchWithAuth(endpoint, {
+  post: function<T, R>(endpoint: string, data: R, params?: Record<string, string | number | boolean>) {
+    return fetchWithAuth<T>(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
       params,
-    }),
+    });
+  },
 
-  put: (endpoint: string, data: any, params?: Record<string, string | number | boolean>) =>
-    fetchWithAuth(endpoint, {
+  put: function<T, R>(endpoint: string, data: R, params?: Record<string, string | number | boolean>) {
+    return fetchWithAuth<T>(endpoint, {
       method: 'PUT',
       body: JSON.stringify(data),
       params,
-    }),
+    });
+  },
 
-  delete: (endpoint: string, params?: Record<string, string | number | boolean>) =>
-    fetchWithAuth(endpoint, { method: 'DELETE', params }),
+  delete: function<T>(endpoint: string, params?: Record<string, string | number | boolean>) {
+    return fetchWithAuth<T>(endpoint, { method: 'DELETE', params });
+  },
 };
-
-export async function getWallets(): Promise<Wallet[]> {
-  try {
-    const responseData = await api.get('/wallet/get_wallets');
-    return responseData;
-  } catch (error) {
-    console.error('Error fetching crypto stats:', error);
-    throw new Error('Could not load crypto wallets');
-  }
-}
 
 // Define fetch states
 export interface FetchState<T> {
   data: T | null;
   isLoading: boolean;
-  error: Error | null;
+  error: string | null;
+  status: number | null
   refetch: () => Promise<void>;
 }
 
@@ -115,6 +124,7 @@ interface EndpointConfig {
     delayMs: number;
   };
   initialData?: any | null;
+  requiresAuth?: boolean
 }
 
 const defaultRetryConfig = {
@@ -122,15 +132,36 @@ const defaultRetryConfig = {
   delayMs: 5000,
 };
 
-export function useDataFetching<T>(config: EndpointConfig, email: string | null = null): FetchState<T> {
+export interface APIResponse<T> {
+  data: T | null;
+  success: boolean;
+  error: string | null;
+  status_code: number;
+  timestamp: string;
+}
+
+export function useDataFetching<T>(config: EndpointConfig): FetchState<T> {
   const [state, setState] = useState<FetchState<T>>({
     data: config.initialData?.data || null,
     isLoading: !config.initialData?.data,
     error: null,
-    refetch: async () => { }
+    status: null,
+    refetch: async () => {}
   });
 
+  const { isAuthenticated } = useAuth();
+
   const fetchData = useCallback(async (showLoading = false) => {
+    if (config.requiresAuth && !isAuthenticated) {
+      setState(prev => ({
+        ...prev,
+        error: 'Authentication required',
+        status: 401,
+        isLoading: false
+      }))
+      return;
+    }
+  
     let retries = 0;
     const maxRetries = config.retryConfig?.maxRetries ?? defaultRetryConfig.maxRetries;
     const delayMs = config.retryConfig?.delayMs ?? defaultRetryConfig.delayMs;
@@ -143,22 +174,33 @@ export function useDataFetching<T>(config: EndpointConfig, email: string | null 
       try {
         const params = new URLSearchParams();
         if (showLoading) params.append('force_update', 'true');
-        if (email) params.append('email', email);
         const apiUrl = `${config.endpoint}${params.toString() ? `?${params.toString()}` : ''}`;
 
-        const response = await api.get(apiUrl);
+        const response = await api.get<T>(apiUrl);
+
+        if (!response.success || response.error) {
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            error: response.error || 'Request failed',
+            status: response.status_code,
+            refetch
+          }));
+          break;
+        }
 
         if (config.cacheInStorage) {
           localStorage.setItem(config.endpoint, JSON.stringify({
-            data: response,
+            data: response.data,
             timestamp: Date.now()
           }));
         }
 
         setState({
-          data: response,
+          data: response.data,
           isLoading: false,
           error: null,
+          status: response.status_code,
           refetch
         });
         break;
@@ -168,7 +210,8 @@ export function useDataFetching<T>(config: EndpointConfig, email: string | null 
           setState(prev => ({
             ...prev,
             isLoading: false,
-            error: error as Error
+            error: 'Request failed',
+            status: 500,
           }));
           break;
         }
@@ -190,12 +233,13 @@ export function useDataFetching<T>(config: EndpointConfig, email: string | null 
           const { data, timestamp } = JSON.parse(cached);
           const isStale = config.staleTime && Date.now() - timestamp > config.staleTime;
           if (!isStale) {
-            setState({
+            setState(prev => ({
+              ...prev,
               data,
               isLoading: false,
               error: null,
               refetch
-            });
+            }));
             return true;
           }
         }
@@ -232,56 +276,61 @@ export function useDataFetching<T>(config: EndpointConfig, email: string | null 
 
 export const ENDPOINTS = {
   MARKET: {
-    endpoint: '/overview/cryptostats',
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    endpoint: '/overview/marketstats',
+    staleTime: 5 * 60 * 1000, 
   },
   FEAR_GREED: {
     endpoint: '/overview/feargreedindex',
     staleTime: 5 * 60 * 1000,
   },
   WALLETS: {
-    endpoint: '/wallets/get_wallets',
+    endpoint: '/wallet/',
     staleTime: 5 * 60 * 1000,
     cacheInStorage: true,
+    requiresAuth: true
   },
   TOKENS: {
-    endpoint: '/overview/overview-tokens-table-data',
-    staleTime: 10 * 60 * 1000,
+    endpoint: '/overview/token_table',
+    staleTime: 5 * 60 * 1000,
     retryConfig: {
       maxRetries: 5,
       delayMs: 10000,
-    }
+    },
+    cacheInStorage: true
   },
   CATEGORIES: {
-    endpoint: '/overview/get-user-catagories',
+    endpoint: '/overview/user_categories',
     staleTime: 10 * 60 * 1000,
     retryConfig: {
       maxRetries: 5,
       delayMs: 10000,
-    }
+    },
   },
   CGLS_SCRAPE: {
-    endpoint: '/overview/get-scraped-CGLS-data',
+    endpoint: '/overview/scraped-CGLS-data',
     staleTime: 5 * 60 * 1000,
   },
-  CUSTOM_CATEGORIES: {
-    endpoint: '/overview/get-custom-categories',
-    staleTime: 10 * 60 * 1000,
-    retryConfig: {
-      maxRetries: 5,
-      delayMs: 10000,
-    }
-  },
   DEFAULT_CATEGORIES: {
-    endpoint: '/overview/get-default-categories',
+    endpoint: '/overview/default_categories',
     staleTime: 10 * 60 * 1000,
+    cacheInStorage: true
   },
   DEFAULT_TOKENS: {
     endpoint: '/overview/get-default-tokens',
     staleTime: 10 * 60 * 1000,
+    cacheInStorage: true
   },
   ALERTS: {
-    endpoint: '/alerts/get-alerts',
+    endpoint: '/alert/',
+    staleTime: 5 * 60 * 1000,
+    requiresAuth: true,
+  }, 
+  CHARTS: {
+    endpoint: '/chart/day',
+    staleTime: 5 * 60 * 1000,
+  },
+  SINGLETOKEN: {
+    endpoint: '/token',
     staleTime: 5 * 60 * 1000,
   }
 } as const;

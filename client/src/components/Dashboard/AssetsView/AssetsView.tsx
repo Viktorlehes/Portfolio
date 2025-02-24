@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import "./AssetsView.css";
 import MetricCard from "../../overview/MetricCard";
 import AssetList from "./AssetList";
@@ -9,24 +9,16 @@ import { ChartData } from "./TokenPriceChart";
 import { formatCurrency, formatPercent } from "../../../utils/calc";
 import { CircleDollarSign } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
-import { getCachedData, isDataExpired } from "../../../utils/api";
-import { api } from "../../../utils/api";
+import { isDataExpired } from "../../../utils/api";
+import { api, ENDPOINTS } from "../../../utils/api";
+import { Loader } from "lucide-react";
 
-type Wallet = components['schemas']['Wallet'];
-type FullToken = components['schemas']['FullToken'];
+type Wallet = components['schemas']['UnifiedWallet'];
 
 interface CachedData<T> {
   data: T;
   timestamp: number;
 }
-
-const CACHE_KEYS = {
-  CHARTS: 'assetCharts'
-} as const;
-
-const API_ENDPOINTS = {
-  CHARTS: '/dashboard/charts'
-} as const;
 
 interface AssetViewProps {
   wallets: Wallet[];
@@ -45,62 +37,46 @@ export interface Asset {
   fungible_id: string;
 }
 
+type ChartState = CachedData<{
+  [fungible_id: string]: {
+    data: ChartData | null;
+    error: string;
+    isLoading?: boolean;
+  };
+}>;
+
 const AssetsView: React.FC<AssetViewProps> = ({ wallets, isNull }) => {
-  //temporarily set to true, implement logic to show/hide zero values
-  const showZeroValues = true
-  const fetchingRef = useRef<Set<string>>(new Set());
+  const showZeroValues = true;
   const navigate = useNavigate();
 
-  const [chartState, setChartState] = useState<CachedData<Record<string, ChartData>>>(() => {
-    const cachedCharts = getCachedData(CACHE_KEYS.CHARTS);
-    return {
-      data: cachedCharts?.data || {},
-      timestamp: cachedCharts?.timestamp || 0 // Ensure timestamp is always a number
-    };
+  const [chartState, setChartState] = useState<ChartState>({
+    data: {},
+    timestamp: 0 
   });
-
-  const getValue = (token: FullToken): number => {
-    try {
-      return token.token_data?.value || token.zerion_data.value || 0;
-    } catch (error) {
-      console.error('Error getting token value:', error);
-      return 0;
-    }
-  };
-
-  const getChange = (token: FullToken): number => {
-    try {
-      return token.token_data?.change24h || token.zerion_data.changes.percent_1d || 0;
-    } catch (error) {
-      console.error('Error getting token change:', error);
-      return 0;
-    }
-  };
 
   const { totalValueArray, largest4Assets } = !isNull ? useMemo(() => {
     const totalValuePerAsset = wallets.reduce((acc, wallet) => {
       wallet.tokens?.forEach(token => {
-        const tokenData = token.token_data ? token.token_data : token.zerion_data;
-        if (!acc[tokenData.name]) {
-          acc[tokenData.name] = {
+        if (!acc[token.name]) {
+          acc[token.name] = {
             value: 0,
-            lastValue: 0, // To store previous value for absolute change
-            tokens: [], // Store all instances of this token
+            lastValue: 0, 
+            tokens: [], 
             amount: 0,
             price: 0,
-            icon: token.zerion_data.icon || '',
-            symbol: tokenData.symbol,
-            fungible_id: token.zerion_data.fungible_id,
-            percentChange: getChange(token) // Store the original percent change
+            icon: token.icon || '',
+            symbol: token.symbol,
+            fungible_id: token.token_id,
+            percentChange: token.price_24h_change 
           };
         }
 
-        const value = getValue(token);
-        acc[tokenData.name].value += value;
-        acc[tokenData.name].tokens.push(token);
-        acc[tokenData.name].amount += token.zerion_data.quantity.float;
-        acc[tokenData.name].price = token.zerion_data.price;
-        acc[tokenData.name].lastValue += value / (1 + (getChange(token) / 100));
+        const value = token.value_usd;
+        acc[token.name].value += value;
+        acc[token.name].tokens.push(token);
+        acc[token.name].amount += token.amount;
+        acc[token.name].price = token.price_usd;
+        acc[token.name].lastValue += value / (1 + (token.price_24h_change / 100));
       });
       return acc;
     }, {} as Record<string, {
@@ -116,97 +92,105 @@ const AssetsView: React.FC<AssetViewProps> = ({ wallets, isNull }) => {
     }>);
 
     let allAssets: Asset[] = Object.entries(totalValuePerAsset)
-      .map(([name, data]) => {
-        // Calculate absolute change
-        const absoluteChange = data.value - data.lastValue;
-
-        // Get the original percentage change from the token data
-        return {
-          name,
-          value: data.value,
-          change: data.percentChange, // Use original percentage change
-          absoluteChange, // Use calculated absolute change
-          amount: data.amount,
-          price: data.price,
-          icon: data.icon,
-          symbol: data.symbol,
-          fungible_id: data.fungible_id
-        };
-      })
+      .map(([name, data]) => ({
+        name,
+        value: data.value,
+        change: data.percentChange,
+        absoluteChange: data.value - data.lastValue,
+        amount: data.amount,
+        price: data.price,
+        icon: data.icon,
+        symbol: data.symbol,
+        fungible_id: data.fungible_id
+      }))
       .filter(asset => showZeroValues || asset.value >= 0.1)
       .sort((a, b) => b.value - a.value);
 
-    const top4 = allAssets.slice(0, 4);
-    const rest = allAssets.slice(4);
     return {
-      totalValueArray: rest,
-      largest4Assets: top4
+      totalValueArray: allAssets.slice(4),
+      largest4Assets: allAssets.slice(0, 4)
     };
   }, [wallets, showZeroValues]) : { totalValueArray: [], largest4Assets: [] };
 
-  useEffect(() => {
-    const fetchChart = async (fungible_id: string) => {
-      if (fetchingRef.current.has(fungible_id) || chartState.data[fungible_id]) {
-        return;
-      }
-
-      fetchingRef.current.add(fungible_id);
-
-      try {
-        const chartData = await api.post(
-          API_ENDPOINTS.CHARTS,  // Update this path to match your API_ENDPOINTS.CHARTS
-          { fungible_id }
-        );
-
-        setChartState(prev => {
-          const newState = {
-            data: {
-              ...prev.data,
-              [fungible_id]: chartData
-            },
-            timestamp: Date.now()
-          };
-
-          // Cache the updated charts data
-          localStorage.setItem(CACHE_KEYS.CHARTS, JSON.stringify(newState));
-
-          return newState;
+  const fetchChart = useCallback(async (fungible_id: string) => {
+    setChartState(prev => ({
+      ...prev,
+      data: {
+        ...prev.data,
+        [fungible_id]: {
+          ...prev.data[fungible_id],
+          isLoading: true
         }
-        );
-      } catch (error) {
-        console.error('Error fetching chart data:', error);
-      } finally {
-        fetchingRef.current.delete(fungible_id);
       }
-    };
+    }));
 
+    try {
+      const response = await api.post<ChartData, object>(ENDPOINTS.CHARTS.endpoint, {fungible_id});
+      
+      setChartState(prev => ({
+        data: {
+          ...prev.data,
+          [fungible_id]: {
+            data: response.success ? response.data! : null,
+            error: response.success ? "" : response.error!,
+            isLoading: false
+          }
+        },
+        timestamp: Date.now()
+      }));
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+      setChartState(prev => ({
+        data: {
+          ...prev.data,
+          [fungible_id]: {
+            data: null,
+            error: 'Error fetching chart data',
+            isLoading: false
+          }
+        },
+        timestamp: Date.now()
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchMissingCharts = async () => {
-      // Check if cache is expired (every 5 minutes)
       const shouldRefetch = isDataExpired(chartState.timestamp || 0);
-
+      
       largest4Assets.forEach(asset => {
-        if ((!chartState.data[asset.fungible_id] || shouldRefetch) &&
-          !fetchingRef.current.has(asset.fungible_id)) {
+        const currentData = chartState.data[asset.fungible_id];
+        if (!currentData || shouldRefetch) {
           fetchChart(asset.fungible_id);
         }
       });
     };
 
     fetchMissingCharts();
-    const intervalId = setInterval(() => {
-      fetchMissingCharts();
-    }, 300000); // Refresh every 5 minutes
-
+    const intervalId = setInterval(fetchMissingCharts, 300000);
     return () => clearInterval(intervalId);
-  }, [largest4Assets, chartState.timestamp]);
+  }, [largest4Assets, chartState.timestamp, fetchChart]);
 
-  const handleAssetClick = (assetId: string, assetName: string, isFungible: boolean, navigate: ReturnType<typeof useNavigate>) => {
-    const searchParams = new URLSearchParams({
-      name: assetName,
-      fungible: isFungible.toString(),
-    });
+  const handleAssetClick = useCallback((assetId: string, navigate: ReturnType<typeof useNavigate>) => {
+    navigate(`/Dashboard/asset/${assetId}`);
+  }, []);
 
-    navigate(`/Dashboard/asset/${assetId}?${searchParams.toString()}`);
+  const renderChart = (asset: Asset) => {
+    const chartData = chartState.data[asset.fungible_id];
+    
+    if (!chartData) {
+      return null;
+    }
+
+    if (chartData.isLoading) {
+      return <div className="search-results-loading"><div className="loading-spinner"><Loader className="animate-spin" /></div></div>;
+    }
+
+    if (!chartData.data || chartData.error) {
+    return null;
+    }
+
+    return <TokenPriceChart chartData={chartData.data} />;
   };
 
   return (
@@ -221,11 +205,9 @@ const AssetsView: React.FC<AssetViewProps> = ({ wallets, isNull }) => {
               change={formatPercent(asset.change)}
               amount={`${asset.amount.toFixed(3)} ${asset.symbol}`}
               absoluteChange={formatCurrency(asset.absoluteChange, 2, 2)}
-              Chart={chartState.data[asset.fungible_id] ?
-                <TokenPriceChart chartData={chartState.data[asset.fungible_id]} /> :
-                null}
+              Chart={renderChart(asset)}
               icon={asset.icon ? <img src={asset.icon} alt={asset.name} className="icon" /> : <CircleDollarSign />}
-              handleClick={() => handleAssetClick(asset.fungible_id, asset.name, true, navigate)}
+              handleClick={() => handleAssetClick(asset.fungible_id, navigate)}
             />
           ))}
         </div>

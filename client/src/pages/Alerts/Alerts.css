@@ -256,6 +256,17 @@
     cursor: not-allowed;
   }
   
+  .search-results-loading {
+    display: flex;
+    justify-content: center;
+    padding-top: 15px;
+    align-items: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
   .search-results {
     border: 1px solid #e5e7eb;
     border-radius: 4px;
@@ -276,6 +287,13 @@
     background: #f9fafb;
   }
   
+  .submit-error {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 400;
+    color: #ef4444;
+  }
+
   .asset-symbol {
     font-weight: 500;
   }

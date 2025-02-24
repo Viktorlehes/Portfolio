@@ -10,9 +10,8 @@ import { RefreshCcw } from 'lucide-react';
 import { formatCurrencySuffix } from '../../utils/calc';
 import { api, ENDPOINTS, useDataFetching } from '../../utils/api';
 
-type Wallet = components["schemas"]["Wallet"];
-type FullToken = components["schemas"]["FullToken"];
-type ZerionToken = components["schemas"]["ZerionToken"];
+type Wallet = components["schemas"]["UnifiedWallet"];
+type UnifiedToken = components["schemas"]["UnifiedToken"];
 
 interface allChartsData {
     day: ChartData;
@@ -43,8 +42,6 @@ interface AssetStats {
 
 interface AssetLoaderData {
     assetId: string;
-    assetName: string;
-    isFungible: boolean;
     wallets: {
         data: Wallet[] | null;
         timestamp: number;
@@ -52,23 +49,11 @@ interface AssetLoaderData {
 }
 
 export const assetLoader: LoaderFunction = async ({
-    params,
-    request
+    params
 }: LoaderFunctionArgs): Promise<AssetLoaderData> => {
-    const url = new URL(request.url);
-    const assetName = url.searchParams.get('name') || '';
-    const isFungible = url.searchParams.get('fungible') === 'true';
-
-    if (!params.assetId) {
-        throw new Error('Asset ID is required');
-    }
-
     const cachedWallets = localStorage.getItem(ENDPOINTS.WALLETS.endpoint);
-
     return {
-        assetId: params.assetId,
-        assetName,
-        isFungible,
+        assetId: params.assetId ? params.assetId : "" ,
         wallets: cachedWallets ? JSON.parse(cachedWallets) : {
             data: null,
             timestamp: 0
@@ -76,87 +61,54 @@ export const assetLoader: LoaderFunction = async ({
     };
 };
 
-async function fetchZerionToken(fungible_id: string): Promise<ZerionToken> {
-    return api.post('/tokens/zerionToken', { fungible_id });
+async function fetchChartData(fungible_id: string) {
+    return await api.post<allChartsData, object>('/chart/', {fungible_id});
 }
 
-async function fetchChartData(fungible_id: string): Promise<allChartsData> {
-    return api.post('/dashboard/allCharts', { fungible_id });
-}
-
-function getFungibleId(wallets: Wallet[], assetId: string, assetName: string, isFungible: boolean): string {
-    if (isFungible) {
-        return assetId;
-    }
-
-    for (const wallet of wallets) {
-        if (!wallet.tokens) continue;
-
-        const tokenByData = wallet.tokens.find(token =>
-            token.token_data?.name === assetName
-        );
-        if (tokenByData) {
-            return tokenByData.zerion_data.fungible_id;
-        }
-
-        const tokenByZerion = wallet.tokens.find(token =>
-            token.zerion_data.name === assetName
-        );
-        if (tokenByZerion) {
-            return tokenByZerion.zerion_data.fungible_id;
-        }
-    }
-    return '';
+async function fetchTokenData(fungible_id: string) {
+    return await api.post<UnifiedToken, object>('/token/', {id: fungible_id, id_type: "zerion_id" });
 }
 
 const SingleAssetView: React.FC = () => {
-    const { assetId, assetName, isFungible, wallets } = useLoaderData() as AssetLoaderData;
+    const { assetId, wallets } = useLoaderData() as AssetLoaderData;
     const walletState = useDataFetching<Wallet[]>({
         ...ENDPOINTS.WALLETS,
         initialData: wallets
       });
-    const navigate = useNavigate();
+    const [tokenData, setTokenData] = useState<UnifiedToken | null>(null);
     const [showSmallValues, setShowSmallValues] = useState<boolean>(true);
     const [assetStats, setAssetStats] = useState<AssetStats | null>(null);
     const [chartData, setChartData] = useState<allChartsData | null>(null);
     const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>('day');
-    const [zerionTokenData, setZerionTokenData] = useState<ZerionToken | null>(null);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-    const [loadingStates, setLoadingStates] = useState({
-        zerionToken: false,
-        chartData: false
+    const navigate = useNavigate();
+    const [showNull, setShowNull] = useState({
+        token: true,
+        chartData: true
     });
 
     useEffect(() => {
+        setShowNull({
+            token: !tokenData,
+            chartData: !chartData
+            });
+    }, [tokenData, chartData]);
+
+    useEffect(() => {
         const fetchData = async () => {
-            if (!walletState.data) {
-                setLoadingStates(prev => ({ ...prev, zerionToken: true, chartData: true }));
-                return;
-            };
-            const fungible_id = walletState.data && getFungibleId(walletState.data, assetId, assetName, isFungible) || '';
-
-            try {
-                // Fetch Zerion token data
-                setLoadingStates(prev => ({ ...prev, zerionToken: true }));
-                const tokenData = await fetchZerionToken(fungible_id);
-                setZerionTokenData(tokenData);
-
-                setLoadingStates(prev => ({ ...prev, zerionToken: false }));
-
-                // Check cache for chart data
-                setLoadingStates(prev => ({ ...prev, chartData: true }));
-                const newChartData = await fetchChartData(fungible_id);
-                setChartData(newChartData);
-
-                setLoadingStates(prev => ({ ...prev, chartData: false }));
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                setLoadingStates(prev => ({ ...prev, zerionToken: true, chartData: true }));
+            const chartData = await fetchChartData(assetId)
+            if (chartData.success) {
+                setChartData(chartData.data)
             }
-        };
+            const tokenData = await fetchTokenData(assetId)
+            if (tokenData.success) {
+                setTokenData(tokenData.data)
+            }
+        }
 
-        fetchData();
-    }, [walletState.data]);
+        fetchData()
+    }, [walletState.data])
+    
 
     const shortenAddress = (address: string, startLength: number = 8, endLength: number = 8): string => {
         return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
@@ -166,20 +118,11 @@ const SingleAssetView: React.FC = () => {
         navigate(`/dashboard/wallet/${address}`);
     };
 
-    const getValue = (token: FullToken): number => {
-        try {
-            return token.token_data?.value || token.zerion_data.value || 0;
-        } catch (error) {
-            console.error('Error getting token value:', error);
-            return 0;
-        }
-    };
-
     const calculateAssetStats = (): AssetStats => {
         let totalValue = 0;
         let totalAmount = 0;
         let positions: Position[] = [];
-        let processedTokenIds = new Set<string>();
+        
 
         if (!walletState.data) {
             return {
@@ -191,26 +134,18 @@ const SingleAssetView: React.FC = () => {
             };
         }
 
-        const zerion24hChange = zerionTokenData?.data.attributes.market_data.changes.percent_1d || 0;
+        const total24hChange = tokenData?.price_data.percent_change_24h || 0;
 
         // Process all wallets
         walletState.data?.forEach(wallet => {
             if (!wallet.tokens) return;
-
-            // For fungible tokens
-            if (isFungible) {
-                wallet.tokens.forEach(token => {
-                    // Check if this token matches our criteria
-                    const matchesFungibleId = token.zerion_data.fungible_id === assetId;
-                    const matchesName = token.zerion_data.name === assetName ||
-                        token.token_data?.name === assetName;
-
+            wallet.tokens.forEach(token => {
+                    const matchesFungibleId = token.token_id === assetId;
+                    const matchesName = token.name == tokenData?.name;
                     if (matchesFungibleId || matchesName) {
-                        processedTokenIds.add(token.zerion_data.fungible_id);
-
-                        const value = getValue(token);
-                        const amount = token.token_data?.amount || token.zerion_data.quantity.float;
-                        const change24h = zerion24hChange;
+                        const value = token.value_usd;
+                        const amount = token.amount
+                        const change24h = token.price_24h_change;
                         const absoluteChange = (value * change24h) / 100;
 
                         totalValue += value;
@@ -218,46 +153,18 @@ const SingleAssetView: React.FC = () => {
 
                         positions.push({
                             walletName: wallet.name,
-                            walletAddress: wallet.address,
+                            walletAddress: wallet.address!,
                             value,
                             amount,
-                            change24h,
+                            change24h: total24hChange,
                             absoluteChange,
-                            chain: token.zerion_data.chain,
-                            icon: token.zerion_data.icon,
-                            price: token.token_data?.price || token.zerion_data.price,
+                            chain: token.chain || "",
+                            icon: token.icon || "",
+                            price: tokenData?.price_data.price || 0,
                             percentage: 0
                         });
                     }
-                });
-            } else {
-                // For non-fungible tokens
-                wallet.tokens.forEach(token => {
-                    if (token.token_data?.id === assetId || token.token_data?.name === assetName) {
-                        const value = getValue(token);
-                        const amount = token.token_data?.amount || token.zerion_data.quantity.float;
-                        const change24h = zerion24hChange;
-                        const absoluteChange = (value * change24h) / 100;
-
-                        totalValue += value;
-                        totalAmount += amount;
-
-                        positions.push({
-                            walletName: wallet.name,
-                            walletAddress: wallet.address,
-                            value,
-                            amount,
-                            change24h,
-                            absoluteChange,
-                            chain: token.zerion_data.chain,
-                            icon: token.zerion_data.icon,
-                            price: token.token_data?.price || token.zerion_data.price,
-                            percentage: 0
-                        });
-
-                    }
-                });
-            }
+            });
         });
 
         // Calculate percentages
@@ -269,8 +176,8 @@ const SingleAssetView: React.FC = () => {
         return {
             totalValue,
             totalAmount,
-            totalChange: zerion24hChange,
-            totalAbsoluteChange: (totalValue * zerion24hChange) / 100,
+            totalChange: total24hChange,
+            totalAbsoluteChange: (totalValue * total24hChange) / 100,
             positions: positions
                 .filter(pos => showSmallValues || pos.value >= 1)
                 .sort((a, b) => b.value - a.value)
@@ -278,11 +185,11 @@ const SingleAssetView: React.FC = () => {
     };
 
     useEffect(useMemo(() => () => {
-        if (walletState.data) {
+        if (walletState.data && tokenData) {
             setAssetStats(calculateAssetStats());
         }
     }
-    , [walletState.data, showSmallValues]), [walletState.data, showSmallValues]);
+    , [walletState.data, tokenData]), [walletState.data, tokenData]);
 
     return (
         <div className="single-wallet-container">
@@ -295,15 +202,17 @@ const SingleAssetView: React.FC = () => {
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    {zerionTokenData?.data.attributes.icon.url && (
-                        <img src={zerionTokenData.data.attributes.icon.url} alt={assetName} style={{ 'width': '40px', 'height': '40px' }} />
-                    )}
-                    <h1>{assetName} ({zerionTokenData?.data.attributes.symbol})</h1>
+                    {!showNull.token && tokenData?.logo_url ? (
+                        <img src={tokenData!.logo_url ? tokenData!.logo_url : "" } alt={""} style={{ 'width': '40px', 'height': '40px' }} />
+                    ) : (
+                        null
+                    ) }
+                    <h1>{!showNull.token ? tokenData?.name : "-"} ({!showNull.token ? tokenData?.symbol : "-"})</h1>
                 </div>
                 <div className="overview-values">
                     <ValueCard
                         label="Price"
-                        value={loadingStates.zerionToken || !zerionTokenData ? 0 : zerionTokenData.data.attributes.market_data.price}
+                        value={!showNull.token ? tokenData?.price_data.price! : 0}
                         color={'#666'}
                     />
                     <ValueCard
@@ -319,7 +228,7 @@ const SingleAssetView: React.FC = () => {
                     />
                     <ValueCard
                         label="24h Change"
-                        value={loadingStates.zerionToken || !zerionTokenData ? 0 : zerionTokenData.data.attributes.market_data.changes.percent_1d}
+                        value={!showNull.token ? tokenData?.price_data.percent_change_24h! : 0}
                         color={'#666'}
                         isPercent={true}
                     />
@@ -339,44 +248,44 @@ const SingleAssetView: React.FC = () => {
                     <section className="chart-periods">
                         <div className="time-period">
                             <span className="period-label">1 Day</span>
-                            <span className={`period-value ${(!loadingStates.zerionToken && (zerionTokenData?.data.attributes.market_data.changes.percent_1d ?? 0) >= 0) ? 'positive' : 'negative'}`}>
-                                {loadingStates.zerionToken || !zerionTokenData ? '-' : `${zerionTokenData.data.attributes.market_data.changes.percent_1d.toFixed(2)}%`}
+                            <span className={`period-value ${(!showNull.token && (tokenData?.price_data.percent_change_24h || 0) >= 0) ? 'positive' : 'negative'}`}>
+                                {showNull.token ? '-' : `${tokenData?.price_data.percent_change_24h!.toFixed(2)}%`}
                             </span>
                         </div>
                         <div className="time-period">
-                            <span className="period-label">1 Month</span>
-                            <span className={`period-value ${(!loadingStates.zerionToken && (zerionTokenData?.data.attributes.market_data.changes.percent_30d ?? 0) >= 0) ? 'positive' : 'negative'}`}>
-                                {loadingStates.zerionToken || !zerionTokenData ? '-' : `${zerionTokenData.data.attributes.market_data.changes.percent_30d.toFixed(2)}%`}
+                            <span className="period-label">7 Days</span>
+                            <span className={`period-value ${(!showNull.token && (tokenData?.price_data.percent_change_7d! || 0) >= 0) ? 'positive' : 'negative'}`}>
+                            {showNull.token ? '-' : `${tokenData?.price_data.percent_change_7d!.toFixed(2)}%`}
                             </span>
                         </div>
                         <div className="time-period">
-                            <span className="period-label">3 Months</span>
-                            <span className={`period-value ${(!loadingStates.zerionToken && (zerionTokenData?.data.attributes.market_data.changes.percent_90d ?? 0) >= 0) ? 'positive' : 'negative'}`}>
-                                {loadingStates.zerionToken || !zerionTokenData ? '-' : `${zerionTokenData.data.attributes.market_data.changes.percent_90d.toFixed(2)}%`}
+                            <span className="period-label">30 Days</span>
+                            <span className={`period-value ${(!showNull.token && (tokenData?.price_data.percent_change_30d! || 0) >= 0) ? 'positive' : 'negative'}`}>
+                            {showNull.token ? '-' : `${tokenData?.price_data.percent_change_30d!.toFixed(2)}%`}
                             </span>
                         </div>
                         <div className="time-period">
-                            <span className="period-label">1 Year</span>
-                            <span className={`period-value ${(!loadingStates.zerionToken && (zerionTokenData?.data.attributes.market_data.changes.percent_365d ?? 0) >= 0) ? 'positive' : 'negative'}`}>
-                                {loadingStates.zerionToken || !zerionTokenData ? '-' : `${zerionTokenData.data.attributes.market_data.changes.percent_365d.toFixed(2)}%`}
+                            <span className="period-label">90 Days</span>
+                            <span className={`period-value ${(!showNull.token && (tokenData?.price_data.percent_change_90d! || 0) >= 0) ? 'positive' : 'negative'}`}>
+                            {showNull.token ? '-' : `${tokenData?.price_data.percent_change_90d!.toFixed(2)}%`}
                             </span>
                         </div>
                         <div className="time-period">
                             <span className="period-label">Market Cap</span>
                             <span className="period-value">
-                                {loadingStates.zerionToken || !zerionTokenData ? '-' : formatCurrencySuffix(zerionTokenData.data.attributes.market_data.market_cap)}
+                                {showNull.token ? '-' : formatCurrencySuffix(tokenData?.price_data.market_cap || 0)}
                             </span>
                         </div>
                         <div className="time-period">
                             <span className="period-label">Circulating Supply</span>
                             <span className="period-value">
-                                {loadingStates.zerionToken || !zerionTokenData ? '-' : formatCurrencySuffix(zerionTokenData.data.attributes.market_data.circulating_supply)}
+                            {showNull.token ? '-' : formatCurrencySuffix(tokenData?.circulating_supply || 0)}
                             </span>
                         </div>
                         <div className="time-period">
                             <span className="period-label">Total Supply</span>
                             <span className="period-value">
-                                {loadingStates.zerionToken || !zerionTokenData ? '-' : formatCurrencySuffix(zerionTokenData.data.attributes.market_data.total_supply)}
+                            {showNull.token ? '-' : formatCurrencySuffix(tokenData?.total_supply || 0)}
                             </span>
                         </div>
                     </section>
@@ -393,7 +302,7 @@ const SingleAssetView: React.FC = () => {
                     </div>
                 </div>
                 <div className="chart-section">
-                    {loadingStates.chartData ? (
+                    {showNull.chartData ? (
                         <div className="loading-chart">
                             <RefreshCcw size={32} color="#8b5cf6" />
                         </div>
@@ -445,7 +354,7 @@ const SingleAssetView: React.FC = () => {
                                             {position.icon ? (
                                                 <img src={position.icon} alt={position.walletName} />
                                             ) : (
-                                                <img src="/api/placeholder/32/32" alt="wallet" />
+                                                <img src="/api/placeholder/32/32" alt="" />
                                             )}
                                         </div>
                                         <div className="token-details">
@@ -483,15 +392,15 @@ const SingleAssetView: React.FC = () => {
                     </div>
                 </div>
             </div>
-            {zerionTokenData && (
+            {!showNull.token && (
                 <div className="description-section">
-                    {zerionTokenData.data.attributes.description && (
+                    {tokenData?.description && (
                         <>
-                            <h2>About {zerionTokenData.data.attributes.name}</h2>
+                            <h2>About {tokenData?.name}</h2>
                             <div
                                 className={`description-text ${!isDescriptionExpanded ? 'collapsed' : ''}`}
                                 dangerouslySetInnerHTML={{
-                                    __html: zerionTokenData.data.attributes.description
+                                    __html: tokenData?.description
                                 }}
                             />
                             <button
@@ -503,7 +412,7 @@ const SingleAssetView: React.FC = () => {
                         </>
                     )}
                     <div className="external-links">
-                        {zerionTokenData.data.attributes.external_links.map((link, index) => (
+                        {tokenData?.external_links ? tokenData?.external_links.map((link, index) => (
                             <a
                                 key={index}
                                 href={link.url}
@@ -513,15 +422,15 @@ const SingleAssetView: React.FC = () => {
                             >
                                 {link.name} <span className="link-arrow">↗</span>
                             </a>
-                        ))}
+                        )) : null}
                     </div>
                 </div>
             )}
-            {zerionTokenData && (
+            {!showNull.token && (
                 <div className="explorers-section">
                     <h2>Active on Chains</h2>
                     <div className="explorers-grid">
-                        {zerionTokenData.data.attributes.implementations.map((impl, index) => (
+                        {tokenData?.implementations ? tokenData?.implementations.map((impl, index) => (
                             <div key={index} className="explorer-card">
                                 <div className="explorer-info">
                                     <div className="chain-icon">
@@ -551,7 +460,7 @@ const SingleAssetView: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                        )) : null}
                     </div>
                 </div>
             )}

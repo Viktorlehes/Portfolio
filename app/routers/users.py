@@ -39,8 +39,6 @@ class LoginUserResponse(BaseModel):
 
 @router.post("/login", response_model=LoginUserResponse)
 async def login_user(request: LoginUserRequest):
-    print(request)
-    
     try:
         user: dict = await users_collection.find_one(
             {"email": request.email},

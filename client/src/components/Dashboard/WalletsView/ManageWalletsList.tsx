@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { components } from '../../../types/api-types';
 import './ManageWalletsList.css';
 
-type Wallet = components["schemas"]["Wallet"];
+type Wallet = components["schemas"]["UnifiedWallet"];
 
 interface ManageWalletsListProps {
   wallets: Wallet[];
-  onDeleteWallet: (address: string) => void;
+  onDeleteWallet: (address: string) => Promise<{success: boolean; error?: string}>;
   onEditWallet: (wallet: Wallet) => Promise<{success: boolean; error?: string}>;
 }
 
@@ -40,8 +40,12 @@ const ManageWalletsList: React.FC<ManageWalletsListProps> = ({
     }
   };
 
-  const handleRemove = (address: string) => {
-    onDeleteWallet(address);
+  const handleRemove = async (address: string) => {
+    const result = await onDeleteWallet(address);
+    if (!result.success || result.error) {
+      setError(result.error || 'An unexpected error occurred');
+      setIsLoading(false);
+    }
   };
 
   const handleSubmitEdit = async () => {
@@ -76,13 +80,13 @@ const ManageWalletsList: React.FC<ManageWalletsListProps> = ({
           <li key={wallet.address} className="wallet-item">
             <div className="wallet-info">
               <h3>{wallet.name}</h3>
-              <p>{shortenAddress(wallet.address)}</p>
+              <p>{shortenAddress(wallet.address!)}</p>
             </div>
             <div className="wallet-actions">
               <button onClick={() => handleEdit(wallet)} className="edit-btn">
                 {expandedWallet === wallet.address ? 'Close' : 'Edit'}
               </button>
-              <button onClick={() => handleRemove(wallet.address)} className="remove-btn">
+              <button onClick={() => handleRemove(wallet.address!)} className="remove-btn">
                 Remove
               </button>
             </div>
@@ -124,23 +128,6 @@ const ManageWalletsList: React.FC<ManageWalletsListProps> = ({
                       </div>
                     ))}
                   </div>
-                </div>
-                <div className="edit-field">
-                  <label>Wallet Type</label>
-                  <select
-                    value={editingWallet.wallet_mode}
-                    onChange={(e) => setEditingWallet({
-                      ...editingWallet,
-                      wallet_mode: e.target.value as "simple" | "full"
-                    })}
-                  >
-                    <option value="simple">Simple</option>
-                    <option value="full">Full</option>
-                  </select>
-                  <p className="info-text">
-                    Simple - Only tokens<br />
-                    Full - Tokens and defi positions
-                  </p>
                 </div>
                 {error && <p className="error-message">{error}</p>}
                 <button 

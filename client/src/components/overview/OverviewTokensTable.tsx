@@ -4,10 +4,10 @@ import './OverviewTokensTable.css';
 import { components } from '../../types/api-types';
 import { RefreshCcw } from 'lucide-react';
 
-type TokenOverviewResponse = components['schemas']['TokenOverviewData'];
+type UnifiedToken = components['schemas']['UnifiedToken']
 
 interface OverviewTokensTableProps {
-  tokens: TokenOverviewResponse[] | null;
+  tokens: UnifiedToken[] | null;
   isNull: boolean;
   reFetch: () => void;
 }
@@ -15,15 +15,15 @@ interface OverviewTokensTableProps {
 export const OverviewTokensTable: React.FC<OverviewTokensTableProps> = ({ tokens, isNull, reFetch }) => {  
 
   const latestUpdate =() => {
-    if (!isNull && tokens && tokens[0] && tokens[0].lastUpdated) {    
-      const date = new Date(tokens[0].lastUpdated);
+    if (!isNull && tokens && tokens[0] && tokens[0].updated_at) {    
+    const utcDate = new Date(tokens[0].updated_at + 'Z');
       const options: Intl.DateTimeFormatOptions = {
         timeZone: "Europe/Stockholm",
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
       };
-      const swedishLocalTime = new Intl.DateTimeFormat("sv-SE", options).format(date);
+      const swedishLocalTime = new Intl.DateTimeFormat("sv-SE", options).format(utcDate);
       return swedishLocalTime;
     }
   };

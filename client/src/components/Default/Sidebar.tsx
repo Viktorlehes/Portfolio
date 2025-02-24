@@ -1,13 +1,15 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, PanelsTopLeft, HandCoins, BellRing } from "lucide-react";
+import { LayoutDashboard, PanelsTopLeft, HandCoins, BellRing, LogOut } from "lucide-react";
+import { useAuth } from "../../auth/authContext";
 import logo from "../../assets/Matrix_logo.png"
 import './Sidebar.css'
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
-  
+  const { logout } = useAuth()
+
   const menuItems = [
     { icon: PanelsTopLeft, text: "Overview", path: "/" },
     { icon: LayoutDashboard, text: "Dashboard", path: "/Dashboard" },
@@ -43,6 +45,25 @@ const Sidebar: React.FC = () => {
               </Link>
             </li>
           ))}
+        </ul>
+        <ul>
+          <li key={"logout"}>
+              <Link
+                onClick={() => logout()}
+                to={"/"}
+                className={`sidebar-link`}
+              >
+                <LogOut
+                  className={`sidebar-icon`}
+                  size={20}
+                />
+                <span
+                  className={`sidebar-text`}
+                >
+                  Logout
+                </span>
+              </Link>
+            </li>
         </ul>
       </nav>
     </div>
