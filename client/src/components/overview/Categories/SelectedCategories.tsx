@@ -44,7 +44,7 @@ const SelectedCategories: React.FC<SelectedCategoriesProps> = ({ userCategories,
               <li className='category-item'>
                 <div>
                   {userCategories.error ?
-                    <span>Something went wrong: {userCategories.error.message}</span>
+                    <span>Something went wrong: {userCategories.error}</span>
                     :
                     <span>Loading...</span>
                   }
@@ -78,7 +78,7 @@ const SelectedCategories: React.FC<SelectedCategoriesProps> = ({ userCategories,
               <li className='category-item'>
                 <div>
                   {userCategories.error ?
-                    <span>Something went wrong: {userCategories.error.message}</span>
+                    <span>Something went wrong: {userCategories.error}</span>
                     :
                     <span>Loading...</span>
                   }
