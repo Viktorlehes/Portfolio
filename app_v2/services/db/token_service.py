@@ -119,7 +119,7 @@ class TokenService(BaseDBService[UnifiedToken]):
             self.logger.error(f"Error in get_all_active_tokens: {str(e)}")
             return None
 
-    async def get_by_external_id(self, id_type: str, external_id: str | int) -> Optional[UnifiedToken]:
+    async def get_by_external_id(self, id_type: str, external_id: str) -> Optional[UnifiedToken]:
         """Get token by external ID (cmc, zerion, coingecko)"""
         doc = await self.collection.find_one({id_type: external_id})
         
@@ -195,7 +195,7 @@ class TokenService(BaseDBService[UnifiedToken]):
                     if str(cmc_id) in existing_token_map:
                         return UnifiedToken(**existing_token_map[str(cmc_id)])
                     else:
-                        return await self.get_or_create_new_token(id=cmc_id, id_type="cmc")
+                        return await self.get_or_create_new_token(id=str(cmc_id), id_type="cmc")
                 except Exception as e:
                     self.logger.error(f"Error processing token {cmc_id}: {str(e)}")
                     return None
@@ -240,7 +240,7 @@ class TokenService(BaseDBService[UnifiedToken]):
             self.logger.error(f"Error in get_top_tokens: {str(e)}")
             raise Exception(f"Failed to get top tokens: {str(e)}")
         
-    async def get_or_create_new_token(self, name: str = "", symbol: str = "", id: Optional[str | int] = None, id_type: str = "") -> Optional[UnifiedToken]:
+    async def get_or_create_new_token(self, name: str = "", symbol: str = "", id: Optional[str] = None, id_type: str = "") -> Optional[UnifiedToken]:
         try:
             # 1. Direct ID match (most reliable)
             if id:
@@ -263,7 +263,7 @@ class TokenService(BaseDBService[UnifiedToken]):
             self.logger.error(f"Error in get_or_create_new_token: {str(e)}")
             return None
 
-    async def _get_token_by_id(self, id: str | int, id_type: str) -> Optional[UnifiedToken]:
+    async def _get_token_by_id(self, id: str, id_type: str) -> Optional[UnifiedToken]:
         """Direct ID lookup"""
         id_field = f"{id_type.strip()}_id"
         return await self.get_by_external_id(id_field, id)
@@ -316,7 +316,7 @@ class TokenService(BaseDBService[UnifiedToken]):
         
         return False
 
-    async def _create_new_token(self, name: str, symbol: str, id: Optional[str | int], id_type: str) -> Optional[UnifiedToken]:
+    async def _create_new_token(self, name: str, symbol: str, id: Optional[str], id_type: str) -> Optional[UnifiedToken]:
         """Create new unified token from best available data"""
         # Get CMC data (required)
         cmc_token = await self._get_cmc_data(name, symbol, id, id_type)
@@ -352,7 +352,7 @@ class TokenService(BaseDBService[UnifiedToken]):
         
         return None
     
-    async def _get_cmc_data(self, name: str, symbol: str, id: Optional[str | int], id_type: str) -> Optional[dict]:
+    async def _get_cmc_data(self, name: str, symbol: str, id: Optional[str ], id_type: str) -> Optional[dict]:
         """Get CMC token data, trying multiple methods in order of reliability"""
         cmc_token = None
         
@@ -360,7 +360,7 @@ class TokenService(BaseDBService[UnifiedToken]):
         if id and id_type == "cmc":
             result = await self.cmc_service.get_tokens_by_cmc_id([id])
             if result:
-                return result[str(id)]
+                return result[id]
         
         # 2. Clean inputs for searching
         clean_name = re.sub(r'[^\w\s]', '', name).strip()
@@ -417,7 +417,7 @@ class TokenService(BaseDBService[UnifiedToken]):
             "price_data": TokenPrice(**price_data)
         }
 
-    async def _add_optional_data(self, token_data: dict, symbol: str, id: Optional[str | int], id_type: str):
+    async def _add_optional_data(self, token_data: dict, symbol: str, id: Optional[str], id_type: str):
         """Add optional data from other services"""
         # 1. Add Coinglass data if available
         try:
