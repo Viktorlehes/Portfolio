@@ -1,5 +1,5 @@
 # app/core/responses.py
-from typing import Any, TypeVar, Generic
+from typing import Any, TypeVar, Generic, Optional
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from datetime import datetime, timezone
@@ -7,9 +7,9 @@ from datetime import datetime, timezone
 T = TypeVar('T')
 
 class APIResponse(BaseModel, Generic[T]):
-    data: T | None = None
+    data: Optional[T] = None
     success: bool = True
-    error: str | None = None
+    error: Optional[str] = None
     status_code: int = 200
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     class Config:
