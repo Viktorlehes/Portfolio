@@ -128,7 +128,7 @@ class CMCService:
             except Exception as e:
                 await self._handle_api_error(e, "fetching feargread index")
 
-    async def get_token_by_symbol_or_name(self, name: str) -> FullCMCToken | None:
+    async def get_token_by_symbol_or_name(self, name: str) -> Optional[FullCMCToken]:
         """ 
         Fetch new token by name or symbol from CMC api 
         """
@@ -161,7 +161,7 @@ class CMCService:
         else:
             return None
         
-    async def search_tokens_by_symbol_or_name(self, name: str, limit: int = 100) -> List[FullCMCToken] | None:
+    async def search_tokens_by_symbol_or_name(self, name: str, limit: int = 100) -> Optional[List[FullCMCToken]]:
         """ 
         Fetch new token by name or symbol from CMC api 
         """
