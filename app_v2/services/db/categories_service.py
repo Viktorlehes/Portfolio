@@ -119,7 +119,7 @@ class CustomCategoriesService(BaseDBService[CustomCategory]):
                     if str(token_id) in token_data:
                         tokens.append(token_data[str(token_id)])
                     else:
-                        raise Exception(f"Token {token_id} not found in token data fetched for category {updated_categorie["name"]}")
+                        raise Exception(f"Token {token_id} not found in token data fetched for category {updated_categorie.name}")
                     
                 if len(tokens) == len(updated_categorie.tokens):
                     total_market_cap = sum(token['quote']['USD']['market_cap'] for token in tokens)
