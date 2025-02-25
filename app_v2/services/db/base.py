@@ -1,11 +1,11 @@
-# app/services/db/base.py
+# app_v2/services/db/base.py
 
 from typing import Optional, List, Type, TypeVar, Generic, Dict, Any
 from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from pydantic import BaseModel
 import logging
-from app.core.config import DB_URI
+from app_v2.core.config import DB_URI
 
 # Type variable for generic database operations
 T = TypeVar('T', bound=BaseModel)
