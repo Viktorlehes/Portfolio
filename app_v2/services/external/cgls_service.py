@@ -2,7 +2,7 @@
 from fastapi import HTTPException
 from typing import List
 import httpx
-from app.core.config import CGLS_API_KEY
+from app_v2.core.config import CGLS_API_KEY
 from app_v2.models.CGLS.CGLS_token import ExchangeResponse
 
 class CGLSServiceError(Exception):

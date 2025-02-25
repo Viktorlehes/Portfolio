@@ -4,7 +4,7 @@ import httpx
 import asyncio
 import logging
 from fastapi import HTTPException
-from app.core.config import CM_API_KEY
+from app_v2.core.config import CM_API_KEY
 from typing import List, Dict, Optional
 from datetime import datetime, timezone
 from app_v2.services.db.base import BaseDBService
