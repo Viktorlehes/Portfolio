@@ -47,11 +47,6 @@ class WalletUpdateTask(BackgroundTask):
                     # Process wallet positions
                     tokens, defi_positions = await process_positions(wallet_data.get('data', []))
                     
-                    for token in tokens:
-                        tkn = await self.token_service.get_or_create_new_token(name=token.name, symbol=token.symbol, id=token.token_id, id_type="zerion")
-                        if not tkn:
-                            print(token.name, token.symbol)
-                    
                     # Calculate totals
                     total_assets = sum(token.value_usd for token in tokens)
                     total_defi = sum(pos.price_data.current_value for pos in defi_positions)
