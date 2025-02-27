@@ -11,7 +11,7 @@ from app_v2.models.CMC.CMC_token import FullCMCToken
 from app_v2.models.token import UnifiedToken
 from app_v2.models.CMC.feargreed_response import FearGreadData
 from app_v2.models.categories import UserCategories, DefaultCategory
-from app_v2.scripts.coinglass_scrape import CoinglassMetrics, scrape_coinglass
+#from app_v2.scripts.coinglass_scrape import CoinglassMetrics, scrape_coinglass
 from app_v2.api.v1.dependencies import CMCServiceDep, CGLSServiceDep, CategoryServiceDep, TokenServiceDep
 from app_v2.core.responses import APIResponse, create_response
 router = APIRouter()
@@ -53,11 +53,12 @@ async def get_markestats(cmc_service: CMCServiceDep):
             detail=f"CMC market data not found: {str(e)}"
         )
     
-@router.get("/scraped-CGLS-data", response_model=APIResponse[CoinglassMetrics])
+@router.get("/scraped-CGLS-data", response_model=APIResponse[None])
 async def get_scraped_CGLS_data():
     raise HTTPException(detail="Not implemented", status_code=500)
     try:
-        return await scrape_coinglass()
+        pass
+        #return await scrape_coinglass()
     except Exception as e:
         print(f"Error fetching scraped CGLS data: " + str(e))
         return None

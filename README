@@ -1,0 +1,446 @@
+# Matrix Portfolio - Crypto Portfolio Manager
+
+Matrix Portfolio is a secure, privacy-focused cryptocurrency portfolio manager that allows users to track their crypto assets across multiple wallets and DeFi positions without storing private keys or requiring access permissions.
+
+## 📊 Features
+
+- **Wallet Tracking**: Connect EVM-compatible wallets to view assets and balances
+- **DeFi Position Monitoring**: Track your positions across various DeFi protocols
+- **Market Overview**: Stay updated with market statistics, fear & greed index, and token performances
+- **Asset Categories**: Filter and group assets by categories (default or custom)
+- **Price Alerts**: Set up custom price and change alerts for your tracked assets
+- **Multi-wallet View**: Aggregate assets across wallets for a unified view
+- **Privacy-first**: No private keys are ever stored or required
+
+## 🔒 Security & Privacy
+
+Matrix Portfolio is built with a focus on security and privacy:
+
+- **Read-only Access**: We only request public addresses for viewing purposes
+- **No Private Keys**: We never ask for, store, or handle your private keys
+- **No Tracking**: We don't track your transactions or trading activity
+
+## 🏗️ Architecture
+
+The application is built using a modern stack with a clear separation between the backend and frontend:
+
+### Backend (Server)
+
+The backend is built with FastAPI (Python) and handles:
+
+1. **Data Aggregation**: Fetches data from various external APIs (CoinMarketCap, Zerion, Coinglass, etc.)
+2. **Authentication**: Handles user authentication and session management
+3. **Data Processing**: Normalizes data from different sources into a unified format
+4. **Background Tasks**: Periodically updates crypto market data, wallet information, and DeFi positions
+
+Key components:
+- **Background Services**: Asynchronous tasks for updating token data, wallet positions, and category information
+- **External Integrations**: Services for communicating with CoinMarketCap, Zerion, Coinglass, etc.
+- **Database Layer**: MongoDB services for data persistence with efficient indexing
+- **Rate Limiting**: Manages API request frequency to external services
+
+### Frontend (Client)
+
+The frontend is built with React and TypeScript, providing a responsive and intuitive user interface:
+
+1. **State Management**: Custom hooks and context for managing application state
+2. **API Integration**: Typed API calls with caching and state synchronization
+3. **Responsive Design**: Mobile-friendly layout adapting to different screen sizes
+4. **Interactive Charts**: Data visualization for asset performance
+5. **Authentication Flow**: Secure login and registration processes
+
+Key components:
+- **Dashboard Views**: Wallet and asset aggregation displays
+- **Market Overview**: Crypto market statistics and category performance
+- **Alert Management**: Setting and managing price and change alerts
+- **DeFi Positions**: Specialized views for DeFi protocol positions
+
+## 🌐 DeFi Integration
+
+Matrix Portfolio integrates with various DeFi protocols to provide comprehensive position tracking:
+
+- **Protocol Support**: Track positions across lending, borrowing, liquidity provision, and staking protocols
+- **Unified View**: Normalize position data from different protocols into a consistent format
+- **Position Details**: View details like yields*, rewards*, and locked values
+- **Chain Agnostic**: Support for positions across multiple EVM-compatible chains
+
+The application uses Zerion's API to fetch information about DeFi positions, providing detailed breakdowns of:
+- Current position values
+- Underlying assets
+- Protocol-specific details
+- Historical performance data
+
+## 🧠 Technical Implementation
+
+### Data Flow
+
+1. User connects wallet address (read-only)
+2. Backend fetches wallet data from Zerion API
+3. Token information is enriched with data from CoinMarketCap
+4. DeFi positions are normalized and categorized by protocol
+5. All data is cached and periodically updated
+6. Frontend receives unified data through type-safe API endpoints
+
+### Async Background Tasks
+
+The backend implements a robust background task system that handles:
+- Token price updates (every 5 minutes)
+- Wallet balance refreshes (every 5 minutes)
+- DeFi position updates (every 5 minutes)
+- Market data refreshes (every 5 minutes)
+
+### Smart Caching
+
+To optimize performance and reduce API calls:
+- Data is cached both server-side and client-side
+- Stale-while-revalidate pattern is implemented
+- Cache invalidation happens on configurable intervals
+- Forced refreshes are available for time-sensitive views
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (v18+)
+- Python (v3.10+)
+- MongoDB
+- API keys for:
+  - CoinMarketCap
+  - Zerion
+  - Coinglass (optional)
+
+### Installation
+
+#### Backend Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/matrix-portfolio.git
+cd matrix-portfolio/backend
+
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your API keys and configuration
+
+# Start the server
+uvicorn app_v2.main:app --reload
+```
+
+#### Frontend Setup
+
+```bash
+# Navigate to frontend directory
+cd ../frontend
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your API endpoint
+
+# Start the development server
+npm run dev
+```
+
+## 📄 API Documentation
+
+Once the backend is running, API documentation is available at:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 📞 Contact
+
+For any questions or suggestions, please open an issue on GitHub or contact the maintainers.
+
+---
+
+## Technical Deep Dive
+
+### Backend Structure
+
+The backend follows a service-oriented architecture with clear separation of concerns:
+
+```
+app_v2/
+│
+├── api/                # API endpoints
+│   └── v1/             # API version 1
+│       └── endpoints/  # API route handlers
+│
+├── core/               # Core functionality
+│   ├── auth_utils.py   # Authentication utilities
+│   ├── config.py       # Application configuration
+│   └── responses.py    # Response models
+│
+├── models/             # Data models
+│   ├── token.py        # Token models
+│   ├── wallet.py       # Wallet models
+│   └── user.py         # User models
+│
+├── services/           # Business logic
+│   ├── background/     # Background tasks
+│   ├── db/             # Database services
+│   ├── external/       # External API services
+│   └── wallet/         # Wallet-specific services
+│
+└── main.py             # Application entry point
+```
+
+### Token Normalization
+
+One of the core challenges addressed is normalizing token data from multiple sources. Therefore token data is seeded with the coinmarketcap token then additional data is fetched:
+
+```python
+async def _add_optional_data(self, token_data: dict, symbol: str, id: Optional[str], id_type: str):
+        """Add optional data from other services"""
+        # 1. Add Coinglass data if available
+        try:
+            cgls_token = await self.cgls_service.get_token(token_data["symbol"])
+            if cgls_token:
+                net_flow_data = TokenNetFlow(
+                    net_flow_1h=sum(exchange.get('flowsUsd1h', 0) for exchange in cgls_token),
+                    net_flow_4h=sum(exchange.get('flowsUsd4h', 0) for exchange in cgls_token),
+                    net_flow_12h=sum(exchange.get('flowsUsd12h', 0) for exchange in cgls_token),
+                    net_flow_24h=sum(exchange.get('flowsUsd24h', 0) for exchange in cgls_token),
+                    net_flow_1w=sum(exchange.get('flowsUsd1w', 0) for exchange in cgls_token),
+                    last_updated=datetime.now(timezone.utc)
+                )
+                token_data["net_flow_data"] = net_flow_data
+        except Exception as e:
+            self.logger.warning(f"Error fetching Coinglass data: {str(e)}")
+
+        # 2. Add Zerion data if available
+        try:
+            zerion_token = None
+            if id and id_type == "zerion":
+                zerion_token = await self.zerion_service.get_token_by_id(id)
+            
+            if not zerion_token:
+                zerion_token = await self.zerion_service.get_token(token_data["name"])
+                if not zerion_token:
+                    zerion_token = await self.zerion_service.get_token(token_data["symbol"])
+                if zerion_token:
+                    if zerion_token["attributes"]["symbol"].lower() == token_data["symbol"].lower():
+                        matched = self._are_names_similar(token_data["name"], zerion_token["attributes"]["name"])
+                        zerion_token = zerion_token if matched else {}
+                    else:
+                        zerion_token = {}
+            
+            if zerion_token:
+                token_exists = await self.collection.find_one({"zerion_id": zerion_token.get("id")})
+                
+                if token_exists:
+                    raise Exception("warning: zerion token exists: " + zerion_token.get("id"))
+                
+                icon = zerion_token.get("attributes", {}).get("icon", {})
+                if icon:
+                    icon_url = icon.get("url")
+                else:
+                    icon_url = ""
+                
+                token_data.update({
+                    "zerion_id": zerion_token.get("id"),
+                    "implementations": zerion_token.get("attributes", {}).get("implementations"),
+                    "description": zerion_token.get("attributes", {}).get("description"),
+                    "logo_url": icon_url,
+                    "external_links": zerion_token.get("attributes", {}).get("external_links"),
+                    "zerion_last_updated": datetime.now(timezone.utc)
+                })
+        except Exception as e:
+            self.logger.warning(f"Error fetching Zerion data: {str(e)}")
+```
+
+### Frontend State Management
+
+The frontend implements custom hooks for data fetching and state management:
+
+```typescript
+export function useDataFetching<T>(config: EndpointConfig): FetchState<T> {
+  const [state, setState] = useState<FetchState<T>>({
+    data: config.initialData?.data || null,
+    isLoading: !config.initialData?.data,
+    error: null,
+    status: null,
+    refetch: async () => {}
+  });
+
+  const { isAuthenticated } = useAuth();
+
+  const fetchData = useCallback(async (showLoading = false) => {
+    if (config.requiresAuth && !isAuthenticated) {
+      setState(prev => ({
+        ...prev,
+        error: 'Authentication required',
+        status: 401,
+        isLoading: false
+      }))
+      return;
+    }
+  
+    let retries = 0;
+    const maxRetries = config.retryConfig?.maxRetries ?? defaultRetryConfig.maxRetries;
+    const delayMs = config.retryConfig?.delayMs ?? defaultRetryConfig.delayMs;
+
+    if (showLoading) {
+      setState(prev => ({ ...prev, isLoading: true }));
+    }
+
+    while (retries <= maxRetries) {
+      try {
+        const params = new URLSearchParams();
+        if (showLoading) params.append('force_update', 'true');
+        const apiUrl = `${config.endpoint}${params.toString() ? `?${params.toString()}` : ''}`;
+
+        const response = await api.get<T>(apiUrl);
+
+        if (!response.success || response.error) {
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            error: response.error || 'Request failed',
+            status: response.status_code,
+            refetch
+          }));
+          break;
+        }
+
+        if (config.cacheInStorage) {
+          localStorage.setItem(config.endpoint, JSON.stringify({
+            data: response.data,
+            timestamp: Date.now()
+          }));
+        }
+
+        setState({
+          data: response.data,
+          isLoading: false,
+          error: null,
+          status: response.status_code,
+          refetch
+        });
+        break;
+      } catch (error) {
+        retries++;
+        if (retries === maxRetries) {
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            error: 'Request failed',
+            status: 500,
+          }));
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+  }, [config.endpoint, config.cacheInStorage]);
+
+  const refetch = useCallback(async () => {
+    await fetchData(true);
+  }, [fetchData]);
+
+  useEffect(() => {
+    // Check cached data only on mount
+    const checkCachedData = () => {
+      if (config.cacheInStorage) {
+        const cached = localStorage.getItem(config.endpoint);
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          const isStale = config.staleTime && Date.now() - timestamp > config.staleTime;
+          if (!isStale) {
+            setState(prev => ({
+              ...prev,
+              data,
+              isLoading: false,
+              error: null,
+              refetch
+            }));
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    // Initial data fetch
+    const initializeFetch = async () => {
+      const hasCachedData = checkCachedData();
+      if (!hasCachedData) {
+        await fetchData();
+      }
+    };
+
+    initializeFetch();
+
+    // Set up polling interval
+    let intervalId: NodeJS.Timeout | null = null;
+    if (config.staleTime) {
+      intervalId = setInterval(fetchData, config.staleTime);
+    }
+
+    // Cleanup
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [config.endpoint, config.staleTime, config.cacheInStorage, fetchData]);
+
+  return { ...state, refetch };
+}
+```
+
+### DeFi Position Processing
+
+DeFi positions are processed and normalized from raw API responses:
+
+```python
+async def process_positions(positions: List[Dict]) -> Tuple[List[WalletToken], List[DefiPosition]]:
+    """Process wallet positions from Zerion"""
+    tokens = []
+    defi_positions = []
+    
+    for position in positions:
+        try:
+            position_type = position.get('attributes').get('position_type')
+            
+            # Process as regular token
+            if position_type == 'wallet':
+                token = await create_wallet_token(position)
+                if token:
+                    tokens.append(token)
+            
+            # Process as DeFi position
+            else:
+                defi_pos = await create_defi_position(position)
+                if defi_pos:
+                    defi_positions.append(defi_pos)
+                    
+        except Exception as e:
+            logging.error(f"Error processing position: {str(e)}")
+            continue
+            
+    return tokens, defi_positions
+```

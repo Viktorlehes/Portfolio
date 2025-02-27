@@ -2,7 +2,6 @@ import os
 import re
 import secrets
 import asyncio
-import aiohttp
 import telegram
 import traceback
 from bot.config import Config

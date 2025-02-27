@@ -1,7 +1,6 @@
 # app/services/background/wallet_updates.py
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import List, Dict, Optional
 from app_v2.services.background.base import BackgroundTask
 from app_v2.services.db.wallet_service import WalletService
 from app_v2.services.external.zerion_service import ZerionService, ZerionServiceError

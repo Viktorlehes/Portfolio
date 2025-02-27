@@ -1,8 +1,6 @@
 from app_v2.services.background.base import BackgroundTask
 from app_v2.services.db.categories_service import CategoryService
 from app_v2.services.external.cmc_service import CMCService
-from app_v2.models.categories import UserCategoryPreference
-from typing import List
 import logging
 from datetime import datetime, timezone, timedelta
 
