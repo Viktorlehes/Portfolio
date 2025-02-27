@@ -31,11 +31,11 @@ class WalletUpdateTask(BackgroundTask):
                     if wallet.source != WalletSource.ZERION:
                         continue
 
-                    current_time = datetime.now(timezone.utc)
-                    wallet_updated = wallet.updated_at.replace(tzinfo=timezone.utc)  # Add UTC timezone to naive datetime
+                    # current_time = datetime.now(timezone.utc)
+                    # wallet_updated = wallet.updated_at.replace(tzinfo=timezone.utc)  # Add UTC timezone to naive datetime
 
-                    if (current_time - wallet_updated) < timedelta(minutes=10):
-                        continue
+                    # if (current_time - wallet_updated) < timedelta(minutes=10):
+                    #     continue
                     
                     # Get wallet data from Zerion
                     wallet_data = await self.zerion_service.get_wallet_positions(wallet.address)

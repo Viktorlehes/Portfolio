@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import List, Dict, Optional, Tuple
 import logging
 from app_v2.models.wallet import WalletToken, DefiPosition
+from app_v2.models.token import TokenImplementation
 from app_v2.utils.helpers import safe_get, safe_float
 
 async def create_wallet_token(position: Dict) -> Optional[WalletToken]:
@@ -40,6 +41,11 @@ async def create_defi_position(position: Dict) -> Optional[DefiPosition]:
         quantity: dict = safe_get(attrs, ['quantity'], {})
         app_metadata: dict = safe_get(attrs, ['application_metadata'], {})
         
+        if position.get("attributes", {}).get("implementations"):
+            implementations = [TokenImplementation(**impl) if isinstance(impl, dict) else impl for impl in position.get("attributes", {}).get("implementations")]
+        else:
+            implementations = []
+        
         return DefiPosition(
             id=safe_get(position, ['id']),
             name=safe_get(fungible_info, ['name']),
@@ -48,7 +54,10 @@ async def create_defi_position(position: Dict) -> Optional[DefiPosition]:
             protocol=safe_get(attrs, ['protocol']),
             chain=safe_get(relations, ['chain', 'data', 'id'], ""),
             position_type=safe_get(attrs, ['position_type']),
+            cmc_id=None,
+            coingecko_id=None,
             zerion_id=safe_get(relations, ['fungible', 'data', 'id']),
+            implementatioxns=implementations,
             price_data={
                 'current_value': safe_get(attrs, ['value'], 0),
                 'current_price': safe_get(attrs, ['price'], 0),
@@ -69,7 +78,8 @@ async def create_defi_position(position: Dict) -> Optional[DefiPosition]:
             dapp=safe_get(relations, ['dapp', 'data', 'id'], ""),
             updated_at=datetime.now(timezone.utc)
         )
-    except Exception:
+    except Exception as e:
+        print(f"Error proccessing Defi position: " + str(e))
         return None
 
 async def process_positions(positions: List[Dict]) -> Tuple[List[WalletToken], List[DefiPosition]]:

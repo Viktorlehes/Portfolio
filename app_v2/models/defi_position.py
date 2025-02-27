@@ -32,9 +32,9 @@ class DefiPosition(BaseModel):
     protocol: str
     chain: str
     position_type: str
-    cmc_id: Optional[int]
-    zerion_id: Optional[str]
-    coingecko_id: Optional[str]
+    cmc_id: Optional[int] = None
+    zerion_id: Optional[str] = None
+    coingecko_id: Optional[str] = None
     
     # Core token data
     implementatioxns: List[TokenImplementation]
