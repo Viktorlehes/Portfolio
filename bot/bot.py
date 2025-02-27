@@ -7,54 +7,24 @@ import telegram
 import traceback
 from bot.config import Config
 from bson import ObjectId
-from pymongo import MongoClient
+from pymongo import UpdateOne
 from bot.logger import bot_logger
-from pymongo.database import Database
+from motor.motor_asyncio import AsyncIOMotorClient
 from telegram import Update, BotCommand
-from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Set
 from datetime import datetime, timedelta, timezone
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, Application
+from bot.bot_types import UnifiedToken, AlertUser, Alert
 
 # States for conversation handler
 WAITING_FOR_EMAIL = 1
 
-@dataclass
-class AlertUser:
-    email: str
-    is_verified: bool = False
-    verification_code: Optional[str] = None
-    telegram_chat_id: Optional[str] = None 
-    
-@dataclass
-class Alert:
-    cmc_id: int
-    symbol: str
-    name: str
-    telegram_chat_id: str  # Changed from email to telegram_chat_id
-    id: str
-    upper_target_price: Optional[float] = None
-    lower_target_price: Optional[float] = None
-    percent_change_threshold: Optional[float] = None
-    base_price: Optional[float] = None
-    last_checked_price: Optional[float] = None
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-
-    def validate(self) -> bool:
-        """Validate that the alert has valid price targets"""
-        has_price_target = (
-            self.upper_target_price is not None or 
-            self.lower_target_price is not None
-        )
-        has_percent_threshold = self.percent_change_threshold is not None
-        return has_price_target or has_percent_threshold
-
 class DatabaseManager:
     def __init__(self, connection_string: str):
-        self.client = MongoClient(connection_string)
+        self.client = AsyncIOMotorClient(connection_string)
         # Connect to the database collection crypto_bot_db
-        self.crypto_bot_db: Database = self.client.crypto_bot_db
-        self.client_db: Database = self.client.main
+        self.crypto_bot_db = self.client.crypto_bot_db
+        self.client_db = self.client.Main
         #self.init_db()
 
     def init_db(self):
@@ -64,7 +34,7 @@ class DatabaseManager:
         self.crypto_bot_db.users.create_index("telegram_chat_id")
         self.crypto_bot_db.alerts.create_index([("email", 1), ("crypto", 1)])
 
-    def save_user(self, user: AlertUser) -> str:
+    async def save_user(self, user: AlertUser) -> str:
         """
         Save or update a user in the database.
         Returns the user's ID as a string.
@@ -77,20 +47,67 @@ class DatabaseManager:
         }
         
         # Check if user exists
-        existing_user = self.crypto_bot_db.users.find_one({"email": user.email})
+        existing_user = await self.crypto_bot_db.users.find_one({"email": user.email})
         bot_logger.info(f"Found user: {existing_user}")
         
         if existing_user:
             # Update existing user
-            result = self.crypto_bot_db.users.update_one(
+            result = await self.crypto_bot_db.users.update_one(
                 {"_id": existing_user["_id"]},
                 {"$set": user_dict}
             )
             bot_logger.info(f"Updated user document. Modified count: {result.modified_count}")
             return str(existing_user["_id"])
 
-    def get_user_by_chat_id(self, chat_id: str) -> Optional[AlertUser]:
-        user_doc = self.crypto_bot_db.users.find_one({"telegram_chat_id": chat_id})
+    async def get_user_by_chat_id(self, chat_id: str) -> Optional[AlertUser]:
+        user_doc = await self.crypto_bot_db.users.find_one({"telegram_chat_id": chat_id})
+        
+        await self.crypto_bot_db.users.update_one(
+            {"telegram_chat_id": chat_id},
+            {"$set": {"last_active": datetime.now(timezone.utc)}}
+            )
+        
+        if user_doc:
+            return AlertUser(**user_doc)
+        return None
+
+    async def get_token_prices(self, cmc_ids: List[int]) -> Dict[int, UnifiedToken]:
+        try:
+            # Convert cursor to list of documents in one operation
+            documents = await self.client_db.tokens.find(
+                {"cmc_id": {"$in": cmc_ids}}
+            ).to_list(None)
+            
+            # Debug log to see what we got back
+            bot_logger.info(f"Found {len(documents)} tokens in DB for {len(cmc_ids)} requested IDs")
+            
+            if documents:
+                # Update last_active timestamp for all found tokens
+                current_time = datetime.now(timezone.utc)
+                update_operations = [
+                    UpdateOne(
+                        {"cmc_id": doc["cmc_id"]},
+                        {"$set": {"last_active": current_time}}
+                    )
+                    for doc in documents
+                ]
+                
+                if update_operations:
+                    # Perform bulk update
+                    result = await self.client_db.tokens.bulk_write(update_operations)
+                    bot_logger.info(f"Updated last_active for {result.modified_count} tokens")
+                
+                # Create a dictionary mapping cmc_id to document
+                return {doc["cmc_id"]: doc for doc in documents}
+            else:
+                bot_logger.warning(f"No tokens found for IDs: {cmc_ids}")
+                return {}
+        except Exception as e:
+            bot_logger.error(f"Error getting tokens from DB: {str(e)}")
+            return {}
+
+    async def get_user_by_email(self, email: str) -> Optional[AlertUser]:
+        user_doc = await self.crypto_bot_db.users.find_one({"email": email})
         if user_doc:
             return AlertUser(
                 email=user_doc["email"],
@@ -101,19 +118,7 @@ class DatabaseManager:
             )
         return None
 
-    def get_user_by_email(self, email: str) -> Optional[AlertUser]:
-        user_doc = self.crypto_bot_db.users.find_one({"email": email})
-        if user_doc:
-            return AlertUser(
-                email=user_doc["email"],
-                telegram_chat_id=user_doc["telegram_chat_id"],
-                verification_code=user_doc.get("verification_code"),
-                is_verified=user_doc["is_verified"],
-                _id=str(user_doc["_id"])
-            )
-        return None
-
-    def save_alert(self, alert: Alert) -> str:
+    async def save_alert(self, alert: Alert) -> str:
         alert_dict = {
             "cmc_id": alert.cmc_id,
             "telegram_chat_id": alert.telegram_chat_id,
@@ -128,27 +133,27 @@ class DatabaseManager:
         }
         
         if alert.id:
-            self.crypto_bot_db.alerts.update_one(
+            await self.crypto_bot_db.alerts.update_one(
                 {"_id": ObjectId(alert._id)},
                 {"$set": alert_dict}
             )
             return alert.id
         else:
-            result = self.crypto_bot_db.alerts.insert_one(alert_dict)
+            result = await self.crypto_bot_db.alerts.insert_one(alert_dict)
             return str(result.inserted_id)
         
-    def delete_alert(self, alert_id: str) -> bool:
+    async def delete_alert(self, alert_id: str) -> bool:
         """Delete an alert by its ID"""
         try:
-            result = self.crypto_bot_db.alerts.delete_one({"_id": ObjectId(alert_id)})
+            result = await self.crypto_bot_db.alerts.delete_one({"_id": ObjectId(alert_id)})
             return result.deleted_count > 0
         except Exception as e:
             bot_logger.error(f"Error deleting alert: {e}")
             return False
         
-    def get_alerts_by_telegram_chat_id(self, telegram_chat_id: str) -> List[Alert]:
+    async def get_alerts_by_telegram_chat_id(self, telegram_chat_id: str) -> List[Alert]:
         alerts = []
-        for alert_doc in self.crypto_bot_db.alerts.find({"telegram_chat_id": telegram_chat_id}):
+        for alert_doc in await self.crypto_bot_db.alerts.find({"telegram_chat_id": telegram_chat_id}).to_list(None):
             alerts.append(Alert(
                 cmc_id=alert_doc["cmc_id"],
                 symbol=alert_doc["symbol"],
@@ -164,13 +169,13 @@ class DatabaseManager:
             ))
         return alerts
 
-    def get_all_active_alerts(self) -> List[Alert]:
+    async def get_all_active_alerts(self) -> List[Alert]:
         """Get all alerts for verified users"""
-        verified_users = self.crypto_bot_db.users.find({"is_verified": True})
+        verified_users = await self.crypto_bot_db.users.find({"is_verified": True}).to_list(None)
         verified_telegram_ids = [user["telegram_chat_id"] for user in verified_users]
         
         alerts = []
-        for alert_doc in self.crypto_bot_db.alerts.find({"telegram_chat_id": {"$in": verified_telegram_ids}}):
+        for alert_doc in await self.crypto_bot_db.alerts.find({"telegram_chat_id": {"$in": verified_telegram_ids}}).to_list(None):
             alerts.append(Alert(
                 cmc_id=alert_doc["cmc_id"],
                 symbol=alert_doc["symbol"],
@@ -196,63 +201,23 @@ class PriceMonitor:
         self.last_check: Dict[str, float] = {}  # Store last check time
         self.db = db_manager
         
-    async def get_crypto_prices_via_db(self, cmc_ids: Set[int]) -> Dict[str, Dict]:
+    async def get_crypto_prices_via_db(self, cmc_ids: Set[int]) -> Dict[str, UnifiedToken]:
         """Fetch prices from DB"""
         #self.client_db
         if not cmc_ids:
             return {}
         
         try: 
-            cursor = self.db.client_db.tokens.find(
-                {"cmc_id": {"$in": cmc_ids}}
-            )
-
-            print(cursor)
-
-            tokens = await cursor.to_list(length=None)
-            
-            print(tokens)
-            
+            tokens = await self.db.get_token_prices(cmc_ids)            
             #TODO: Implement last_active logic to make sure tokens stay active when used for alerts
             
             if tokens:
-                print(f"Found {len(tokens)} / {len(cmc_ids)} tokens in DB")
-                
-                response_dict = {token["cmc_id"]: token for token in tokens}
-
-                return response_dict
+                return tokens
             else:
                 return {}
         except Exception as e:
             print(f"Error getting tokens from DB: {str(e)}")
             return {}
-        
-    async def get_crypto_prices(self, cmc_ids: Set[int]) -> Dict[str, Dict]:
-        """Fetch prices from CoinMarketCap API"""
-        
-        if not cmc_ids:
-            return {}
-        str_cmc_ids = [str(id) for id in cmc_ids]
-        
-        id_string = ",".join(str_cmc_ids)
-        url = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest'
-        
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.get(
-                    url,
-                    params={'id': id_string},
-                    headers={'X-CMC_PRO_API_KEY': self.api_key}
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        return data.get('data', {})
-                    else:
-                        bot_logger.error(f"Error fetching prices: {response.status}")
-                        return {}
-            except Exception as e:
-                bot_logger.error(f"Error in API request: {e}")
-                return {}
 
 class AlertHandler:
     def __init__(self, db_manager: DatabaseManager, bot_app, price_monitor: PriceMonitor):
@@ -267,7 +232,7 @@ class AlertHandler:
             return True
             
         cooldown_period = timedelta(minutes=5)  # Adjust as needed
-        return datetime.now() - self.alert_cooldowns[alert_id] > cooldown_period
+        return datetime.now(timezone.utc) - self.alert_cooldowns[alert_id] > cooldown_period
         
     def calculate_percent_change(self, current_price: float, base_price: float) -> float:
         """Calculate percentage change from base price"""
@@ -275,9 +240,9 @@ class AlertHandler:
             return 0
         return ((current_price - base_price) / base_price) * 100
         
-    async def process_price_alerts(self, id: int, price_data: Dict, alerts: List[Alert]) -> None:
+    async def process_price_alerts(self, id: int, price_data: UnifiedToken, alerts: List[Alert]) -> None:
         """Process alerts for a specific cryptocurrency"""
-        current_price = price_data["price_data"]["price"]
+        current_price = price_data.price_data.price
         
         alerts_to_remove = []  # Track alerts that need to be removed
         
@@ -295,7 +260,7 @@ class AlertHandler:
             if alert.base_price is None:
                 print("Warning: Base price not set for alert")
                 alert.base_price = current_price
-                self.db.save_alert(alert)
+                await self.db.save_alert(alert)
 
             # Handle price target alerts (upper and lower)
             if alert.upper_target_price or alert.lower_target_price:
@@ -352,16 +317,17 @@ class AlertHandler:
 
             # Save alert changes if needed
             if should_notify and not is_reminder:
-                self.db.save_alert(alert)
+                await self.db.save_alert(alert)
 
             # Send notification if needed
             if should_notify:
+                bot_logger.info(f"Sending alert to user {alert.telegram_chat_id} for alert {alert.symbol}")
                 try:
                     await self.bot.bot.send_message(
                         chat_id=alert.telegram_chat_id,
                         text=message
                     )
-                    self.alert_cooldowns[alert_id] = datetime.now()
+                    self.alert_cooldowns[alert_id] = datetime.now(timezone.utc)
                     bot_logger.info(f"Alert sent for {alert.name} to {alert.telegram_chat_id}")
                 except Exception as e:
                     bot_logger.error(f"Error sending alert: {e}")
@@ -369,7 +335,7 @@ class AlertHandler:
         # Remove alerts that have sent their final reminder
         for alert_id in alerts_to_remove:
             try:
-                self.db.delete_alert(alert_id)
+                await self.db.delete_alert(alert_id)
                 bot_logger.info(f"Alert {alert_id} removed after final reminder")
             except Exception as e:
                 bot_logger.error(f"Error removing alert {alert_id}: {e}")
@@ -454,7 +420,7 @@ class CryptoBot:
         """Job for checking prices and sending alerts"""
         try:
             # Get all active alerts
-            alerts = self.db.get_all_active_alerts()
+            alerts = await self.db.get_all_active_alerts()
             if not alerts:
                 return
             
@@ -472,12 +438,12 @@ class CryptoBot:
             # Process each cryptocurrency
             for id in crypto_ids:
                 if id not in price_data:
-                    print(f"Price data not found for {id}")
+                    bot_logger.warning(f"Price data not found for {id}")
                     continue
                     
                 crypto_alerts = [alert for alert in alerts if alert.cmc_id == id]
                 crypto_price_data = price_data[id]  # Get first quote for the symbol
-                    
+                crypto_price_data = UnifiedToken(**crypto_price_data)
                 await self.alert_handler.process_price_alerts(id, crypto_price_data, crypto_alerts)
                 
         except Exception as e:
@@ -502,7 +468,7 @@ class CryptoBot:
         """Show available commands and their descriptions"""
         
         chat_id = str(update.effective_chat.id)
-        user = self.db.get_user_by_chat_id(chat_id)
+        user = await self.db.get_user_by_chat_id(chat_id)
         
         if not user:
             menu_text = (
@@ -542,7 +508,7 @@ class CryptoBot:
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         chat_id = str(update.effective_chat.id)
-        user = self.db.get_user_by_chat_id(chat_id)
+        user = await self.db.get_user_by_chat_id(chat_id)
         
         if user and user.is_verified:
             await update.message.reply_text(
@@ -568,7 +534,7 @@ class CryptoBot:
             return WAITING_FOR_EMAIL
         
         # Check if email exists in database
-        existing_user = self.db.get_user_by_email(email)
+        existing_user = await self.db.get_user_by_email(email)
         if existing_user and existing_user.is_verified:
             await update.message.reply_text(
                 "This email is already registered with another Telegram account. "
@@ -603,7 +569,7 @@ class CryptoBot:
             )
             return ConversationHandler.END
         else: 
-            self.db.save_user(user)
+            await self.db.save_user(user)
             bot_logger.info(f"User updated: {user.email}")
         
         # In a real application, send this code via email
@@ -618,7 +584,7 @@ class CryptoBot:
 
     async def verify_code(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         chat_id = str(update.effective_chat.id)
-        user = self.db.get_user_by_chat_id(chat_id)
+        user = await self.db.get_user_by_chat_id(chat_id)
         
         if not user:
             await update.message.reply_text(
@@ -642,7 +608,7 @@ class CryptoBot:
         if code == user.verification_code:
             user.is_verified = True
             user.verification_code = None
-            self.db.save_user(user)
+            await self.db.save_user(user)
             
             await update.message.reply_text(
                 "✅ Email verified successfully!\n"
@@ -656,7 +622,7 @@ class CryptoBot:
 
     async def status(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         chat_id = str(update.effective_chat.id)
-        user = self.db.get_user_by_chat_id(chat_id)
+        user = await self.db.get_user_by_chat_id(chat_id)
         
         if not user or not user.is_verified:
             await update.message.reply_text(
@@ -665,7 +631,7 @@ class CryptoBot:
             )
             return
         
-        alerts = self.db.get_alerts_by_telegram_chat_id(user.telegram_chat_id)
+        alerts = await self.db.get_alerts_by_telegram_chat_id(user.telegram_chat_id)
         if not alerts:
             await update.message.reply_text(
                 "You don't have any active alerts.\n"
